@@ -27,7 +27,11 @@ app.post('/v0.1/trip', function(req, res) {
 });
 
 app.get('/v0.1/trip', function(req, res){
-  res.sendfile(file_path);
+  res.sendFile(file_path, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 });
 
 app.listen(8888);

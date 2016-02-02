@@ -26,4 +26,8 @@ app.post('/v0.1/trip', function(req, res) {
   res.send('Trip saved');
 });
 
+app.get('/v0.1/trip', function(req, res){
+  res.sendfile(file_path);
+});
+
 app.listen(8888);

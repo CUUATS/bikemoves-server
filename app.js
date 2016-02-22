@@ -19,8 +19,13 @@ app.use(bodyParser.json());
 
 app.post('/v0.1/trip', function(req, res) {
   var body = req.body;
+  fs.exists(file_path, function(exists) {
+    if(!exists){
+      fs.mkdir(file_path, function(error){});
+    }
+  });
   if (body.tripData) {
-    var data = JSON.parse(lzString.decompressFromBase64(body.tripData));
+    var data = JSON.parse(body.tripData);
     fs.appendFile(file_path, JSON.stringify(data, null, 2));
   }
   res.send('Trip saved');

@@ -18,7 +18,7 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 
 app.post('/v0.1/trip', function(req, res) {
-  var body = req.body;
+  /*var body = req.body;
   fs.exists(file_path, function(exists) {
     if(!exists){
       fs.mkdir(file_path, function(error){});
@@ -27,7 +27,7 @@ app.post('/v0.1/trip', function(req, res) {
   if (body.tripData) {
     var data = JSON.parse(body.tripData);
     fs.appendFile(file_path, JSON.stringify(data, null, 2));
-  }
+  }*/
   res.send('Trip saved');
 });
 

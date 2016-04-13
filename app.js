@@ -6,84 +6,13 @@ var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('bikemoves.db');
 var app = express();
 
+var pg = require('pg');
+var conString = "postgres://username:password@localhost/database";
+var client = new pg.Client(connectionString);
+client.connect();
+
+
 var file_path = '/var/bikemoves/trips.json';
-
-db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='User'",
-       function(err, rows) {
-  if(err !== null) {
-    console.log(err);
-  }
-  else if(rows === undefined) {
-    db.run('CREATE TABLE "User" ' +
-           '("id" INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-           '"device_uuid" VARCHAR(255), ' +
-           '"gender" CHARACTER, ' +
-           '"age" INTEGER, ' +
-           '"cycling_experience" VARCHAR(255))', function(err) {
-      if(err !== null) {
-        console.log(err);
-      }
-      else {
-        console.log("SQL Table 'User' initialized.");
-      }
-    });
-  }
-  else {
-    console.log("SQL Table 'User' already initialized.");
-  }
-});
-
-db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='Trip'",
-       function(err, rows) {
-  if(err !== null) {
-    console.log(err);
-  }
-  else if(rows === undefined) {
-    db.run('CREATE TABLE "Trip" ' +
-           '("id" INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-           '"user_id" INTEGER, ' +
-           '"origin_type" VARCHAR(255), ' +
-           '"destination_type" VARCHAR(255), ' +
-           '"start_datetime" TIMESTAMP, ' +
-           '"end_datetime" TIMESTAMP, ' +
-           '"trip_geom" VARCHAR(255))', function(err) {
-      if(err !== null) {
-        console.log(err);
-      }
-      else {
-        console.log("SQL Table 'Trip' initialized.");
-      }
-    });
-  }
-  else {
-    console.log("SQL Table 'Trip' already initialized.");
-  }
-});
-
-db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='Trip_point'",
-       function(err, rows) {
-  if(err !== null) {
-    console.log(err);
-  }
-  else if(rows === undefined) {
-    db.run('CREATE TABLE "Trip_point" ' +
-           '("id" INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-           '"trip_id" INTEGER, ' +
-           '"datetime" TIMESTAMP, ' +
-           '"gps_accuracy" FLOAT, ' +
-           '"geom" VARCHAR(255))', function(err) {
-      if(err !== null) {
-        console.log(err);
-      }
-      else {
-        console.log("SQL Table 'User' initialized.");
-      }
-    });
-  }
-  else {
-    console.log("SQL Table 'User' already initialized.");
-  }
-});
 
 app.enable('trust proxy');
 
@@ -97,19 +26,79 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 
 app.post('/v0.1/trip', function(req, res) {
-  var body = req.body;
-  fs.exists(file_path, function(exists) {
-    if(!exists){
-      fs.mkdir(file_path, function(error){});
+    var body = req.body;
+    if (body.tripData) {
+        var tripdata = JSON.parse(lzString.decompressFromBase64(body.tripData));
+
+        pg.connect(conString, function(err, client, done) {
+            if(err){
+              fs.appendFile(file_path, JSON.stringify(tripdata, null, 2));
+              done();
+              console.log(err);
+              return console.error('error connecting');
+            }
+
+            client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
+                if(qry.rowCount===0){
+                    client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', tripdata.deviceID, '0', 0, 0, function(err, qry){
+                        client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
+                            
+                            var userid = qry[0].id;
+                            client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime, function(err, qry){
+                                client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
+                                    var tripid = qry[0].id;
+                                    for(var i = 0; i < tripdata.points.length; i++){
+                                        client.query('INSERT INTO Point(trip_id, lat, lat) values($1, $2, $3)', tripid, tripdata.points[i].lat, tripdata.points[i].lng function(err, qry){});
+                                    }
+                                });
+                            });
+
+                        });
+                    });
+                }
+                else{
+
+                    var userid = qry[0].id;
+                    client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime, function(err, qry){
+                        client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
+                            var tripid = qry[0].id;
+                            for(var i = 0; i < tripdata.points.length; i++){
+                                client.query('INSERT INTO Point(trip_id, lat, lat) values($1, $2, $3)', tripid, tripdata.points[i].lat, tripdata.points[i].lng function(err, qry){});
+                            }
+                        });
+                    });
+
+                }
+            });
+
+        });
     }
-  });
-  if (body.tripData) {
-    var data = JSON.parse(lzString.decompressFromBase64(body.tripData));
-    //var data = JSON.parse(body.tripData);
-    fs.appendFile(file_path, JSON.stringify(data, null, 2));
-  }
-  res.send('Trip saved');
-});
+}
+
+app.post('/v0.1/user', function(req, res) {
+    var body = req.body;
+    if (body.userData) {
+        var userdata = JSON.parse(lzString.decompressFromBase64(body.userData));
+        pg.connect(conString, function(err, client, done) {
+            if(err){
+              done();
+              console.log(err);
+              return console.error('error connecting');
+            }
+
+            client.query('SELECT * FROM User WHERE device_uuid = ' + userdata.deviceID, function(err, qry){
+                if(qry.rowCount===0){
+                    client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience, function(err, qry){});
+                }
+                else{
+                    var userid = qry[0].id;
+                    client.query('UPDATE User SET gender=($1), age=($2), cycling_experience=($3) WHERE id=($4)', userdata.gender, userdata.age, userdata.cycling_experience, userid, function(err, qry){});
+                }
+            });
+
+        });
+    }
+}
 
 app.get('/v0.1/trip', function(req, res){
   res.sendFile(file_path, {

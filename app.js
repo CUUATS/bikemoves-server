@@ -63,7 +63,7 @@ app.post('/v0.1/trip', function(req, res) {
                         client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
                             var tripid = qry[0].id;
                             for(var i = 0; i < tripdata.points.length; i++){
-                                client.query('INSERT INTO Point(trip_id, lat, lat, datetime) values($1, $2, $3, $4)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i]], function(err, qry){});
+                                client.query('INSERT INTO Point(trip_id, lat, long, datetime, gps_accuracy) values($1, $2, $3, $4, $5)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i], tripdata.accuracys[i]], function(err, qry){});
                             }
                         });
                     });

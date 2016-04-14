@@ -73,7 +73,7 @@ app.post('/v0.1/trip', function(req, res) {
 
         });
     }
-}
+});
 
 app.post('/v0.1/user', function(req, res) {
     var body = req.body;
@@ -98,7 +98,7 @@ app.post('/v0.1/user', function(req, res) {
 
         });
     }
-}
+});
 
 app.get('/v0.1/trip', function(req, res){
   res.sendFile(file_path, {

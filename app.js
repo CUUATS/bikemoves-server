@@ -6,6 +6,11 @@ var app = express();
 
 var pg = require('pg');
 
+var username = process.env.POSTGRES_PORT_5432_POSTGRES_USER;
+var password = process.env.POSTGRES_PORT_5432_POSTGRES_PASSWORD;
+var addr = process.env.POSTGRES_PORT_5432_TCP_ADDR;
+var port = process.env.POSTGRES_PORT_5432_TCP_PORT;
+var db = process.env.POSTGRES_PORT_5432_POSTGRES_DB;
 var conString = "postgres://" + username + ":" + password + "@" + addr + ":" + port + "/" + db;
 var client = new pg.Client(conString);
 client.connect();

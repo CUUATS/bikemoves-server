@@ -8,7 +8,7 @@ var app = express();
 
 var pg = require('pg');
 var conString = "postgres://username:password@localhost/database";
-var client = new pg.Client(connectionString);
+var client = new pg.Client(conString);
 client.connect();
 
 

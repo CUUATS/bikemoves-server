@@ -2,12 +2,11 @@ var express = require('express');
 var fs = require('fs');
 var bodyParser = require('body-parser');
 var lzString = require('lz-string');
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('bikemoves.db');
 var app = express();
 
 var pg = require('pg');
-var conString = "postgres://username:password@localhost/database";
+
+var conString = "postgres://" + username + ":" + password + "@" + addr + ":" + port + "/" + db;
 var client = new pg.Client(conString);
 client.connect();
 

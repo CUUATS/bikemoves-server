@@ -6,11 +6,11 @@ var app = express();
 
 var pg = require('pg');
 
-var username = process.env.POSTGRES_PORT_5432_POSTGRES_USER;
-var password = process.env.POSTGRES_PORT_5432_POSTGRES_PASSWORD;
+var username = process.env.POSTGRES_ENV_POSTGRES_USER;
+var password = process.env.POSTGRES_ENV_POSTGRES_PASSWORD;
 var addr = process.env.POSTGRES_PORT_5432_TCP_ADDR;
 var port = process.env.POSTGRES_PORT_5432_TCP_PORT;
-var db = process.env.POSTGRES_PORT_5432_POSTGRES_DB;
+var db = process.env.POSTGRES_ENV_POSTGRES_DB;
 var conString = "postgres://" + username + ":" + password + "@" + addr + ":" + port + "/" + db;
 var client = new pg.Client(conString);
 client.connect();
@@ -46,7 +46,7 @@ app.post('/v0.1/trip', function(req, res) {
                 if(qry.rowCount===0){
                     client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
                         client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
-                            
+
                             var userid = qry[0].id;
                             client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                                 client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){

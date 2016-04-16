@@ -12,9 +12,6 @@ var addr = process.env.POSTGRES_PORT_5432_TCP_ADDR;
 var port = process.env.POSTGRES_PORT_5432_TCP_PORT;
 var db = process.env.POSTGRES_ENV_POSTGRES_DB;
 var conString = "postgres://" + username + ":" + password + "@" + addr + ":" + port + "/" + db;
-var client = new pg.Client(conString);
-client.connect();
-
 
 var file_path = '/var/bikemoves/trips.json';
 
@@ -25,6 +22,19 @@ app.use(function(req, res, next) {
   res.header('Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept');
   next();
+});
+
+pg.connect(conString, function(err, client, done) {
+    if(err){
+      done();
+      console.log(err);
+      return console.error('error connecting');
+    }
+
+    client.query('CREATE TABLE IF NOT EXISTS User(id integer primary key autoincrement, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){});
+    client.query('CREATE TABLE IF NOT EXISTS Trip(id integer primary key autoincrement, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){});
+    client.query('CREATE TABLE IF NOT EXISTS Point(id integer primary key autoincrement, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){});
+
 });
 
 app.use(bodyParser.json());

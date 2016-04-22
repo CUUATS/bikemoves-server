@@ -31,6 +31,9 @@ pg.connect(conString, function(err, client, done) {
       return console.error('error connecting');
     }
 
+    client.query('CREATE TABLE IF NOT EXISTS User(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){});
+    client.query('CREATE TABLE IF NOT EXISTS Trip(id serial primary key, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){});
+    client.query('CREATE TABLE IF NOT EXISTS Point(id serial primary key, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){});
 
 });
 

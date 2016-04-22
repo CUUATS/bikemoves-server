@@ -132,7 +132,7 @@ app.get('/v0.1/user', function(req, res){
 
         client.query('SELECT * FROM User', function(err, qry){
             var str = "";
-            for(int i=0; i < qry.rows.length; i++){
+            for(var i=0; i < qry.rows.length; i++){
                 str+= qry.rows[i];
             }
             res.send(str);

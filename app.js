@@ -53,14 +53,14 @@ app.post('/v0.1/trip', function(req, res) {
             }
 
             client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
-                if(qry.rowCount===0){
+                if(qry.rows.length==0){
                     client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
                         client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
 
-                            var userid = qry[0].id;
+                            var userid = qry.rows[0].id;
                             client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                                 client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
-                                    var tripid = qry[0].id;
+                                    var tripid = qry.rows[0].id;
                                     for(var i = 0; i < tripdata.points.length; i++){
                                         client.query('INSERT INTO Point(trip_id, lat, lat) values($1, $2, $3)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng], function(err, qry){});
                                     }
@@ -72,10 +72,10 @@ app.post('/v0.1/trip', function(req, res) {
                 }
                 else{
 
-                    var userid = qry[0].id;
+                    var userid = qry.rows[0].id;
                     client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                         client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
-                            var tripid = qry[0].id;
+                            var tripid = qry.rows[0].id;
                             for(var i = 0; i < tripdata.points.length; i++){
                                 client.query('INSERT INTO Point(trip_id, lat, long, datetime, gps_accuracy) values($1, $2, $3, $4, $5)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i], tripdata.accuracys[i]], function(err, qry){});
                             }
@@ -101,11 +101,11 @@ app.post('/v0.1/user', function(req, res) {
             }
 
             client.query('SELECT * FROM User WHERE device_uuid = ' + userdata.deviceID, function(err, qry){
-                if(qry.rowCount===0){
+                if(qry.rows.length==0){
                     client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
                 }
                 else{
-                    var userid = qry[0].id;
+                    var userid = qry.rows[0].id;
                     client.query('UPDATE User SET gender=($1), age=($2), cycling_experience=($3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
                 }
             });
@@ -120,6 +120,25 @@ app.get('/v0.1/trip', function(req, res){
       'Content-Type': 'application/json'
     }
   });
+});
+
+app.get('/v0.1/user', function(req, res){
+    pg.connect(conString, function(err, client, done) {
+        if(err){
+          done();
+          console.log(err);
+          return console.error('error connecting');
+        }
+
+        client.query('SELECT * FROM User', function(err, qry){
+            var str = "";
+            for(int i=0; i < qry.rows.length; i++){
+                str+= qry.rows[i];
+            }
+            res.send(str);
+        });
+
+    });
 });
 
 app.listen(8888);

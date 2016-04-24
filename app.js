@@ -115,11 +115,26 @@ app.post('/v0.1/user', function(req, res) {
 });
 
 app.get('/v0.1/trip', function(req, res){
-  res.sendFile(file_path, {
+  /*res.sendFile(file_path, {
     headers: {
       'Content-Type': 'application/json'
     }
-  });
+  });*/
+    pg.connect(conString, function(err, client, done) {
+        if(err){
+          done();
+          console.log(err);
+          return console.error('error connecting');
+        }
+
+        client.query('SELECT * FROM Trip', function(err, qry){
+            var str = "There are " + qry.rows.length + " users \n";
+            
+            str+=JSON.stringify(qry, null, 2)
+            res.send(str);
+        });
+
+    });
 });
 
 app.get('/v0.1/user', function(req, res){

@@ -92,7 +92,7 @@ app.post('/v0.1/trip', function(req, res) {
     }
 });
 
-app.post('/v0.1/users', function(req, res) {
+app.post('/v0.1/user', function(req, res) {
     var body = req.body;
     if (body.userData) {
         var userdata = JSON.parse(lzString.decompressFromBase64(body.userData));

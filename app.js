@@ -84,9 +84,10 @@ app.post('/v0.1/trip', function(req, res) {
 
                 }
             });
-
+            res.send("Success");
         });
     }
+    res.send("Nothing sent");
 });
 
 app.post('/v0.1/user', function(req, res) {
@@ -109,9 +110,10 @@ app.post('/v0.1/user', function(req, res) {
                     client.query('UPDATE User SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
                 }
             });
-
+            res.send("Success");
         });
     }
+    res.send("Nothing sent");
 });
 
 app.get('/v0.1/trip', function(req, res){
@@ -128,7 +130,7 @@ app.get('/v0.1/trip', function(req, res){
         }
 
         client.query('SELECT * FROM Trip', function(err, qry){
-            var str = "There are " + qry.rows.length + " users \n";
+            var str = "There are " + qry.rows.length + "  trips\n";
             
             str+=JSON.stringify(qry, null, 2)
             res.send(str);
@@ -160,7 +162,7 @@ app.get('/v0.1/user', function(req, res){
             res.send(str);
         });*/
         client.query('SELECT * FROM User', function(err, qry){
-            var str = "There are " + qry.rows.length + " users \n";
+            var str = "There are " + qry.rows.length + " users\n";
             
             str+=JSON.stringify(qry, null, 2)
             res.send(str);

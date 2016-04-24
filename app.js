@@ -52,7 +52,7 @@ app.post('/v0.1/trip', function(req, res) {
               return console.error('error connecting');
             }
 
-            client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
+            client.query('SELECT * FROM User WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
                     client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
                         client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
@@ -100,13 +100,13 @@ app.post('/v0.1/user', function(req, res) {
               return console.error('error connecting');
             }
 
-            client.query('SELECT * FROM User WHERE device_uuid = ' + userdata.deviceID, function(err, qry){
+            client.query('SELECT * FROM User WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
                     client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
                 }
                 else{
                     var userid = qry.rows[0].id;
-                    client.query('UPDATE User SET gender=($1), age=($2), cycling_experience=($3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
+                    client.query('UPDATE User SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
                 }
             });
 
@@ -145,11 +145,24 @@ app.get('/v0.1/user', function(req, res){
           return console.error('error connecting');
         }
 
+        /*client.query('SELECT * FROM User', function(err, qry){
+            var str = "There are " + qry.rows.length + " users \n";
+            for(var j=0; j < qry.fields.length; j++){
+                str+= qry.fields[j].name + "\t";
+            }
+            str+='\n';
+            for(var i=0; i < qry.rows.length; i++){
+                for(var j=0; j < qry.fields.length; j++){
+                    str+= qry.rows[i]. + "\t";
+                }
+                str+= "\n";
+            }
+            res.send(str);
+        });*/
         client.query('SELECT * FROM User', function(err, qry){
             var str = "There are " + qry.rows.length + " users \n";
-            for(var i=0; i < qry.rows.length; i++){
-                str+= qry.rows[i] + "\n";
-            }
+            
+            str+=JSON.stringify(qry, null, 2)
             res.send(str);
         });
 

@@ -87,7 +87,9 @@ app.post('/v0.1/trip', function(req, res) {
             res.send("Success");
         });
     }
-    res.send("Nothing sent");
+    else{
+        res.send("Nothing sent");
+    }
 });
 
 app.post('/v0.1/user', function(req, res) {
@@ -113,7 +115,9 @@ app.post('/v0.1/user', function(req, res) {
             res.send("Success");
         });
     }
-    res.send("Nothing sent");
+    else{
+        res.send("Nothing sent");
+    }
 });
 
 app.get('/v0.1/trip', function(req, res){

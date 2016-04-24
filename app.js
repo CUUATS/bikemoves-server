@@ -31,7 +31,7 @@ pg.connect(conString, function(err, client, done) {
       return console.error('error connecting');
     }
 
-    client.query('CREATE TABLE IF NOT EXISTS User(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){});
+    client.query('CREATE TABLE IF NOT EXISTS Users(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){});
     client.query('CREATE TABLE IF NOT EXISTS Trip(id serial primary key, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){});
     client.query('CREATE TABLE IF NOT EXISTS Point(id serial primary key, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){});
 
@@ -52,10 +52,10 @@ app.post('/v0.1/trip', function(req, res) {
               return console.error('error connecting');
             }
 
-            client.query('SELECT * FROM User WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
+            client.query('SELECT * FROM Users WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
-                        client.query('SELECT * FROM User WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
+                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
+                        client.query('SELECT * FROM Users WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
 
                             var userid = qry.rows[0].id;
                             client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
@@ -92,7 +92,7 @@ app.post('/v0.1/trip', function(req, res) {
     }
 });
 
-app.post('/v0.1/user', function(req, res) {
+app.post('/v0.1/users', function(req, res) {
     var body = req.body;
     if (body.userData) {
         var userdata = JSON.parse(lzString.decompressFromBase64(body.userData));
@@ -103,13 +103,13 @@ app.post('/v0.1/user', function(req, res) {
               return console.error('error connecting');
             }
 
-            client.query('SELECT * FROM User WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
+            client.query('SELECT * FROM Users WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO User(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
+                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
                 }
                 else{
                     var userid = qry.rows[0].id;
-                    client.query('UPDATE User SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
+                    client.query('UPDATE Users SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
                 }
             });
             res.send("Success");
@@ -165,7 +165,7 @@ app.get('/v0.1/user', function(req, res){
             }
             res.send(str);
         });*/
-        client.query('SELECT * FROM User', function(err, qry){
+        client.query('SELECT * FROM Users', function(err, qry){
             var str = "There are " + qry.rows.length + " users\n";
             
             str+=JSON.stringify(qry, null, 2)

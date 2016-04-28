@@ -52,7 +52,7 @@ app.post('/v0.1/trip', function(req, res) {
               return console.error('error connecting');
             }
 
-            client.query('SELECT * FROM Users WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
+            client.query('SELECT * FROM Users WHERE device_uuid = \'' + tripdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
                     client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
                         client.query('SELECT * FROM Users WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){

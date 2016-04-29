@@ -54,15 +54,15 @@ app.post('/v0.1/trip', function(req, res) {
 
             client.query('SELECT * FROM Users WHERE device_uuid = \'' + tripdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
+                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4)', [tripdata.deviceID, '0', 0, 0], function(err, qry){
                         client.query('SELECT * FROM Users WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
 
                             var userid = qry.rows[0].id;
-                            client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
+                            client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                                 client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
                                     var tripid = qry.rows[0].id;
                                     for(var i = 0; i < tripdata.points.length; i++){
-                                        client.query('INSERT INTO Point(trip_id, lat, lat) values($1, $2, $3)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng], function(err, qry){});
+                                        client.query('INSERT INTO Point(trip_id, lat, lat) VALUES($1, $2, $3)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng], function(err, qry){});
                                     }
                                 });
                             });
@@ -73,11 +73,11 @@ app.post('/v0.1/trip', function(req, res) {
                 else{
 
                     var userid = qry.rows[0].id;
-                    client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) values($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
+                    client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                         client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
                             var tripid = qry.rows[0].id;
                             for(var i = 0; i < tripdata.points.length; i++){
-                                client.query('INSERT INTO Point(trip_id, lat, long, datetime, gps_accuracy) values($1, $2, $3, $4, $5)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i], tripdata.accuracys[i]], function(err, qry){});
+                                client.query('INSERT INTO Point(trip_id, lat, long, datetime, gps_accuracy) VALUES($1, $2, $3, $4, $5)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i], tripdata.accuracys[i]], function(err, qry){});
                             }
                         });
                     });
@@ -105,14 +105,14 @@ app.post('/v0.1/user', function(req, res) {
 
             client.query('SELECT * FROM Users WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) values($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
+                    client.query('INSERT INTO Users (device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
                 }
                 else{
                     var userid = qry.rows[0].id;
                     client.query('UPDATE Users SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
                 }
+                res.send("Success");
             });
-            res.send("Success");
         });
     }
     else{
@@ -121,11 +121,6 @@ app.post('/v0.1/user', function(req, res) {
 });
 
 app.get('/v0.1/trip', function(req, res){
-  /*res.sendFile(file_path, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });*/
     pg.connect(conString, function(err, client, done) {
         if(err){
           done();
@@ -151,20 +146,6 @@ app.get('/v0.1/user', function(req, res){
           return console.error('error connecting');
         }
 
-        /*client.query('SELECT * FROM User', function(err, qry){
-            var str = "There are " + qry.rows.length + " users \n";
-            for(var j=0; j < qry.fields.length; j++){
-                str+= qry.fields[j].name + "\t";
-            }
-            str+='\n';
-            for(var i=0; i < qry.rows.length; i++){
-                for(var j=0; j < qry.fields.length; j++){
-                    str+= qry.rows[i]. + "\t";
-                }
-                str+= "\n";
-            }
-            res.send(str);
-        });*/
         client.query('SELECT * FROM Users', function(err, qry){
             var str = "There are " + qry.rows.length + " users\n";
             

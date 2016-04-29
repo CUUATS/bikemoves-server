@@ -44,6 +44,8 @@ app.post('/v0.1/trip', function(req, res) {
     var body = req.body;
     if (body.tripData) {
         var tripdata = JSON.parse(lzString.decompressFromBase64(body.tripData));
+        if(tripdata.deviceID == null)
+          tripdata.deviceID = "none";
 
         pg.connect(conString, function(err, client, done) {
             if(err){
@@ -97,6 +99,8 @@ app.post('/v0.1/user', function(req, res) {
     var body = req.body;
     if (body.userData) {
         var userdata = JSON.parse(lzString.decompressFromBase64(body.userData));
+        if(userdata.deviceID ==null)
+          userdata.deviceID ="none";
         pg.connect(conString, function(err, client, done) {
             if(err){
               done();

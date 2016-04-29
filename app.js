@@ -31,10 +31,11 @@ pg.connect(conString, function(err, client, done) {
       return console.error('error connecting');
     }
 
-    client.query('CREATE TABLE IF NOT EXISTS Users(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){});
-    client.query('CREATE TABLE IF NOT EXISTS Trip(id serial primary key, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){});
-    client.query('CREATE TABLE IF NOT EXISTS Point(id serial primary key, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){});
-
+    client.query('CREATE TABLE IF NOT EXISTS Users(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){
+        client.query('CREATE TABLE IF NOT EXISTS Trip(id serial primary key, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){
+            client.query('CREATE TABLE IF NOT EXISTS Point(id serial primary key, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){done();});
+        });
+    });
 });
 
 app.use(bodyParser.json());
@@ -105,11 +106,11 @@ app.post('/v0.1/user', function(req, res) {
 
             client.query('SELECT * FROM Users WHERE device_uuid = \'' + userdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO Users (device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){});
+                    client.query('INSERT INTO Users (device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4)', [userdata.deviceID, userdata.gender, userdata.age, userdata.cycling_experience], function(err, qry){done();});
                 }
                 else{
                     var userid = qry.rows[0].id;
-                    client.query('UPDATE Users SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){});
+                    client.query('UPDATE Users SET (gender, age, cycling_experience)=($1, $2, $3) WHERE id=($4)', [userdata.gender, userdata.age, userdata.cycling_experience, userid], function(err, qry){done();});
                 }
                 res.send("Success");
             });
@@ -132,6 +133,7 @@ app.get('/v0.1/trip', function(req, res){
             var str = "There are " + qry.rows.length + "  trips\n";
             
             str+=JSON.stringify(qry, null, 2)
+            done();
             res.send(str);
         });
 
@@ -150,6 +152,7 @@ app.get('/v0.1/user', function(req, res){
             var str = "There are " + qry.rows.length + " users\n";
             
             str+=JSON.stringify(qry, null, 2)
+            done();
             res.send(str);
         });
 

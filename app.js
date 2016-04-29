@@ -31,7 +31,7 @@ pg.connect(conString, function(err, client, done) {
       return console.error('error connecting');
     }
 
-    client.query('CREATE TABLE IF NOT EXISTS Users(id serial primary key, device_uuid varchar(255), gender character, age integer, cycling_experience integer)', function(err, qry){
+    client.query('CREATE TABLE IF NOT EXISTS Users(id serial primary key, device_uuid varchar(255), gender varchar(255), age varchar(255), cycling_experience varchar(255))', function(err, qry){
         client.query('CREATE TABLE IF NOT EXISTS Trip(id serial primary key, user_id integer, origin_type varchar(255), destination_type varchar(255), start_datetime timestamp, end_datetime timestamp)', function(err, qry){
             client.query('CREATE TABLE IF NOT EXISTS Point(id serial primary key, trip_id integer, datetime timestamp, lat float, long float, gps_accuracy float)', function(err, qry){done();});
         });
@@ -155,6 +155,20 @@ app.get('/v0.1/user', function(req, res){
             done();
             res.send(str);
         });
+
+    });
+});
+
+
+app.get('/v0.1/clear', function(req, res){
+    pg.connect(conString, function(err, client, done) {
+        if(err){
+          done();
+          console.log(err);
+          return console.error('error connecting');
+        }
+
+        client.query('DROP TABLE Users, Trip, Point', function(err, qry){done();});
 
     });
 });

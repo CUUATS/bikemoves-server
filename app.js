@@ -61,13 +61,19 @@ app.post('/v0.1/trip', function(req, res) {
                         var userid = qry.rows[0].id;
                         client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5) RETURNING id', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                             var tripid = qry.rows[0].id;
-                            var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
-                            for(var i = 0; i < tripdata.points.length; i++){
-                                statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
-                                if(i!=tripdata.points.length - 1)
-                                    statement += ", ";
+                            if(tripdata.points.length ==0){
+                                done();
                             }
-                            client.query(statement, function(err, qry){done();});
+                            else
+                            {
+                                var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
+                                for(var i = 0; i < tripdata.points.length; i++){
+                                    statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                                    if(i!=tripdata.points.length - 1)
+                                        statement += ", ";
+                                }
+                                client.query(statement, function(err, qry){done();});
+                            }
                         });
                     });
                 }
@@ -76,13 +82,19 @@ app.post('/v0.1/trip', function(req, res) {
                     var userid = qry.rows[0].id;
                     client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5) RETURNING id', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
                         var tripid = qry.rows[0].id;
-                        var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
-                        for(var i = 0; i < tripdata.points.length; i++){
-                            statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
-                            if(i!=tripdata.points.length - 1)
-                                statement += ", ";
+                        if(tripdata.points.length ==0){
+                            done();
                         }
-                        client.query(statement, function(err, qry){done();});
+                        else
+                        {
+                            var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
+                            for(var i = 0; i < tripdata.points.length; i++){
+                                statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                                if(i!=tripdata.points.length - 1)
+                                    statement += ", ";
+                            }
+                            client.query(statement, function(err, qry){done();});
+                        }
                     });
 
                 }

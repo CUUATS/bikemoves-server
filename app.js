@@ -125,7 +125,7 @@ app.post('/v0.1/user', function(req, res) {
     }
 });
 
-app.get('v/0.1/file', function(req, res){
+app.get('/v0.1/file', function(req, res){
     res.sendFile(file_path, {
     headers: {
       'Content-Type': 'application/json'

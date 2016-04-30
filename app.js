@@ -57,32 +57,32 @@ app.post('/v0.1/trip', function(req, res) {
 
             client.query('SELECT * FROM Users WHERE device_uuid = \'' + tripdata.deviceID + '\'', function(err, qry){
                 if(qry.rows.length==0){
-                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4)', [tripdata.deviceID, '0', '0', '0'], function(err, qry){
-                        client.query('SELECT * FROM Users WHERE device_uuid = ' + tripdata.deviceID, function(err, qry){
-
-                            var userid = qry.rows[0].id;
-                            client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
-                                client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
-                                    var tripid = qry.rows[0].id;
-                                    for(var i = 0; i < tripdata.points.length; i++){
-                                        client.query('INSERT INTO Point(trip_id, lat, lat) VALUES($1, $2, $3)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng], function(err, qry){});
-                                    }
-                                });
-                            });
-
+                    client.query('INSERT INTO Users(device_uuid, gender, age, cycling_experience) VALUES ($1, $2, $3, $4) RETURNING id', [tripdata.deviceID, '0', '0', '0'], function(err, qry){
+                        var userid = qry.rows[0].id;
+                        client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5) RETURNING id', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
+                            var tripid = qry.rows[0].id;
+                            var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
+                            for(var i = 0; i < tripdata.points.length; i++){
+                                statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                                if(i!=tripdata.points.length - 1)
+                                    statement += ", ";
+                            }
+                            client.query(statement, function(err, qry){done();});
                         });
                     });
                 }
                 else{
 
                     var userid = qry.rows[0].id;
-                    client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5)', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
-                        client.query('SELECT * FROM Trip WHERE user_id = ' + userid + ' AND start_datetime = ' + tripdata.startTime, function(err, qry){
-                            var tripid = qry.rows[0].id;
-                            for(var i = 0; i < tripdata.points.length; i++){
-                                client.query('INSERT INTO Point(trip_id, lat, long, datetime, gps_accuracy) VALUES($1, $2, $3, $4, $5)', [tripid, tripdata.points[i].lat, tripdata.points[i].lng, tripdata.timestamps[i], tripdata.accuracys[i]], function(err, qry){});
-                            }
-                        });
+                    client.query('INSERT INTO Trip(user_id, origin_type, destination_type, start_datetime, end_datetime) VALUES($1, $2, $3, $4, $5) RETURNING id', [userid, tripdata.from, tripdata.to, tripdata.startTime, tripdata.endTime], function(err, qry){
+                        var tripid = qry.rows[0].id;
+                        var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
+                        for(var i = 0; i < tripdata.points.length; i++){
+                            statement+= "(" + tripid + ", " + tripdata.timestamps[i] + ", " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                            if(i!=tripdata.points.length - 1)
+                                statement += ", ";
+                        }
+                        client.query(statement, function(err, qry){done();});
                     });
 
                 }

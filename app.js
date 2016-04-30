@@ -142,7 +142,26 @@ app.get('/v0.1/trip', function(req, res){
         }
 
         client.query('SELECT * FROM Trip', function(err, qry){
-            var str = "There are " + qry.rows.length + "  trips\n";
+            var str = "There are " + qry.rows.length + " trips\n";
+            
+            str+=JSON.stringify(qry, null, 2)
+            done();
+            res.send(str);
+        });
+
+    });
+});
+
+app.get('/v0.1/trip', function(req, res){
+    pg.connect(conString, function(err, client, done) {
+        if(err){
+          done();
+          console.log(err);
+          return console.error('error connecting');
+        }
+
+        client.query('SELECT * FROM Point', function(err, qry){
+            var str = "There are " + qry.rows.length + " points\n";
             
             str+=JSON.stringify(qry, null, 2)
             done();

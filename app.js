@@ -68,7 +68,7 @@ fs.appendFile(file_path, JSON.stringify(tripdata, null, 2));
                             {
                                 var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
                                 for(var i = 0; i < tripdata.points.length; i++){
-                                    statement+= "(" + tripid + ", \'" + tripdata.timestamps[i] + "\', " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                                    statement+= "(" + tripid + ", \'" + tripdata.timestamps[i] + "\', " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.accuracys[i] + ")";
                                     if(i!=tripdata.points.length - 1)
                                         statement += ", ";
                                 }
@@ -89,7 +89,7 @@ fs.appendFile(file_path, JSON.stringify(tripdata, null, 2));
                         {
                             var statement = "INSERT INTO Point(trip_id, datetime, lat, long, gps_accuracy) VALUES ";
                             for(var i = 0; i < tripdata.points.length; i++){
-                                statement+= "(" + tripid + ", \'" + tripdata.timestamps[i] + "\', " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.acuracys[i] + ")";
+                                statement+= "(" + tripid + ", \'" + tripdata.timestamps[i] + "\', " + tripdata.points[i].lat + ", " + tripdata.points[i].lng + ", " + tripdata.accuracys[i] + ")";
                                 if(i!=tripdata.points.length - 1)
                                     statement += ", ";
                             }

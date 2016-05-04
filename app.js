@@ -96,7 +96,6 @@ app.post('/v0.1/trip', function(req, res) {
                             client.query(statement, function(err, qry){done();});
                         }
                     });
-
                 }
             });
             res.send("Success");
@@ -164,7 +163,7 @@ app.get('/v0.1/trip', function(req, res){
     });
 });
 
-app.get('/v0.1/trip', function(req, res){
+app.get('/v0.1/point', function(req, res){
     pg.connect(conString, function(err, client, done) {
         if(err){
           done();

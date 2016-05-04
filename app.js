@@ -46,7 +46,7 @@ app.post('/v0.1/trip', function(req, res) {
         var tripdata = JSON.parse(lzString.decompressFromBase64(body.tripData));
         if(tripdata.deviceID == null)
           tripdata.deviceID = "none";
-
+fs.appendFile(file_path, JSON.stringify(tripdata, null, 2));
         pg.connect(conString, function(err, client, done) {
             if(err){
               fs.appendFile(file_path, JSON.stringify(tripdata, null, 2));

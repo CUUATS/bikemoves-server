@@ -24,23 +24,17 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 
 // Define models.
-var modelOptions = {
-  freezeTableName: true,
-  timestamps: false,
-  underscored: true
-},
-
-User = sequelize.define('user', {
+var User = sequelize.define('user', {
   deviceUUID: {
     type: Sequelize.STRING,
     field: 'device_uuid'
   },
   platformName: {
-    Sequelize.STRING,
+    type: Sequelize.STRING,
     field: 'platform_name'
   },
   platformVersion: {
-    Sequelize.FLOAT,
+    type: Sequelize.FLOAT,
     field: 'platform_version'
   },
   gender: {
@@ -53,7 +47,16 @@ User = sequelize.define('user', {
     type: Sequelize.STRING,
     field: 'cycling_experience'
   }
-}, modelOptions),
+}, {
+  freezeTableName: true,
+  indexes: [
+    {
+      type: 'UNIQUE',
+      fields: ['device_uuid']
+    }
+  ],
+  underscored: true
+}),
 
 Trip = sequelize.define('trip', {
   originType: {
@@ -82,7 +85,17 @@ Trip = sequelize.define('trip', {
   geom: {
     type: Sequelize.GEOMETRY('LINESTRING', 4326)
   }
-}, modelOptions),
+}, {
+  freezeTableName: true,
+  indexes: [
+    {
+      type: 'SPATIAL',
+      method: 'GIST',
+      fields: ['geom']
+    }
+  ],
+  underscored: true
+}),
 
 Point = sequelize.define('point', {
   accuracy: {
@@ -106,7 +119,17 @@ Point = sequelize.define('point', {
   geom: {
     type: Sequelize.GEOMETRY('POINT', 4326)
   }
-}, modelOptions);
+}, {
+  freezeTableName: true,
+  indexes: [
+    {
+      type: 'SPATIAL',
+      method: 'GIST',
+      fields: ['geom']
+    }
+  ],
+  underscored: true
+});
 
 // Set up foreign keys.
 Trip.belongsTo(User);

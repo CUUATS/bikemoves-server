@@ -147,6 +147,7 @@ var WGS_84 = {
   },
   extractData = function(body) {
     if (!body.data) throw 'Data key is empty';
+    if (!body.data.deviceUUID) throw 'Missing device UUID';
     // return JSON.parse(lzString.decompressFromBase64(body.data));
     return body.data;
   },
@@ -194,24 +195,14 @@ var WGS_84 = {
   };
 
 app.post('/v0.1/user', function(req, res) {
-  var userData = extractData(req.body),
-    createdUser;
-  if (!userData.deviceUUID) throw 'Missing device UUID';
-
-  User.findOrCreate({
-    where: {deviceUUID: userData.deviceUUID}
-  }).spread(function(user, created) {
-    createdUser = created;
-    return user.update(userData);
-  }).then(function() {
+  var userData = extractData(req.body);
+  User.upsert(userData).then(function(createdUser) {
     res.send(((createdUser) ? 'Created' : 'Updated') + ' user');
   });
 });
 
 app.post('/v0.1/trip', function(req, res) {
   var tripData = extractData(req.body);
-  if (!tripData.deviceUUID) throw 'Missing device UUID';
-
   User.findOrCreate({
     where: {deviceUUID: tripData.deviceUUID}
   }).spread(function(user, created) {

@@ -35,6 +35,14 @@ User = sequelize.define('user', {
     type: Sequelize.STRING,
     field: 'device_uuid'
   },
+  platformName: {
+    Sequelize.STRING,
+    field: 'platform_name'
+  },
+  platformVersion: {
+    Sequelize.FLOAT,
+    field: 'platform_version'
+  },
   gender: {
     type: Sequelize.STRING
   },

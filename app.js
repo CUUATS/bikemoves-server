@@ -136,7 +136,7 @@ Trip.belongsTo(User);
 Trip.hasMany(Point);
 
 // Update models.
-sequelize.sync({force: true});
+sequelize.sync();
 
 // Helper functions
 var WGS_84 = {

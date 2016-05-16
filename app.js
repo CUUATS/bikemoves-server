@@ -198,6 +198,9 @@ app.post('/v0.1/user', function(req, res) {
   var userData = extractData(req.body);
   User.upsert(userData).then(function(createdUser) {
     res.send(((createdUser) ? 'Created' : 'Updated') + ' user');
+  }).catch(function(e) {
+    console.error(e.stack);
+    res.status(500).send('Error saving user');
   });
 });
 
@@ -211,6 +214,9 @@ app.post('/v0.1/trip', function(req, res) {
     return Point.bulkCreate(makePoints(tripData.locations, trip.id));
   }).then(function() {
     res.send('Saved trip');
+  }).catch(function(e) {
+    console.error(e.stack);
+    res.status(500).send('Error saving trip');
   });
 });
 

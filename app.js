@@ -148,8 +148,7 @@ var WGS_84 = {
   extractData = function(body) {
     if (!body.data) throw 'Data key is empty';
     if (!body.data.deviceUUID) throw 'Missing device UUID';
-    // return JSON.parse(lzString.decompressFromBase64(body.data));
-    return body.data;
+    return JSON.parse(lzString.decompressFromBase64(body.data));
   },
   toGeoJSON = function(locations) {
     if (Array.isArray(locations)) {

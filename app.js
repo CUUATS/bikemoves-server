@@ -1,7 +1,7 @@
 var express = require('express'),
+  ProtoBuf = require('protobufjs'),
   Sequelize = require('sequelize'),
   bodyParser = require('body-parser'),
-  lzString = require('lz-string'),
   app = express(),
   sequelize = new Sequelize(
     process.env.POSTGRES_ENV_POSTGRES_DB,
@@ -11,7 +11,8 @@ var express = require('express'),
       host: process.env.POSTGRES_PORT_5432_TCP_ADDR,
       port: process.env.POSTGRES_PORT_5432_TCP_PORT
     }
-  );
+  ),
+  messages = ProtoBuf.loadJsonFile('messages.json').build();
 
 // Set up middleware.
 app.enable('trust proxy');
@@ -145,11 +146,14 @@ var WGS_84 = {
       name: 'EPSG:4326'
     }
   },
-  extractData = function(body) {
-    if (!body.data) throw 'Data key is empty';
-    var data = JSON.parse(lzString.decompressFromBase64(body.data));
-    if (!data.deviceUUID) throw 'Missing device UUID';
-    return data;
+  extractData = function(req, Message) {
+    if (!req.body) throw 'Missing post data';
+    try {
+      return Message.decode(req.body);
+    } catch(e) {
+      console.error(e.stack);
+      throw 'Malformed request';
+    }
   },
   toGeoJSON = function(locations) {
     if (Array.isArray(locations)) {
@@ -195,7 +199,7 @@ var WGS_84 = {
   };
 
 app.post('/v0.1/user', function(req, res) {
-  var userData = extractData(req.body);
+  var userData = extractData(req, messages.bikemoves.User);
   User.upsert(userData).then(function(createdUser) {
     res.send(((createdUser) ? 'Created' : 'Updated') + ' user');
   }).catch(function(e) {
@@ -205,7 +209,7 @@ app.post('/v0.1/user', function(req, res) {
 });
 
 app.post('/v0.1/trip', function(req, res) {
-  var tripData = extractData(req.body);
+  var tripData = extractData(req, messages.bikemoves.Trip);
   User.findOrCreate({
     where: {deviceUUID: tripData.deviceUUID}
   }).spread(function(user, created) {

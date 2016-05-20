@@ -1,0 +1,278 @@
+{
+    "package": "bikemoves",
+    "messages": [
+        {
+            "name": "User",
+            "fields": [
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "deviceUuid",
+                    "id": 1
+                },
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "platformName",
+                    "id": 2
+                },
+                {
+                    "rule": "required",
+                    "type": "float",
+                    "name": "platformVersion",
+                    "id": 3
+                },
+                {
+                    "rule": "optional",
+                    "type": "Gender",
+                    "name": "gender",
+                    "id": 4
+                },
+                {
+                    "rule": "optional",
+                    "type": "Age",
+                    "name": "age",
+                    "id": 5
+                },
+                {
+                    "rule": "optional",
+                    "type": "ExperienceLevel",
+                    "name": "cyclingExperience",
+                    "id": 6
+                }
+            ],
+            "enums": [
+                {
+                    "name": "Gender",
+                    "values": [
+                        {
+                            "name": "NOT_SPECIFIED",
+                            "id": 0
+                        },
+                        {
+                            "name": "MALE",
+                            "id": 1
+                        },
+                        {
+                            "name": "FEMALE",
+                            "id": 2
+                        },
+                        {
+                            "name": "OTHER",
+                            "id": 3
+                        }
+                    ]
+                },
+                {
+                    "name": "Age",
+                    "values": [
+                        {
+                            "name": "NOT_SPECIFIED",
+                            "id": 0
+                        },
+                        {
+                            "name": "AGE_UNDER_15",
+                            "id": 1
+                        },
+                        {
+                            "name": "AGE_15_TO_19",
+                            "id": 2
+                        },
+                        {
+                            "name": "AGE_20_TO_24",
+                            "id": 3
+                        },
+                        {
+                            "name": "AGE_25_TO_34",
+                            "id": 4
+                        },
+                        {
+                            "name": "AGE_35_TO_44",
+                            "id": 5
+                        },
+                        {
+                            "name": "AGE_45_TO_54",
+                            "id": 6
+                        },
+                        {
+                            "name": "AGE_55_TO_64",
+                            "id": 7
+                        },
+                        {
+                            "name": "AGE_65_TO_74",
+                            "id": 8
+                        },
+                        {
+                            "name": "AGE_75_AND_OLDER",
+                            "id": 9
+                        }
+                    ]
+                },
+                {
+                    "name": "ExperienceLevel",
+                    "values": [
+                        {
+                            "name": "NOT_SPECIFIED",
+                            "id": 0
+                        },
+                        {
+                            "name": "BEGINNER",
+                            "id": 1
+                        },
+                        {
+                            "name": "INTERMEDIATE",
+                            "id": 2
+                        },
+                        {
+                            "name": "ADVANCED",
+                            "id": 3
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Trip",
+            "fields": [
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "deviceUuid",
+                    "id": 1
+                },
+                {
+                    "rule": "repeated",
+                    "type": "Location",
+                    "name": "locations",
+                    "id": 2
+                },
+                {
+                    "rule": "required",
+                    "type": "uint64",
+                    "name": "startTime",
+                    "id": 3
+                },
+                {
+                    "rule": "required",
+                    "type": "uint64",
+                    "name": "endTime",
+                    "id": 4
+                },
+                {
+                    "rule": "required",
+                    "type": "double",
+                    "name": "desiredAccuracy",
+                    "id": 5
+                },
+                {
+                    "rule": "required",
+                    "type": "bool",
+                    "name": "transit",
+                    "id": 6
+                },
+                {
+                    "rule": "optional",
+                    "type": "LocationType",
+                    "name": "originType",
+                    "id": 7
+                },
+                {
+                    "rule": "optional",
+                    "type": "LocationType",
+                    "name": "destinationType",
+                    "id": 8
+                }
+            ],
+            "messages": [
+                {
+                    "name": "Location",
+                    "fields": [
+                        {
+                            "rule": "required",
+                            "type": "double",
+                            "name": "longitude",
+                            "id": 1
+                        },
+                        {
+                            "rule": "required",
+                            "type": "double",
+                            "name": "latitude",
+                            "id": 2
+                        },
+                        {
+                            "rule": "required",
+                            "type": "uint64",
+                            "name": "time",
+                            "id": 3
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "accuracy",
+                            "id": 4
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "altitude",
+                            "id": 5
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "heading",
+                            "id": 6
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "speed",
+                            "id": 7
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "bool",
+                            "name": "moving",
+                            "id": 8
+                        }
+                    ]
+                }
+            ],
+            "enums": [
+                {
+                    "name": "LocationType",
+                    "values": [
+                        {
+                            "name": "NOT_SPECIFIED",
+                            "id": 0
+                        },
+                        {
+                            "name": "HOME",
+                            "id": 1
+                        },
+                        {
+                            "name": "WORK",
+                            "id": 2
+                        },
+                        {
+                            "name": "K12_SCHOOL",
+                            "id": 3
+                        },
+                        {
+                            "name": "UNIVERSITY",
+                            "id": 4
+                        },
+                        {
+                            "name": "SHOPPING",
+                            "id": 5
+                        },
+                        {
+                            "name": "OTHER",
+                            "id": 6
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

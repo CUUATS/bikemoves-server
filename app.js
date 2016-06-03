@@ -77,7 +77,7 @@ var extractMessage = function(req, Message) {
   };
 
 app.post('/:version/user', function(req, res) {
-  var userMsg = (request.params.version == 'v0.1') ?
+  var userMsg = (req.params.version == 'v0.1') ?
     messageFromData(req.body, messages.bikemoves.User) :
     extractMessage(req, messages.bikemoves.User);
   db.User.upsert(userMsg).then(function(createdUser) {
@@ -89,7 +89,7 @@ app.post('/:version/user', function(req, res) {
 });
 
 app.post('/:version/trip', function(req, res) {
-  var tripMsg = (request.params.version == 'v0.1') ?
+  var tripMsg = (req.params.version == 'v0.1') ?
     messageFromData(req.body, messages.bikemoves.Trip) :
     extractMessage(req, messages.bikemoves.Trip);
   db.User.findOrCreate({

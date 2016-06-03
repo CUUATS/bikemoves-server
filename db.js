@@ -98,8 +98,8 @@ var WGS_84 = {
         return {
           origin: msg.origin,
           destination: msg.destination,
-          startTime: new Date(msg.startTime),
-          endTime: new Date(msg.endTime),
+          startTime: new Date(msg.startTime.toNumber()),
+          endTime: new Date(msg.endTime.toNumber()),
           desiredAccuracy: msg.desiredAccuracy,
           transit: msg.transit,
           geom: toGeoJSON(msg.locations),
@@ -150,7 +150,7 @@ var WGS_84 = {
             heading: location.heading,
             moving: location.moving,
             speed: location.speed,
-            time: new Date(location.time),
+            time: new Date(location.time.toNumber()),
             geom: toGeoJSON(location),
             trip_id: tripID
           };

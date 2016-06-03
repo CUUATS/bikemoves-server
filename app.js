@@ -2,7 +2,7 @@ const express = require('express'),
   ProtoBuf = require('protobufjs'),
   bodyParser = require('body-parser'),
   lzString = require('lz-string'),
-  db = require('db.js');
+  db = require('./db.js');
 
 var app = express(),
   messages = ProtoBuf.loadJsonFile('messages.json').build();
@@ -43,7 +43,7 @@ const AGE = {
     'Home': messages.bikemoves.Trip.LocationType.HOME,
     'Work': messages.bikemoves.Trip.LocationType.WORK,
     'K-12 School': messages.bikemoves.Trip.LocationType.K12_SCHOOL,
-    'University': messages.bikemoves.Trip.LocationType.UNIVERSITY
+    'University': messages.bikemoves.Trip.LocationType.UNIVERSITY,
     'Shopping': messages.bikemoves.Trip.LocationType.SHOPPING,
     'Other':  messages.bikemoves.Trip.LocationType.OTHER
   };

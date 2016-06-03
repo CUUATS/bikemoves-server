@@ -15,7 +15,8 @@ app.use(function(req, res, next) {
     'Origin, X-Requested-With, Content-Type, Accept');
   next();
 });
-app.use(bodyParser.raw());
+app.use('/v0.1/*', bodyParser.json());
+app.use('/v0.2/*', bodyParser.raw());
 
 // Legacy API conversions
 const AGE = {
@@ -50,8 +51,7 @@ const AGE = {
 
 var messageFromData = function(body, Message) {
   if (!body.data) throw 'Data key is empty';
-  var data = JSON.parse(lzString.decompressFromBase64(
-    JSON.stringify(body.data)));
+  var data = JSON.parse(lzString.decompressFromBase64(body.data));
   if (!data.deviceUUID) throw 'Missing device UUID';
 
   data.deviceUuid = data.deviceUUID;

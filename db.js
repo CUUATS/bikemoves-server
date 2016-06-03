@@ -45,13 +45,13 @@ var WGS_84 = {
       field: 'platform_version'
     },
     gender: {
-      type: Sequelize.STRING
+      type: Sequelize.INTEGER
     },
     age: {
-      type: Sequelize.STRING
+      type: Sequelize.INTEGER
     },
     cyclingExperience: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
       field: 'cycling_experience'
     }
   }, {
@@ -66,12 +66,12 @@ var WGS_84 = {
   }),
 
   Trip = sequelize.define('trip', {
-    originType: {
-      type: Sequelize.STRING,
+    origin: {
+      type: Sequelize.INTEGER,
       field: 'origin_type'
     },
-    destinationType: {
-      type: Sequelize.STRING,
+    destination: {
+      type: Sequelize.INTEGER,
       field: 'destination_type'
     },
     startTime: {
@@ -96,8 +96,8 @@ var WGS_84 = {
     classMethods: {
       fromMessage: function(msg, userID) {
         return {
-          originType: msg.origin,
-          destinationType: msg.destination,
+          origin: msg.origin,
+          destination: msg.destination,
           startTime: new Date(msg.startTime),
           endTime: new Date(msg.endTime),
           desiredAccuracy: msg.desiredAccuracy,

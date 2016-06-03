@@ -64,6 +64,6 @@ message Trip {
   required uint64 end_time = 4;
   required double desired_accuracy = 5;
   required bool transit = 6;
-  optional LocationType origin_type = 7;
-  optional LocationType destination_type = 8;
+  optional LocationType origin = 7;
+  optional LocationType destination = 8;
 }

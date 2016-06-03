@@ -173,13 +173,13 @@
                 {
                     "rule": "optional",
                     "type": "LocationType",
-                    "name": "originType",
+                    "name": "origin",
                     "id": 7
                 },
                 {
                     "rule": "optional",
                     "type": "LocationType",
-                    "name": "destinationType",
+                    "name": "destination",
                     "id": 8
                 }
             ],

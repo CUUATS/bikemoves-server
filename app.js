@@ -60,10 +60,17 @@ var messageFromData = function(body, Message) {
   if ('age' in data) data.age = AGE[data.age] || 0;
   if ('cyclingExperience' in data) data.cyclingExperience =
     EXPERIENCE_LEVEL[data.cyclingExperience] || 0;
-  if ('gender' in data) data.gender = GENDER[data.gender] || 0;
+  if ('sex' in data) {
+    data.gender = GENDER[data.sex] || 0;
+    delete data.sex;
+  }
   if ('origin' in data) data.origin = LOCATION_TYPE[data.origin] || 0;
   if ('destination' in data) data.destination =
     LOCATION_TYPE[data.destination] || 0;
+  if ('distance' in data) delete data.distance;
+  if ('submitted' in data) delete data.submitted;
+
+  return new Message(data);
 };
 
 // Helper functions
@@ -81,7 +88,7 @@ app.post('/:version/user', function(req, res) {
   var userMsg = (req.params.version == 'v0.1') ?
     messageFromData(req.body, messages.bikemoves.User) :
     extractMessage(req, messages.bikemoves.User);
-  db.User.upsert(userMsg).then(function(createdUser) {
+  db.User.upsert(db.User.fromMessage(userMsg)).then(function(createdUser) {
     res.send(((createdUser) ? 'Created' : 'Updated') + ' user');
   }).catch(function(e) {
     console.error(e.stack);

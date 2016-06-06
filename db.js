@@ -34,7 +34,8 @@ var WGS_84 = {
   User = sequelize.define('user', {
     deviceUUID: {
       type: Sequelize.STRING,
-      field: 'device_uuid'
+      field: 'device_uuid',
+      allowNull: false
     },
     platformName: {
       type: Sequelize.STRING,
@@ -55,6 +56,18 @@ var WGS_84 = {
       field: 'cycling_experience'
     }
   }, {
+    classMethods: {
+      fromMessage: function(msg) {
+        return {
+          deviceUUID: msg.deviceUuid,
+          platformName: msg.platformName,
+          platformVersion: msg.platformVersion,
+          gender: msg.gender,
+          age: msg.age,
+          cyclingExperience: msg.cyclingExperience
+        };
+      }
+    },
     freezeTableName: true,
     indexes: [
       {
@@ -76,21 +89,25 @@ var WGS_84 = {
     },
     startTime: {
       type: Sequelize.DATE,
-      field: 'start_time'
+      field: 'start_time',
+      allowNull: false
     },
     endTime: {
       type: Sequelize.DATE,
-      field: 'end_time'
+      field: 'end_time',
+      allowNull: false
     },
     desiredAccuracy: {
       type: Sequelize.INTEGER,
-      field: 'desired_accuracy'
+      field: 'desired_accuracy',
+      allowNull: false
     },
     transit: {
       type: Sequelize.BOOLEAN
     },
     geom: {
-      type: Sequelize.GEOMETRY('LINESTRING', 4326)
+      type: Sequelize.GEOMETRY('LINESTRING', 4326),
+      allowNull: false
     }
   }, {
     classMethods: {
@@ -120,7 +137,8 @@ var WGS_84 = {
 
   Point = sequelize.define('point', {
     accuracy: {
-      type: Sequelize.DOUBLE
+      type: Sequelize.DOUBLE,
+      allowNull: false
     },
     altitude: {
       type: Sequelize.DOUBLE
@@ -135,10 +153,12 @@ var WGS_84 = {
       type: Sequelize.DOUBLE
     },
     time: {
-      type: Sequelize.DATE
+      type: Sequelize.DATE,
+      allowNull: false
     },
     geom: {
-      type: Sequelize.GEOMETRY('POINT', 4326)
+      type: Sequelize.GEOMETRY('POINT', 4326),
+      allowNull: false
     }
   }, {
     classMethods: {

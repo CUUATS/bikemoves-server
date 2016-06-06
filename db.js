@@ -58,10 +58,13 @@ var WGS_84 = {
   }, {
     classMethods: {
       fromMessage: function(msg) {
+        // Round the version number to at most two decimal places.
+        var version = (msg.platformVersion) ?
+          +(Math.round(msg.platformVersion + 'e+2')  + 'e-2') : null;
         return {
           deviceUUID: msg.deviceUuid,
           platformName: msg.platformName,
-          platformVersion: msg.platformVersion,
+          platformVersion: version,
           gender: msg.gender,
           age: msg.age,
           cyclingExperience: msg.cyclingExperience

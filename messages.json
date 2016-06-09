@@ -7,19 +7,19 @@
                 {
                     "rule": "required",
                     "type": "string",
-                    "name": "deviceUuid",
+                    "name": "device_uuid",
                     "id": 1
                 },
                 {
                     "rule": "required",
                     "type": "string",
-                    "name": "platformName",
+                    "name": "platform_name",
                     "id": 2
                 },
                 {
                     "rule": "required",
                     "type": "float",
-                    "name": "platformVersion",
+                    "name": "platform_version",
                     "id": 3
                 },
                 {
@@ -37,7 +37,7 @@
                 {
                     "rule": "optional",
                     "type": "ExperienceLevel",
-                    "name": "cyclingExperience",
+                    "name": "cycling_experience",
                     "id": 6
                 }
             ],
@@ -137,7 +137,7 @@
                 {
                     "rule": "required",
                     "type": "string",
-                    "name": "deviceUuid",
+                    "name": "device_uuid",
                     "id": 1
                 },
                 {
@@ -149,19 +149,19 @@
                 {
                     "rule": "required",
                     "type": "uint64",
-                    "name": "startTime",
+                    "name": "start_time",
                     "id": 3
                 },
                 {
                     "rule": "required",
                     "type": "uint64",
-                    "name": "endTime",
+                    "name": "end_time",
                     "id": 4
                 },
                 {
                     "rule": "required",
                     "type": "double",
-                    "name": "desiredAccuracy",
+                    "name": "desired_accuracy",
                     "id": 5
                 },
                 {
@@ -268,6 +268,109 @@
                         },
                         {
                             "name": "OTHER",
+                            "id": 6
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Incident",
+            "fields": [
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "device_uuid",
+                    "id": 1
+                },
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "comment",
+                    "id": 2
+                }
+            ],
+            "messages": [
+                {
+                    "name": "Location",
+                    "fields": [
+                        {
+                            "rule": "required",
+                            "type": "double",
+                            "name": "longitude",
+                            "id": 1
+                        },
+                        {
+                            "rule": "required",
+                            "type": "double",
+                            "name": "latitude",
+                            "id": 2
+                        },
+                        {
+                            "rule": "required",
+                            "type": "uint64",
+                            "name": "time",
+                            "id": 3
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "accuracy",
+                            "id": 4
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "altitude",
+                            "id": 5
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "heading",
+                            "id": 6
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "double",
+                            "name": "speed",
+                            "id": 7
+                        },
+                        {
+                            "rule": "optional",
+                            "type": "bool",
+                            "name": "moving",
+                            "id": 8
+                        }
+                    ]
+                }
+            ],
+            "enums": [
+                {
+                    "name": "IncidentCategory",
+                    "values": [
+                        {
+                            "name": "BIKE_ON_BIKE",
+                            "id": 1
+                        },
+                        {
+                            "name": "BIKE_ON_OBJECT",
+                            "id": 2
+                        },
+                        {
+                            "name": "BIKE_ON_VEHICLE",
+                            "id": 3
+                        },
+                        {
+                            "name": "VEGETATION",
+                            "id": 4
+                        },
+                        {
+                            "name": "DEBRIS",
+                            "id": 5
+                        },
+                        {
+                            "name": "POTHOLE",
                             "id": 6
                         }
                     ]

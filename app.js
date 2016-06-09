@@ -113,5 +113,18 @@ app.post('/:version/trip', function(req, res) {
     res.status(500).send('Error saving trip');
   });
 });
+app.post('/:version/incident', function(req,res){
+  var incidentMsg = extractMessage(req, messages.bikemoves.Incident);
+  db.User.findOrCreate({
+    where: {deviceUUID: incident.deviceUUID}
+  }).spread(function(user, created){
+    return db.Incident.create(db.Incident.fromMessage(incidentMsg));
+  }).then(function(){
+    res.send('Saved Incident');
+  }).catch(function(e){
+    console.error(e.stack);
+    res.status(500).send('Error saving incident');
+  });
+})
 
 app.listen(8888);

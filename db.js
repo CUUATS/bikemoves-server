@@ -191,9 +191,54 @@ var WGS_84 = {
     underscored: true
   });
 
+  Incident = sequelize.define('incident', {
+    category : {
+      type: Sequelize.STRING
+    },
+    comment:{
+      type: Sequelize.TEXT
+    },
+    time:{
+      type: Sequelize.DATE,
+      allowNull: false
+    },
+    geom: {
+      type: Sequelize.GEOMETRY("POINT", 4326)
+    }
+  },{
+    classMethods: {
+      fromMessage: function(msg){
+        return {
+          deviceUUID : msg.deviceUuid,
+          category : msg.category,
+          comment: msg.comment,
+          time: new Date(msg.time.toNumber()),
+          geom: toGeoJSON(msg.location)
+        }
+      }
+    },
+  freezeTableName: true,
+  indexes: [
+    {
+      type: 'UNIQUE',
+      fields: 'time'
+    },
+
+    {
+      type: 'SPATIAL',
+      method: 'GIST',
+      fields: ['geom']
+    }
+  ],
+  underscored:true
+
+});
+
 // Set up foreign keys.
 Trip.belongsTo(User);
 Trip.hasMany(Point);
+
+Incident.belongsTo(User);
 
 // Update models.
 sequelize.sync();
@@ -201,3 +246,4 @@ sequelize.sync();
 exports.User = User;
 exports.Trip = Trip;
 exports.Point = Point;
+exports.Incident = Incident;

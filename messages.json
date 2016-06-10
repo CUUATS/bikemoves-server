@@ -284,15 +284,33 @@
                     "id": 1
                 },
                 {
-                    "rule": "required",
+                    "rule": "optional",
                     "type": "string",
                     "name": "comment",
                     "id": 2
+                },
+                {
+                    "rule": "required",
+                    "type": "uint64",
+                    "name": "time",
+                    "id": 3
+                },
+                {
+                    "rule": "required",
+                    "type": "Position",
+                    "name": "position",
+                    "id": 4
+                },
+                {
+                    "rule": "required",
+                    "type": "string",
+                    "name": "category",
+                    "id": 5
                 }
             ],
             "messages": [
                 {
-                    "name": "Location",
+                    "name": "Position",
                     "fields": [
                         {
                             "rule": "required",
@@ -307,7 +325,7 @@
                             "id": 2
                         },
                         {
-                            "rule": "required",
+                            "rule": "optional",
                             "type": "uint64",
                             "name": "time",
                             "id": 3
@@ -341,37 +359,6 @@
                             "type": "bool",
                             "name": "moving",
                             "id": 8
-                        }
-                    ]
-                }
-            ],
-            "enums": [
-                {
-                    "name": "IncidentCategory",
-                    "values": [
-                        {
-                            "name": "BIKE_ON_BIKE",
-                            "id": 1
-                        },
-                        {
-                            "name": "BIKE_ON_OBJECT",
-                            "id": 2
-                        },
-                        {
-                            "name": "BIKE_ON_VEHICLE",
-                            "id": 3
-                        },
-                        {
-                            "name": "VEGETATION",
-                            "id": 4
-                        },
-                        {
-                            "name": "DEBRIS",
-                            "id": 5
-                        },
-                        {
-                            "name": "POTHOLE",
-                            "id": 6
                         }
                     ]
                 }

@@ -69,19 +69,11 @@ message Trip {
 }
 
 message Incident {
-  enum IncidentCategory {
-    BIKE_ON_BIKE = 1;
-    BIKE_ON_OBJECT  = 2;
-    BIKE_ON_VEHICLE = 3;
-    VEGETATION = 4;
-    DEBRIS = 5;
-    POTHOLE = 6;
-  }
 
-  message Location {
+  message Position {
     required double longitude = 1;
     required double latitude = 2;
-    required uint64 time = 3;
+    optional uint64 time = 3;
     optional double accuracy = 4;
     optional double altitude = 5;
     optional double heading = 6;
@@ -90,5 +82,8 @@ message Incident {
   }
 
   required string device_uuid = 1;
-  required string comment = 2;
+  optional string comment = 2;
+  required uint64 time = 3;
+  required Position position = 4;
+  required string category = 5;
 }

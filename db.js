@@ -209,11 +209,11 @@ var WGS_84 = {
     classMethods: {
       fromMessage: function(msg){
         return {
-          deviceUUID : msg.deviceUuid,
+          deviceUUID : msg.device_uuid,
           category : msg.category,
           comment: msg.comment,
           time: new Date(msg.time.toNumber()),
-          geom: toGeoJSON(msg.location)
+          geom: toGeoJSON(msg.position)
         }
       }
     },
@@ -221,7 +221,7 @@ var WGS_84 = {
   indexes: [
     {
       type: 'UNIQUE',
-      fields: 'time'
+      fields: ['time']
     },
 
     {
@@ -234,7 +234,7 @@ var WGS_84 = {
 
 });
 
-// Set up foreign keys.
+// Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
 

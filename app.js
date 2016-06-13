@@ -119,7 +119,7 @@ app.post('/:version/incident', function(req,res){
   db.User.findOrCreate({
     where: {deviceUUID: incidentMsg.device_uuid}
   }).spread(function(user, created){
-    return db.Incident.create(db.Incident.fromMessage(incidentMsg));
+    return db.Incident.create(db.Incident.fromMessage(incidentMsg, user.id));
   }).then(function(){
     res.send('Saved Incident');
   }).catch(function(e){

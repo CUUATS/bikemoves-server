@@ -207,23 +207,19 @@ var WGS_84 = {
     }
   },{
     classMethods: {
-      fromMessage: function(msg){
+      fromMessage: function(msg, userID){
         return {
           deviceUUID : msg.device_uuid,
           category : msg.category,
           comment: msg.comment,
           time: new Date(msg.time.toNumber()),
-          geom: toGeoJSON(msg.position)
+          geom: toGeoJSON(msg.position),
+          user_id: userID
         }
       }
     },
   freezeTableName: true,
   indexes: [
-    {
-      type: 'UNIQUE',
-      fields: ['time']
-    },
-
     {
       type: 'SPATIAL',
       method: 'GIST',

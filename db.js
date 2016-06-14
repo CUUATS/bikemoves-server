@@ -62,12 +62,12 @@ var WGS_84 = {
         var version = (msg.platformVersion) ?
           +(Math.round(msg.platformVersion + 'e+2')  + 'e-2') : null;
         return {
-          deviceUUID: msg.deviceUuid,
-          platformName: msg.platformName,
+          deviceUUID: msg.device_uuid,
+          platformName: msg.platform_name,
           platformVersion: version,
           gender: msg.gender,
           age: msg.age,
-          cyclingExperience: msg.cyclingExperience
+          cyclingExperience: msg.cycling_Experience
         };
       }
     },
@@ -209,7 +209,7 @@ var WGS_84 = {
     classMethods: {
       fromMessage: function(msg, userID){
         return {
-          deviceUUID : msg.device_uuid,
+          deviceUuid : msg.deviceUuid,
           category : msg.category,
           comment: msg.comment,
           time: new Date(msg.time.toNumber()),

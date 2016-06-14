@@ -117,7 +117,7 @@ app.post('/:version/incident', function(req,res){
   console.log("Incident Recieved")
   var incidentMsg = extractMessage(req, messages.bikemoves.Incident);
   db.User.findOrCreate({
-    where: {deviceUUID: incidentMsg.device_uuid}
+    where: {deviceUUID: incidentMsg.deviceUuid}
   }).spread(function(user, created){
     return db.Incident.create(db.Incident.fromMessage(incidentMsg, user.id));
   }).then(function(){

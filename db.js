@@ -111,6 +111,11 @@ var WGS_84 = {
     geom: {
       type: Sequelize.GEOMETRY('LINESTRING', 4326),
       allowNull: false
+    },
+    debug: {
+      type: Sequelize.BOOLEAN,
+      field: 'debug'
+
     }
   }, {
     classMethods: {
@@ -123,7 +128,8 @@ var WGS_84 = {
           desiredAccuracy: msg.desiredAccuracy,
           transit: msg.transit,
           geom: toGeoJSON(msg.locations),
-          user_id: userID
+          user_id: userID,
+          debug: msg.debug
         };
       }
     },

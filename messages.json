@@ -181,6 +181,12 @@
                     "type": "LocationType",
                     "name": "destination",
                     "id": 8
+                },
+                {
+                  "rule": "optional",
+                  "type": "bool",
+                  "name": "debug",
+                  "id": 9
                 }
             ],
             "messages": [

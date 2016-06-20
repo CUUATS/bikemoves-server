@@ -66,6 +66,7 @@ message Trip {
   required bool transit = 6;
   optional LocationType origin = 7;
   optional LocationType destination = 8;
+  optional bool debug = 9;
 }
 
 message Incident {
@@ -73,7 +74,7 @@ message Incident {
   message Position {
     required double longitude = 1;
     required double latitude = 2;
-    optional uint64 time = 3;  
+    optional uint64 time = 3;
     optional double accuracy = 4;
     optional double altitude = 5;
     optional double heading = 6;

@@ -52,10 +52,10 @@ const AGE = {
 var messageFromData = function(body, Message) {
   if (!body.data) throw 'Data key is empty';
   var data = JSON.parse(lzString.decompressFromBase64(body.data));
-  if (!data.deviceUUID) throw 'Missing device UUID';
+  if (!data.deviceUuid) throw 'Missing device UUID';
 
-  data.deviceUuid = data.deviceUUID;
-  delete data.deviceUUID;
+  data.deviceUuid = data.deviceUuid;
+  delete data.deviceUuid;
 
   if ('age' in data) data.age = AGE[data.age] || 0;
   if ('cyclingExperience' in data) data.cyclingExperience =
@@ -101,7 +101,7 @@ app.post('/:version/trip', function(req, res) {
     messageFromData(req.body, messages.bikemoves.Trip) :
     extractMessage(req, messages.bikemoves.Trip);
   db.User.findOrCreate({
-    where: {deviceUUID: tripMsg.deviceUuid}
+    where: {deviceUuid: tripMsg.deviceUuid}
   }).spread(function(user, created) {
     return db.Trip.create(db.Trip.fromMessage(tripMsg, user.id));
   }).then(function(trip) {
@@ -114,10 +114,10 @@ app.post('/:version/trip', function(req, res) {
   });
 });
 app.post('/:version/incident', function(req,res){
-  console.log("Incident Recieved")
+  console.log("Incident Recieved");
   var incidentMsg = extractMessage(req, messages.bikemoves.Incident);
   db.User.findOrCreate({
-    where: {deviceUUID: incidentMsg.deviceUuid}
+    where: {deviceUuid: incidentMsg.deviceUuid}
   }).spread(function(user, created){
     return db.Incident.create(db.Incident.fromMessage(incidentMsg, user.id));
   }).then(function(){
@@ -126,6 +126,6 @@ app.post('/:version/incident', function(req,res){
     console.error(e.stack);
     res.status(500).send('Error saving incident');
   });
-})
+});
 
 app.listen(8888);

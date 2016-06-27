@@ -32,7 +32,7 @@ var WGS_84 = {
     }
   ),
   User = sequelize.define('user', {
-    deviceUUID: {
+    deviceUuid: {
       type: Sequelize.STRING,
       field: 'device_uuid',
       allowNull: false
@@ -62,12 +62,12 @@ var WGS_84 = {
         var version = (msg.platformVersion) ?
           +(Math.round(msg.platformVersion + 'e+2')  + 'e-2') : null;
         return {
-          deviceUUID: msg.device_uuid,
-          platformName: msg.platform_name,
+          deviceUuid: msg.deviceUuid,
+          platformName: msg.platformName,
           platformVersion: version,
           gender: msg.gender,
           age: msg.age,
-          cyclingExperience: msg.cycling_Experience
+          cyclingExperience: msg.cyclingExperience
         };
       }
     },

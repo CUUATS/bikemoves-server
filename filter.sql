@@ -1,4 +1,6 @@
-﻿CREATE TEMP TABLE rTable (id int,trip geometry) on commit drop;
+﻿
+DROP TABLE IF EXISTS rTable;
+CREATE TEMP TABLE rTable (id int,trip geometry);
 
 DO
 $filter$
@@ -85,6 +87,7 @@ FROM difs
 
 SELECT *
 FROM lag1;
+
 DO
 $flags$
 BEGIN

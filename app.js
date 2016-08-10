@@ -2,10 +2,12 @@ const express = require('express'),
   ProtoBuf = require('protobufjs'),
   bodyParser = require('body-parser'),
   lzString = require('lz-string'),
-  db = require('./db.js');
+  db = require('./db.js'),
+  SendMail = require('sendmail');
 
 var app = express(),
-  messages = ProtoBuf.loadJsonFile('messages.json').build();
+  messages = ProtoBuf.loadJsonFile('messages.json').build(),
+  sendmail = SendMail();
 
 // Set up middleware.
 app.enable('trust proxy');
@@ -84,6 +86,24 @@ var extractMessage = function(req, Message) {
     }
   };
 
+var sendEmailNotification = function(msg) {
+  var date = new Date(msg.time.toNumber()),
+    mapUrl = 'http://maps.google.com/maps?q=' + msg.position.latitude +
+      ',' + msg.position.longitude;
+  sendmail({
+    from: process.env.BIKEMOVES_NOTIFICATION_FROM,
+    to: process.env.BIKEMOVES_NOTIFICATION_TO,
+    subject: 'BikeMoves: New incident report',
+    content: 'Category:\n' + msg.category + '\n\n' +
+      'Comment:\n' + msg.comment + '\n\n' +
+      'Location:\n' + mapUrl + '\n\n' +
+      'Submitted:\n' + date.toLocaleString() + '\n\n'
+  }, function(e, reply) {
+    if (e) console.error(e.stack);
+    if (reply) console.dir(reply);
+  });
+};
+
 app.post('/:version/user', function(req, res) {
   var userMsg = (req.params.version == 'v0.1') ?
     messageFromData(req.body, messages.bikemoves.User) :
@@ -113,14 +133,15 @@ app.post('/:version/trip', function(req, res) {
     res.status(500).send('Error saving trip');
   });
 });
-app.post('/:version/incident', function(req,res){
-  console.log("Incident Recieved");
+
+app.post('/:version/incident', function(req, res) {
   var incidentMsg = extractMessage(req, messages.bikemoves.Incident);
   db.User.findOrCreate({
     where: {deviceUuid: incidentMsg.deviceUuid}
   }).spread(function(user, created){
     return db.Incident.create(db.Incident.fromMessage(incidentMsg, user.id));
   }).then(function(){
+    sendEmailNotification(incidentMsg);
     res.send('Saved Incident');
   }).catch(function(e){
     console.error(e.stack);

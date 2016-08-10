@@ -13,6 +13,7 @@
     "pg": "^4.5.5",
     "pg-hstore": "^2.3.2",
     "protobufjs": "^5.0.1",
+    "sendmail": "^0.2.2",
     "sequelize": "^3.23.2",
     "serve-favicon": "~2.1.3"
   },

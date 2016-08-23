@@ -116,6 +116,10 @@ var WGS_84 = {
       type: Sequelize.BOOLEAN,
       field: 'debug'
 
+    },
+    appVersion: {
+      type: Sequelize.STRING,
+      field: 'app_version'
     }
   }, {
     classMethods: {
@@ -129,7 +133,8 @@ var WGS_84 = {
           transit: msg.transit,
           geom: toGeoJSON(msg.locations),
           user_id: userID,
-          debug: msg.debug
+          debug: msg.debug,
+          appVersion: msg.appVersion
         };
       }
     },

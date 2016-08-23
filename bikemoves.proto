@@ -67,6 +67,7 @@ message Trip {
   optional LocationType origin = 7;
   optional LocationType destination = 8;
   optional bool debug = 9;
+  optional string appVersion = 10;
 }
 
 message Incident {

@@ -149,6 +149,44 @@ var WGS_84 = {
     underscored: true
   }),
 
+  Route = sequelize.define('route', {
+    distance: {
+      type: Sequelize.DOUBLE,
+    },
+    duration: {
+      type: Sequelize.DOUBLE,
+    },
+    confidence: {
+      type: Sequelize.DOUBLE,
+    },
+    geom: {
+      type: Sequelize.GEOMETRY('LINESTRING', 4326),
+      allowNull: false
+    }
+  }, {
+    classMethods: {
+      fromMatch: function(match, tripID) {
+        match.geometry.crs = WGS_84;
+        return {
+          distance: match.distance,
+          duration: match.duration,
+          confidence: match.confidence,
+          geom: match.geometry,
+          trip_id: tripID
+        };
+      }
+    },
+    freezeTableName: true,
+    indexes: [
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom']
+      }
+    ],
+    underscored: true
+  }),
+
   Point = sequelize.define('point', {
     accuracy: {
       type: Sequelize.DOUBLE,
@@ -244,6 +282,7 @@ var WGS_84 = {
 // Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
+Trip.hasMany(Route);
 
 Incident.belongsTo(User);
 
@@ -252,5 +291,6 @@ sequelize.sync();
 
 exports.User = User;
 exports.Trip = Trip;
+exports.Route = Route;
 exports.Point = Point;
 exports.Incident = Incident;

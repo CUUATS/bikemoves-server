@@ -1,79 +1,40 @@
 const express = require('express'),
-  ProtoBuf = require('protobufjs'),
   bodyParser = require('body-parser'),
-  lzString = require('lz-string'),
+  protobuf = require('protobufjs'),
   db = require('./db.js'),
   SendMail = require('sendmail');
 
-var app = express(),
-  messages = ProtoBuf.loadJsonFile('messages.json').build(),
-  sendmail = SendMail();
+let app = express(),
+  sendmail = SendMail(),
+  UserMessage,
+  TripMessage,
+  IncidentMessage,
+  Age,
+  ExperienceLevel,
+  Gender,
+  LocationType;
+
+function loadMessages() {
+  return protobuf.load('bikemoves.proto').then((root) => {
+    UserMessage = root.lookupType('bikemoves.User');
+    TripMessage = root.lookupType('bikemoves.Trip');
+    IncidentMessage = root.lookupType('bikemoves.Incident');
+    Age = root.lookup('bikemoves.Age');
+    ExperienceLevel = root.lookup('bikemoves.ExperienceLevel');
+    Gender = root.lookup('bikemoves.Gender');
+    LocationType = root.lookup('bikemoves.LocationType');
+  });
+}
 
 // Set up middleware.
 app.enable('trust proxy');
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept');
   next();
 });
-app.use('/v0.1/*', bodyParser.json());
-app.use('/v0.2/*', bodyParser.raw());
-
-// Legacy API conversions
-const AGE = {
-    'Under 15': messages.bikemoves.User.Age.AGE_UNDER_15,
-    '15 to 19': messages.bikemoves.User.Age.AGE_15_TO_19,
-    '20 to 24': messages.bikemoves.User.Age.AGE_20_TO_24,
-    '25 to 34': messages.bikemoves.User.Age.AGE_25_TO_34,
-    '35 to 44': messages.bikemoves.User.Age.AGE_35_TO_44,
-    '45 to 54': messages.bikemoves.User.Age.AGE_45_TO_54,
-    '55 to 64': messages.bikemoves.User.Age.AGE_55_TO_64,
-    '65 to 74': messages.bikemoves.User.Age.AGE_65_TO_74,
-    '75 and Older': messages.bikemoves.User.Age.AGE_75_AND_OLDER
-  },
-  EXPERIENCE_LEVEL = {
-    'Beginner': messages.bikemoves.User.ExperienceLevel.BEGINNER,
-    'Intermediate': messages.bikemoves.User.ExperienceLevel.INTERMEDIATE,
-    'Advanced': messages.bikemoves.User.ExperienceLevel.ADVANCED
-  },
-  GENDER = {
-    'Male': messages.bikemoves.User.Gender.MALE,
-    'Female': messages.bikemoves.User.Gender.FEMALE,
-    'Other': messages.bikemoves.User.Gender.OTHER
-  },
-  LOCATION_TYPE = {
-    'Home': messages.bikemoves.Trip.LocationType.HOME,
-    'Work': messages.bikemoves.Trip.LocationType.WORK,
-    'K-12 School': messages.bikemoves.Trip.LocationType.K12_SCHOOL,
-    'University': messages.bikemoves.Trip.LocationType.UNIVERSITY,
-    'Shopping': messages.bikemoves.Trip.LocationType.SHOPPING,
-    'Other':  messages.bikemoves.Trip.LocationType.OTHER
-  };
-
-var messageFromData = function(body, Message) {
-  if (!body.data) throw 'Data key is empty';
-  var data = JSON.parse(lzString.decompressFromBase64(body.data));
-  if (!data.deviceUuid) throw 'Missing device UUID';
-
-  data.deviceUuid = data.deviceUuid;
-  delete data.deviceUuid;
-
-  if ('age' in data) data.age = AGE[data.age] || 0;
-  if ('cyclingExperience' in data) data.cyclingExperience =
-    EXPERIENCE_LEVEL[data.cyclingExperience] || 0;
-  if ('sex' in data) {
-    data.gender = GENDER[data.sex] || 0;
-    delete data.sex;
-  }
-  if ('origin' in data) data.origin = LOCATION_TYPE[data.origin] || 0;
-  if ('destination' in data) data.destination =
-    LOCATION_TYPE[data.destination] || 0;
-  if ('distance' in data) delete data.distance;
-  if ('submitted' in data) delete data.submitted;
-
-  return new Message(data);
-};
+app.use(bodyParser.raw());
 
 // Helper functions
 var extractMessage = function(req, Message) {
@@ -88,8 +49,8 @@ var extractMessage = function(req, Message) {
 
 var sendEmailNotification = function(msg) {
   var date = new Date(msg.time.toNumber()),
-    mapUrl = 'http://maps.google.com/maps?q=' + msg.position.latitude +
-      ',' + msg.position.longitude;
+    mapUrl = 'http://maps.google.com/maps?q=' + msg.location.latitude +
+      ',' + msg.location.longitude;
   sendmail({
     from: process.env.BIKEMOVES_NOTIFICATION_FROM,
     to: process.env.BIKEMOVES_NOTIFICATION_TO,
@@ -105,9 +66,7 @@ var sendEmailNotification = function(msg) {
 };
 
 app.post('/:version/user', function(req, res) {
-  var userMsg = (req.params.version == 'v0.1') ?
-    messageFromData(req.body, messages.bikemoves.User) :
-    extractMessage(req, messages.bikemoves.User);
+  var userMsg = extractMessage(req, UserMessage);
   db.User.upsert(db.User.fromMessage(userMsg)).then(function(createdUser) {
     res.send(((createdUser) ? 'Created' : 'Updated') + ' user');
   }).catch(function(e) {
@@ -117,9 +76,7 @@ app.post('/:version/user', function(req, res) {
 });
 
 app.post('/:version/trip', function(req, res) {
-  var tripMsg = (req.params.version == 'v0.1') ?
-    messageFromData(req.body, messages.bikemoves.Trip) :
-    extractMessage(req, messages.bikemoves.Trip);
+  var tripMsg = extractMessage(req, TripMessage);
   db.User.findOrCreate({
     where: {deviceUuid: tripMsg.deviceUuid}
   }).spread(function(user, created) {
@@ -135,7 +92,7 @@ app.post('/:version/trip', function(req, res) {
 });
 
 app.post('/:version/incident', function(req, res) {
-  var incidentMsg = extractMessage(req, messages.bikemoves.Incident);
+  var incidentMsg = extractMessage(req, IncidentMessage);
   db.User.findOrCreate({
     where: {deviceUuid: incidentMsg.deviceUuid}
   }).spread(function(user, created){
@@ -149,4 +106,7 @@ app.post('/:version/incident', function(req, res) {
   });
 });
 
-app.listen(8888);
+loadMessages().then(() => {
+  app.listen(8888);
+  console.log('API ready');
+});

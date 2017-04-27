@@ -170,6 +170,15 @@ var WGS_84 = {
       type: Sequelize.DATE,
       allowNull: false
     },
+    event: {
+      type: Sequelize.INTEGER
+    },
+    activity: {
+      type: Sequelize.INTEGER
+    },
+    confidence: {
+      type: Sequelize.INTEGER
+    },
     geom: {
       type: Sequelize.GEOMETRY('POINT', 4326),
       allowNull: false
@@ -185,6 +194,9 @@ var WGS_84 = {
             moving: location.moving,
             speed: location.speed,
             time: new Date(location.time.toNumber()),
+            event: (location.event) ? location.event : null,
+            activity: (location.activity) ? location.activity : null,
+            confidence: (location.confidence) ? location.confidence : null,
             geom: toGeoJSON(location),
             trip_id: tripID
           };
@@ -224,7 +236,7 @@ var WGS_84 = {
           category : msg.category,
           comment: msg.comment,
           time: new Date(msg.time.toNumber()),
-          geom: toGeoJSON(msg.position),
+          geom: toGeoJSON(msg.location),
           user_id: userID
         }
       }

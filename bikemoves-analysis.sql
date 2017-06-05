@@ -97,10 +97,12 @@ GROUP BY trip_id;
 
 -- Second attempt: check the distance to the trip line at the start, end, and
 -- midpoint of each way.
+DROP TABLE IF EXISTS route_pgr;
 CREATE TABLE route_pgr AS
 SELECT row_number() OVER () AS gid,
   trip_id,
-  ST_LineMerge(ST_Collect(geom)) AS geom
+  ST_Project(ST_LineMerge(ST_Collect(geom)), 4326) AS geom,
+  ST_LineMerge(ST_Collect(geom)) AS geom_proj
 FROM (
   SELECT trip_id,
     way.geom_proj AS geom
@@ -138,3 +140,108 @@ ORDER BY trip_id;
 ANALYZE route_pgr;
 
 SELECT Populate_Geometry_Columns(TRUE);
+
+-- Calculate the smaller angle between three points.
+CREATE FUNCTION angle(geometry, geometry, geometry) RETURNS double precision
+  AS 'SELECT least(az_diff, 360 - az_diff)
+  FROM (
+    SELECT abs(degrees(ST_Azimuth($2, $1)) - degrees(ST_Azimuth($2, $3)))
+      AS az_diff
+  ) AS az;'
+  LANGUAGE SQL
+  IMMUTABLE
+  RETURNS NULL ON NULL INPUT;
+
+-- Test the angle function.
+SELECT angle(ST_Point(1, 0), ST_Point(0, 0), ST_Point(0, 1))
+
+-- Filter out duplicates and sharp angles.
+DROP TABLE IF EXISTS point_filtered;
+CREATE TABLE point_filtered AS
+SELECT *
+FROM (
+  SELECT id,
+    accuracy,
+    time,
+    angle(
+      lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time),
+      geom_proj,
+      lead(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)) AS angle,
+    trip_id,
+    geom_proj AS geom
+  FROM (
+    SELECT *
+    FROM (
+      SELECT *,
+        lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)
+          AS prev_geom_proj
+      FROM point
+      WHERE trip_id = 474
+    ) AS neighbors
+    WHERE ST_Distance(prev_geom_proj, geom_proj) > 10
+  ) AS deduped
+) AS angle_measure
+WHERE angle >= 90;
+
+-- Find inflection points
+SELECT trip_id,
+  seq - 1 AS seq,
+  geom
+FROM (
+  SELECT trip_id,
+    (ST_DumpPoints(geom)).geom AS geom,
+    (ST_DumpPoints(geom)).path[1] AS seq,
+    ST_NPoints(geom) AS total
+  FROM (
+    SELECT trip_id,
+      ST_SimplifyVW(ST_MakeLine(geom ORDER BY time), 10^5) AS geom
+    FROM point_filtered
+    GROUP BY trip_id
+  ) AS simplified
+) AS points
+WHERE seq > 1
+  AND seq < total;
+
+-- Use inflection points to segment trip.
+WITH inflection AS (
+  SELECT trip_id,
+    seq - 1 AS seq,
+    geom
+  FROM (
+    SELECT trip_id,
+      (ST_DumpPoints(geom)).geom AS geom,
+      (ST_DumpPoints(geom)).path[1] AS seq,
+      ST_NPoints(geom) AS total
+    FROM (
+      SELECT trip_id,
+        ST_SimplifyVW(ST_MakeLine(geom ORDER BY time), 10^5) AS geom
+      FROM point_filtered
+      GROUP BY trip_id
+    ) AS simplified
+  ) AS points
+  WHERE seq > 1
+    AND seq < total
+--  Join inflection points to filtered points to generate a segment number.
+) SELECT id,
+  accuracy,
+  time,
+  pt.trip_id,
+  sum((inflection.trip_id IS DISTINCT FROM NULL)::integer)
+    OVER (PARTITION BY pt.trip_id ORDER BY time) AS segment,
+  pt.geom
+FROM point_filtered AS pt
+LEFT JOIN inflection
+  ON pt.trip_id = inflection.trip_id
+  AND ST_DWithin(pt.geom, inflection.geom, 1)
+-- Re-add the inflection points so that the endpoint of each segment is a
+-- duplicate of the start point of the following segment.
+UNION SELECT id,
+  accuracy,
+  time,
+  pt.trip_id,
+  seq - 1 AS segment,
+  pt.geom
+FROM point_filtered AS pt
+INNER JOIN inflection
+  ON pt.trip_id = inflection.trip_id
+  AND ST_DWithin(pt.geom, inflection.geom, 1);

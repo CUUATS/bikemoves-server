@@ -203,6 +203,7 @@ WHERE seq > 1
   AND seq < total;
 
 -- Use inflection points to segment trip.
+CREATE TABLE point_segment AS
 WITH inflection AS (
   SELECT trip_id,
     seq - 1 AS seq,
@@ -245,3 +246,30 @@ FROM point_filtered AS pt
 INNER JOIN inflection
   ON pt.trip_id = inflection.trip_id
   AND ST_DWithin(pt.geom, inflection.geom, 1);
+
+-- Find the closeset vertex to the start and end points of each trip segment.
+CREATE TABLE segment_vertex AS
+SELECT DISTINCT *
+FROM (
+  SELECT trip_id,
+    segment,
+    first_value(vertex_id)
+      OVER (PARTITION BY trip_id, segment ORDER BY time) AS start_id,
+    first_value(vertex_id)
+      OVER (PARTITION BY trip_id, segment ORDER BY time DESC) AS end_id
+  FROM (
+    SELECT DISTINCT ON (trip_id, segment, time)
+      trip_id,
+      segment,
+      time,
+      vertex.id AS vertex_id
+    FROM point_segment AS pt
+    LEFT JOIN ways_vertices_pgr AS vertex
+      ON ST_DWithin(pt.geom, vertex.geom_proj, 1320)
+    ORDER BY trip_id,
+      segment,
+      time,
+      ST_Distance(pt.geom, vertex.geom_proj)
+  ) AS nearest_vertex
+) AS segment_vertices
+WHERE start_id <> end_id;

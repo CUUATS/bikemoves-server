@@ -248,6 +248,7 @@ INNER JOIN inflection
   AND ST_DWithin(pt.geom, inflection.geom, 1);
 
 -- Find the closeset vertex to the start and end points of each trip segment.
+DROP TABLE IF EXISTS segment_vertex;
 CREATE TABLE segment_vertex AS
 SELECT DISTINCT *
 FROM (
@@ -272,4 +273,69 @@ FROM (
       ST_Distance(pt.geom, vertex.geom_proj)
   ) AS nearest_vertex
 ) AS segment_vertices
-WHERE start_id <> end_id;
+WHERE start_id <> end_id
+  AND start_id IS DISTINCT FROM NULL
+  AND end_id IS DISTINCT FROM NULL;
+
+-- Cost formula
+SELECT way.gid AS id,
+  way.source,
+  way.target,
+  way.length_m * avg(least(pt.accuracy, 100)) / 100 AS cost
+FROM (
+  SELECT ST_Envelope(ST_Collect(geom)) AS geom
+  FROM point_segment AS pt
+  WHERE trip_id = 474
+    AND segment = 1
+  GROUP BY segment
+) AS envelope
+LEFT JOIN ways AS way
+  ON ST_DWithin(way.geom_proj, envelope.geom, 1320)
+LEFT JOIN point_segment AS pt
+  ON ST_DWithin(way.geom_proj, pt.geom, least(pt.accuracy, 100) * 3.28084)
+    AND pt.trip_id = 474
+    AND pt.segment = 1
+GROUP BY way.gid,
+  way.source,
+  way.target,
+  way.length_m;
+
+-- Map matching
+DROP TABLE IF EXISTS route_pgr;
+CREATE TABLE route_pgr AS
+SELECT trip_id,
+  ST_LineMerge(ST_Collect(way.geom_proj ORDER BY segment, (step).seq, (step).path_seq)) AS geom_proj
+FROM (
+  SELECT trip_id,
+    segment,
+    (pgr_dijkstra('
+      SELECT way.gid AS id,
+        way.source,
+        way.target,
+        way.length_m * avg(least(pt.accuracy, 100)) / 100 AS cost
+      FROM (
+        SELECT ST_Envelope(ST_Collect(geom)) AS geom
+        FROM point_segment AS pt
+        WHERE trip_id = ' || sv.trip_id::text || '
+          AND segment = ' || sv.segment::text || '
+        GROUP BY segment
+      ) AS envelope
+      LEFT JOIN ways AS way
+        ON ST_DWithin(way.geom_proj, envelope.geom, 1320)
+      LEFT JOIN point_segment AS pt
+        ON ST_DWithin(way.geom_proj, pt.geom, least(pt.accuracy, 100) * 3.28084)
+          AND pt.trip_id = ' || sv.trip_id::text || '
+          AND pt.segment = ' || sv.segment::text || '
+      GROUP BY way.gid,
+        way.source,
+        way.target,
+        way.length_m',
+    sv.start_id::int,
+    sv.end_id::int,
+    directed := false)) AS step
+  FROM segment_vertex AS sv
+) AS route
+LEFT JOIN ways AS way
+  ON (route.step).edge = way.gid
+  AND (route.step).edge > -1
+GROUP BY trip_id;

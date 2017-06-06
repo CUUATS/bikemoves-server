@@ -339,3 +339,77 @@ LEFT JOIN ways AS way
   ON (route.step).edge = way.gid
   AND (route.step).edge > -1
 GROUP BY trip_id;
+
+
+DROP TABLE IF EXISTS segment_way;
+CREATE TABLE segment_way AS
+SELECT envelope.trip_id,
+  envelope.segment,
+  way.gid AS way_id,
+  avg(least(ST_Distance(pt.geom, way.geom_proj), 100 * 3.28084) / (100 * 3.28084))
+    AS cost
+FROM (
+  SELECT trip_id,
+    segment,
+    ST_Envelope(ST_Collect(geom)) AS geom
+  FROM point_segment AS pt
+  GROUP BY trip_id,
+    segment
+) AS envelope
+LEFT JOIN ways AS way
+  ON ST_DWithin(way.geom_proj, envelope.geom, 1320)
+LEFT JOIN point_segment AS pt
+  ON ST_DWithin(way.geom_proj, pt.geom, least(pt.accuracy, 100) * 3.28084)
+GROUP BY envelope.trip_id,
+  envelope.segment,
+  way.gid;
+
+DROP TABLE IF EXISTS segment_vertex;
+CREATE TABLE segment_vertex AS
+SELECT trip_id,
+  segment,
+  sum(CASE WHEN first THEN vertex_id ELSE 0 END) AS start_id,
+  sum(CASE WHEN first THEN 0 ELSE vertex_id END) AS end_id
+FROM (
+  SELECT DISTINCT ON (endpoint.trip_id, endpoint.segment, endpoint.first)
+    endpoint.trip_id,
+    endpoint.segment,
+    endpoint.first,
+    CASE WHEN ST_LineLocatePoint(way.geom_proj, endpoint.geom) <= 0.5 THEN
+      way.source ELSE way.target END AS vertex_id
+  FROM (
+    SELECT trip_id,
+      segment,
+      accuracy,
+      seq = 1 AS first,
+      geom
+    FROM (
+      SELECT *,
+        row_number() OVER segment_order AS seq,
+        percent_rank() OVER segment_order AS pct_rank
+      FROM point_segment AS pt
+      WINDOW segment_order AS (PARTITION BY trip_id, segment ORDER BY time)
+    ) AS pt_info
+    WHERE seq = 1
+      OR pct_rank = 1
+  ) AS endpoint
+  INNER JOIN segment_way
+    ON endpoint.trip_id = segment_way.trip_id
+      AND endpoint.segment = segment_way.segment
+  INNER JOIN ways AS way
+    ON segment_way.way_id = way.gid
+      AND ST_DWithin(endpoint.geom, way.geom_proj, least(endpoint.accuracy, 100) * 3.28084 * 1.15)
+  ORDER BY endpoint.trip_id,
+    endpoint.segment,
+    endpoint.first,
+    ST_Distance(endpoint.geom, way.geom_proj) * segment_way.cost
+) AS segment_vertex
+GROUP BY trip_id,
+  segment;
+
+--debug
+SELECT segment_vertex.segment
+  vertex.geom_proj
+FROM segment_vertex
+LEFT JOIN ways_vertices_pgr AS vertex
+  ON segment_vertex.start_id = vertex.id

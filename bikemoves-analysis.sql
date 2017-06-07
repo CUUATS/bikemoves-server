@@ -208,12 +208,16 @@ CREATE TABLE route_candidate AS
 SELECT start_segment.trip_id,
   (pgr_dijkstra('
     SELECT row_number() OVER () AS id,
-      start_vid AS source,
-      end_vid AS target,
-      agg_cost AS cost
+      step.start_vid AS source,
+      step.end_vid AS target,
+      step.agg_cost * bv.cost AS cost
     FROM route_step AS step
-    WHERE edge = -1
-      AND trip_id = ' || start_segment.trip_id::text,
+    LEFT JOIN break_vertex AS bv
+      ON bv.trip_id = step.trip_id
+        AND bv.segment = step.segment
+        AND bv.vertex_id = step.start_vid
+    WHERE step.edge = -1
+      AND step.trip_id = ' || start_segment.trip_id::text,
   start_segment.vids,
   end_segment.vids,
   directed := false)).*

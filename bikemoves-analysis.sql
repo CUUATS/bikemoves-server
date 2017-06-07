@@ -142,7 +142,8 @@ FROM (
       LEFT JOIN point_filtered AS neighbor
         ON neighbor.trip_id = breakpoint.trip_id
           AND (neighbor.segment = breakpoint.segment
-            OR neighbor.segment = breakpoint.segment - 1)
+            OR (neighbor.segment = breakpoint.segment - 1
+              AND neighbor.break = false))
           AND ST_DWithin(neighbor.geom, way.geom_proj,
             least(neighbor.accuracy, 300))
       WHERE breakpoint.break = true

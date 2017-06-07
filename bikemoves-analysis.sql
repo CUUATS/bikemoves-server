@@ -239,3 +239,48 @@ LEFT JOIN (
   GROUP BY bv.trip_id
 ) AS end_segment
   ON start_segment.trip_id = end_segment.trip_id;
+
+-- Inspect selected vertices.
+SELECT rc.*,
+  vertex.geom_proj AS geom
+FROM route_candidate AS rc
+INNER JOIN (
+  SELECT start_vid,
+    end_vid
+  FROM route_candidate AS rc
+  WHERE edge = -1
+  ORDER BY agg_cost
+  LIMIT 1
+) AS least_cost
+  ON rc.start_vid = least_cost.start_vid
+    AND rc.end_vid = least_cost.end_vid
+LEFT JOIN ways_vertices_pgr AS vertex
+  ON vertex.id = rc.node
+ORDER BY rc.path_seq;
+
+-- Inspect selected ways.
+SELECT rs.*,
+  way.geom_proj AS geom
+FROM (
+  SELECT rc.path_seq AS seq,
+    rc.node AS start_vid,
+    lead(rc.node) OVER (PARTITION BY rc.trip_id ORDER BY rc.path_seq) AS end_vid
+  FROM route_candidate AS rc
+  INNER JOIN (
+    SELECT start_vid,
+      end_vid
+    FROM route_candidate AS rc
+    WHERE edge = -1
+    ORDER BY agg_cost
+    LIMIT 1
+  ) AS least_cost
+    ON rc.start_vid = least_cost.start_vid
+      AND rc.end_vid = least_cost.end_vid
+) AS segment
+LEFT JOIN route_step AS rs
+  ON rs.start_vid = segment.start_vid
+    AND rs.end_vid = segment.end_vid
+INNER JOIN ways AS way
+  ON rs.edge = way.gid
+ORDER BY segment.seq,
+  rs.path_seq;

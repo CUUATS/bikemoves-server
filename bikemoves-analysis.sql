@@ -265,6 +265,7 @@ ORDER BY rc.path_seq;
 
 -- Inspect selected ways.
 SELECT rs.*,
+  1 - rs.cost/way.length_m AS confidence,
   way.geom_proj AS geom
 FROM (
   SELECT rc.path_seq AS seq,

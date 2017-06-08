@@ -303,7 +303,12 @@ LEFT JOIN ways_vertices_pgr AS vertex
 ORDER BY rc.path_seq;
 
 -- Inspect selected ways.
-SELECT ss.*,
+SELECT ss.trip_id,
+  ss.segment,
+  row_number() OVER (PARTITION BY ss.trip_id) AS seq,
+  ss.node,
+  ss.edge,
+  ss.cost,
   1 - ss.cost/way.length_m AS confidence,
   way.geom_proj AS geom
 FROM (
@@ -334,6 +339,6 @@ LEFT JOIN segment_step AS ss
 INNER JOIN ways AS way
   ON ss.edge = way.gid
 ORDER BY
-  rs.trip_id,
-  rs.segment,
-  rs.path_seq;
+  ss.trip_id,
+  ss.segment,
+  ss.path_seq;

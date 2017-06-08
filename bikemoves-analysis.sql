@@ -86,12 +86,20 @@ FROM (
         lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)
           AS prev_geom_proj
       FROM point
-      WHERE trip_id = 474
     ) AS neighbors
-    WHERE ST_Distance(prev_geom_proj, geom_proj) > 10
+    WHERE prev_geom_proj IS NOT DISTINCT FROM NULL
+      OR ST_Distance(prev_geom_proj, geom_proj) > 10
   ) AS deduped
 ) AS angle_measure
-WHERE angle >= 90;
+WHERE angle IS NOT DISTINCT FROM NULL
+  OR angle >= 90;
+
+CREATE INDEX point_filtered_geom
+  ON public.point_filtered
+  USING gist(geom);
+
+CREATE INDEX point_filtered_trip_id
+  ON public.point_filtered (trip_id);
 
 -- Find inflection points
 UPDATE point_filtered AS pt
@@ -115,6 +123,11 @@ FROM (
   ORDER BY time
 ) segment
 WHERE pt.id = segment.id;
+
+CREATE INDEX point_filtered_segment
+  ON public.point_filtered (segment);
+
+ANALYZE point_filtered;
 
 -- Identify vertex candidates.
 DROP TABLE IF EXISTS break_vertex;
@@ -152,12 +165,24 @@ FROM (
         breakpoint.geom,
         way.gid
     ) AS candidates
+    WHERE vertex_id IS DISTINCT FROM NULL
     GROUP BY trip_id,
       segment,
       vertex_id
   ) AS way_cost
 ) AS way_priority
 WHERE priority <= 5;
+
+CREATE INDEX break_vertex_trip_id
+  ON public.break_vertex (trip_id);
+
+CREATE INDEX break_vertex_segment
+  ON public.break_vertex (segment);
+
+CREATE INDEX break_vertex_vertex_id
+  ON public.break_vertex (vertex_id);
+
+ANALYZE break_vertex;
 
 -- Inspect vertex candidates.
 SELECT bv.*,
@@ -167,22 +192,23 @@ LEFT JOIN ways_vertices_pgr AS vertex
   ON bv.vertex_id = vertex.id;
 
 -- Find the least cost routes between the candidate vertices for each segment.
-DROP TABLE IF EXISTS route_step;
-CREATE TABLE route_step AS
+DROP TABLE IF EXISTS segment_step;
+CREATE TABLE segment_step AS
 SELECT trip_id,
   segment,
   (pgr_dijkstra('
     WITH pt AS (
       SELECT *
       FROM point_filtered
-      WHERE trip_id = ' || bv.trip_id::text || '
-        AND (segment = ' || bv.segment::text || '
-          OR (segment = ' || bv.segment::text || ' + 1
+      WHERE trip_id = ' || trip_segment.trip_id::text || '
+        AND (segment = ' || trip_segment.segment::text || '
+          OR (segment = ' || trip_segment.segment::text || ' + 1
           AND break = TRUE))
     ) SELECT way.gid AS id,
       way.source,
       way.target,
-      way.length_m * avg(least(ST_Distance(way.geom_proj, pt.geom), 300)) / 300 AS cost
+      way.length_m *
+        avg(least(ST_Distance(way.geom_proj, pt.geom), 300)) / 300 AS cost
     FROM (
       SELECT ST_Envelope(ST_Collect(geom)) AS geom
       FROM pt
@@ -195,24 +221,37 @@ SELECT trip_id,
       way.source,
       way.target,
       way.length_m',
-  array_agg(vertex_id),
-  lead(array_agg(vertex_id)) OVER (PARTITION BY trip_id ORDER BY segment),
+  trip_segment.start_vids,
+  trip_segment.end_vids,
   directed := false)).*
-FROM break_vertex AS bv
-GROUP BY trip_id,
-  segment;
+FROM (
+  SELECT *
+  FROM (
+    SELECT trip_id,
+      segment,
+      array_agg(vertex_id) AS start_vids,
+      lead(array_agg(vertex_id))
+        OVER (PARTITION BY trip_id ORDER BY segment) AS end_vids
+    FROM break_vertex AS bv
+    GROUP BY trip_id,
+      segment
+  ) AS segment_vids
+  WHERE array_length(start_vids, 1) > 0
+    AND array_length(end_vids, 1) > 0
+) AS trip_segment;
+
 
 -- Find the least cost paths between the starting and ending vertex candidates
 -- using the identified steps as the ways.
-DROP TABLE IF EXISTS route_candidate;
-CREATE TABLE route_candidate AS
+DROP TABLE IF EXISTS route_step;
+CREATE TABLE route_step AS
 SELECT start_segment.trip_id,
   (pgr_dijkstra('
-    SELECT row_number() OVER () AS id,
+    SELECT step.segment AS id,
       step.start_vid AS source,
       step.end_vid AS target,
       step.agg_cost * bv.cost AS cost
-    FROM route_step AS step
+    FROM segment_step AS step
     LEFT JOIN break_vertex AS bv
       ON bv.trip_id = step.trip_id
         AND bv.segment = step.segment
@@ -248,45 +287,53 @@ LEFT JOIN (
 -- Inspect selected vertices.
 SELECT rc.*,
   vertex.geom_proj AS geom
-FROM route_candidate AS rc
+FROM route_step AS rs
 INNER JOIN (
   SELECT start_vid,
     end_vid
-  FROM route_candidate AS rc
+  FROM route_step
   WHERE edge = -1
   ORDER BY agg_cost
   LIMIT 1
 ) AS least_cost
-  ON rc.start_vid = least_cost.start_vid
-    AND rc.end_vid = least_cost.end_vid
+  ON rs.start_vid = least_cost.start_vid
+    AND rs.end_vid = least_cost.end_vid
 LEFT JOIN ways_vertices_pgr AS vertex
   ON vertex.id = rc.node
 ORDER BY rc.path_seq;
 
 -- Inspect selected ways.
-SELECT rs.*,
-  1 - rs.cost/way.length_m AS confidence,
+SELECT ss.*,
+  1 - ss.cost/way.length_m AS confidence,
   way.geom_proj AS geom
 FROM (
-  SELECT rc.path_seq AS seq,
-    rc.node AS start_vid,
-    lead(rc.node) OVER (PARTITION BY rc.trip_id ORDER BY rc.path_seq) AS end_vid
-  FROM route_candidate AS rc
+  SELECT rs.trip_id,
+    edge AS segment,
+    rs.node AS start_vid,
+    lead(rs.node) OVER (PARTITION BY rs.trip_id ORDER BY rs.path_seq) AS end_vid
+  FROM route_step AS rs
   INNER JOIN (
-    SELECT start_vid,
+    SELECT DISTINCT ON (trip_id)
+      trip_id,
+      start_vid,
       end_vid
-    FROM route_candidate AS rc
+    FROM route_step
     WHERE edge = -1
-    ORDER BY agg_cost
-    LIMIT 1
+    ORDER BY trip_id,
+      agg_cost
   ) AS least_cost
-    ON rc.start_vid = least_cost.start_vid
-      AND rc.end_vid = least_cost.end_vid
+    ON rs.trip_id = least_cost.trip_id
+      AND rs.start_vid = least_cost.start_vid
+      AND rs.end_vid = least_cost.end_vid
 ) AS segment
-LEFT JOIN route_step AS rs
-  ON rs.start_vid = segment.start_vid
-    AND rs.end_vid = segment.end_vid
+LEFT JOIN segment_step AS ss
+  ON ss.trip_id = segment.trip_id
+    AND ss.segment = segment.segment
+    AND ss.start_vid = segment.start_vid
+    AND ss.end_vid = segment.end_vid
 INNER JOIN ways AS way
-  ON rs.edge = way.gid
-ORDER BY segment.seq,
+  ON ss.edge = way.gid
+ORDER BY
+  rs.trip_id,
+  rs.segment,
   rs.path_seq;

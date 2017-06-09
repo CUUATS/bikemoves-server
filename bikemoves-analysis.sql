@@ -66,33 +66,50 @@ SELECT angle(ST_Point(1, 0), ST_Point(0, 0), ST_Point(0, 1))
 -- Filter out duplicates and sharp angles.
 DROP TABLE IF EXISTS point_filtered;
 CREATE TABLE point_filtered AS
-SELECT *,
-  false AS break,
-  0 AS segment
-FROM (
-  SELECT id,
-    accuracy * 3.28084 AS accuracy,
-    time,
-    angle(
-      lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time),
-      geom_proj,
-      lead(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)) AS angle,
-    trip_id,
-    geom_proj AS geom
+WITH filtered AS (
+  SELECT *
   FROM (
-    SELECT *
+    SELECT id,
+      accuracy * 3.28084 AS accuracy,
+      time,
+      angle(
+        lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time),
+        geom_proj,
+        lead(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)) AS angle,
+      trip_id,
+      geom_proj AS geom
     FROM (
-      SELECT *,
-        lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)
-          AS prev_geom_proj
-      FROM point
-    ) AS neighbors
-    WHERE prev_geom_proj IS NOT DISTINCT FROM NULL
-      OR ST_Distance(prev_geom_proj, geom_proj) > 10
-  ) AS deduped
-) AS angle_measure
-WHERE angle IS NOT DISTINCT FROM NULL
-  OR angle >= 90;
+      SELECT *
+      FROM (
+        SELECT *,
+          lag(geom_proj) OVER (PARTITION BY trip_id ORDER BY time)
+            AS prev_geom_proj
+        FROM point
+      ) AS neighbors
+      WHERE prev_geom_proj IS NOT DISTINCT FROM NULL
+        OR ST_Distance(prev_geom_proj, geom_proj) > 10
+    ) AS deduped
+  ) AS angle_measure
+  WHERE angle IS NOT DISTINCT FROM NULL
+    OR angle >= 90
+),
+inflection AS (
+  SELECT trip_id,
+    (ST_DumpPoints(ST_SimplifyVW(ST_MakeLine(geom ORDER BY time), 10^5))).geom
+      AS geom
+  FROM filtered
+  GROUP BY trip_id
+)
+SELECT *,
+  sum(break::integer) OVER (PARTITION BY trip_id ORDER BY time) AS segment
+FROM (
+  SELECT filtered.*,
+    inflection.geom IS DISTINCT FROM NULL AS break
+  FROM filtered
+  LEFT JOIN inflection
+    ON inflection.trip_id = filtered.trip_id
+      AND inflection.geom = filtered.geom
+) AS with_breaks;
 
 CREATE INDEX point_filtered_geom
   ON public.point_filtered
@@ -100,29 +117,6 @@ CREATE INDEX point_filtered_geom
 
 CREATE INDEX point_filtered_trip_id
   ON public.point_filtered (trip_id);
-
--- Find inflection points
-UPDATE point_filtered AS pt
-SET break = true
-FROM (
-  SELECT trip_id,
-    (ST_DumpPoints(ST_SimplifyVW(ST_MakeLine(geom ORDER BY time), 10^5))).geom AS geom
-  FROM point_filtered
-  GROUP BY trip_id
-) AS inflection
-WHERE inflection.trip_id = pt.trip_id
-  AND inflection.geom = pt.geom;
-
--- Set segment numbers
-UPDATE point_filtered AS pt
-SET segment = segment.index
-FROM (
-  SELECT id,
-    sum(break::integer) OVER (PARTITION BY trip_id ORDER BY time) AS index
-  FROM point_filtered
-  ORDER BY time
-) segment
-WHERE pt.id = segment.id;
 
 CREATE INDEX point_filtered_segment
   ON public.point_filtered (segment);
@@ -184,13 +178,6 @@ CREATE INDEX break_vertex_vertex_id
 
 ANALYZE break_vertex;
 
--- Inspect vertex candidates.
-SELECT bv.*,
-  vertex.geom_proj AS geom
-FROM break_vertex AS bv
-LEFT JOIN ways_vertices_pgr AS vertex
-  ON bv.vertex_id = vertex.id;
-
 -- Find the least cost routes between the candidate vertices for each segment.
 DROP TABLE IF EXISTS segment_step;
 CREATE TABLE segment_step AS
@@ -240,6 +227,19 @@ FROM (
     AND array_length(end_vids, 1) > 0
 ) AS trip_segment;
 
+CREATE INDEX segment_step_trip_id
+  ON public.segment_step (trip_id);
+
+CREATE INDEX segment_step_segment
+  ON public.segment_step (segment);
+
+CREATE INDEX segment_step_start_vid
+  ON public.segment_step (start_vid);
+
+CREATE INDEX segment_step_end_vid
+  ON public.segment_step (end_vid);
+
+ANALYZE segment_step;
 
 -- Find the least cost paths between the starting and ending vertex candidates
 -- using the identified steps as the ways.
@@ -284,33 +284,33 @@ LEFT JOIN (
 ) AS end_segment
   ON start_segment.trip_id = end_segment.trip_id;
 
--- Inspect selected vertices.
-SELECT rc.*,
-  vertex.geom_proj AS geom
-FROM route_step AS rs
-INNER JOIN (
-  SELECT start_vid,
-    end_vid
-  FROM route_step
-  WHERE edge = -1
-  ORDER BY agg_cost
-  LIMIT 1
-) AS least_cost
-  ON rs.start_vid = least_cost.start_vid
-    AND rs.end_vid = least_cost.end_vid
-LEFT JOIN ways_vertices_pgr AS vertex
-  ON vertex.id = rc.node
-ORDER BY rc.path_seq;
+CREATE INDEX route_step_trip_id
+  ON public.route_step (trip_id);
 
--- Inspect selected ways.
-SELECT ss.trip_id,
+CREATE INDEX route_step_path_seq
+  ON public.route_step (path_seq);
+
+CREATE INDEX route_step_node
+  ON public.route_step (node);
+
+CREATE INDEX route_step_agg_cost
+  ON public.route_step (agg_cost);
+
+ANALYZE route_step;
+
+-- Construct the route based on the route steps and segment steps.
+DROP TABLE IF EXISTS route;
+CREATE TABLE route AS
+SELECT row_number() OVER () AS gid,
+  ss.trip_id,
   ss.segment,
   row_number() OVER (PARTITION BY ss.trip_id) AS seq,
   ss.node,
   ss.edge,
   ss.cost,
   1 - ss.cost/way.length_m AS confidence,
-  way.geom_proj AS geom
+  way.the_geom AS geom,
+  way.geom_proj AS geom_proj
 FROM (
   SELECT rs.trip_id,
     edge AS segment,

@@ -140,19 +140,10 @@ FROM (
         breakpoint.segment,
         (CASE WHEN ST_LineLocatePoint(way.geom_proj, breakpoint.geom) <= 0.5 THEN
           way.source ELSE way.target END)::int AS vertex_id,
-        ST_Distance(breakpoint.geom, way.geom_proj) *
-          least(avg(ST_Distance(neighbor.geom, way.geom_proj)/300), 1)
-          AS cost
+        ST_Distance(breakpoint.geom, way.geom_proj) AS cost
       FROM point_filtered AS breakpoint
       LEFT JOIN ways AS way
         ON ST_DWithin(breakpoint.geom, way.geom_proj, 1320)
-      LEFT JOIN point_filtered AS neighbor
-        ON neighbor.trip_id = breakpoint.trip_id
-          AND (neighbor.segment = breakpoint.segment
-            OR (neighbor.segment = breakpoint.segment - 1
-              AND neighbor.break = false))
-          AND ST_DWithin(neighbor.geom, way.geom_proj,
-            least(neighbor.accuracy, 300))
       WHERE breakpoint.break = true
       GROUP BY breakpoint.trip_id,
         breakpoint.segment,
@@ -194,8 +185,8 @@ SELECT trip_id,
     ) SELECT way.gid AS id,
       way.source,
       way.target,
-      way.length_m *
-        avg(least(ST_Distance(way.geom_proj, pt.geom), 300)) / 300 AS cost
+      greatest(way.length_m * 3.28084 -
+        sum(300 - least(ST_Distance(way.geom_proj, pt.geom), 300)), 0) AS cost
     FROM (
       SELECT ST_Envelope(ST_Collect(geom)) AS geom
       FROM pt
@@ -250,7 +241,7 @@ SELECT start_segment.trip_id,
     SELECT step.segment AS id,
       step.start_vid AS source,
       step.end_vid AS target,
-      step.agg_cost * bv.cost AS cost
+      step.agg_cost + bv.cost AS cost
     FROM segment_step AS step
     LEFT JOIN break_vertex AS bv
       ON bv.trip_id = step.trip_id
@@ -342,3 +333,140 @@ ORDER BY
   ss.trip_id,
   ss.segment,
   ss.path_seq;
+
+
+-- SELECT pt.id AS pt_id,
+--   way.gid AS way,
+--   (CASE WHEN ST_LineLocatePoint(way.geom_proj, pt.geom) <= 0.5 THEN
+--           way.source ELSE way.target END)::int AS vertex,
+--   ST_Distance(pt.geom, way.geom_proj) AS dist
+-- FROM point_filtered AS pt
+-- INNER JOIN ways AS way
+--   ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy)
+-- WHERE trip_id = 48
+-- ORDER BY pt.id,
+--   dist;
+
+-- SELECT *
+-- FROM (
+--   SELECT trip_id,
+--     pt_id,
+--     way,
+--     lag(way) OVER (PARTITION BY trip_id ORDER BY pt_id) AS prev_way,
+--     vertex,
+--     lag(vertex) OVER (PARTITION BY trip_id ORDER BY pt_id) AS prev_vertex
+--   FROM (
+--     SELECT pt.trip_id,
+--       pt.id AS pt_id,
+--       array_agg(DISTINCT way.gid) AS way,
+--       array_agg(DISTINCT (CASE WHEN ST_LineLocatePoint(way.geom_proj, pt.geom) <= 0.5 THEN
+--               way.source ELSE way.target END)::int) AS vertex
+--     FROM point_filtered AS pt
+--     INNER JOIN ways AS way
+--       ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy)
+--     WHERE trip_id = 10
+--     GROUP BY pt.trip_id,
+--        pt.id
+--   ) AS pt_summary
+--   ORDER BY trip_id,
+--     pt_id
+-- ) AS neighbor;
+
+CREATE TABLE trip_area AS
+SELECT trip_id,
+  ST_Buffer(ST_Envelope(ST_Collect(geom)), 1320) AS geom
+FROM point_filtered
+GROUP BY trip_id;
+
+CREATE INDEX trip_area_trip_id
+  ON public.trip_area (trip_id);
+
+CREATE INDEX trip_area_geom
+  ON public.trip_area
+  USING gist(geom);
+
+ANALYZE trip_area;
+
+-- WITH trip_vertex AS (
+--   SELECT *,
+--     row_number() OVER (PARTITION BY trip_id ORDER BY pt_id) AS segment_vid
+--   FROM (
+--     SELECT trip_id,
+--       pt_id,
+--       UNNEST(vertex) AS vertex
+--     FROM (
+--       SELECT *,
+--         lag(vertex) OVER (PARTITION BY trip_id ORDER BY pt_id) IS DISTINCT FROM vertex AS vertex_change
+--       FROM (
+--         SELECT pt.trip_id,
+--           pt.id AS pt_id,
+--           array_agg(DISTINCT (CASE WHEN ST_LineLocatePoint(way.geom_proj, pt.geom) <= 0.5 THEN
+--                   way.source ELSE way.target END)::int) AS vertex
+--         FROM point_filtered AS pt
+--         INNER JOIN ways AS way
+--           ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy)
+--         WHERE trip_id = 48
+--         GROUP BY pt.trip_id,
+--            pt.id
+--        ) AS candidate
+--     ) AS deduped
+--     WHERE vertex_change
+--   ) AS add_id
+-- )
+-- SELECT trip_id,
+--   pt_id,
+--   vertex,
+--   lag(vertex) OVER (PARTITION BY trip_id ORDER BY pt_id) AS prev_vertex
+-- FROM (
+--   SELECT trip_id,
+--     pt_id,
+--     array_agg(vertex) AS vertex
+--   FROM trip_vertex
+--   GROUP BY trip_id,
+--     pt_id
+-- )
+
+WITH trip_vertex AS (
+  SELECT *,
+    row_number() OVER (PARTITION BY trip_id ORDER BY pt_id) AS segment_vid
+  FROM (
+    SELECT trip_id,
+      pt_id,
+      row_number() OVER (PARTITION BY trip_id ORDER BY pt_id) AS segment,
+      UNNEST(vertex) AS vertex
+    FROM (
+      SELECT *,
+        lag(vertex) OVER (PARTITION BY trip_id ORDER BY pt_id) IS DISTINCT FROM vertex AS vertex_change
+      FROM (
+        SELECT pt.trip_id,
+          pt.id AS pt_id,
+          array_agg(DISTINCT (CASE WHEN ST_LineLocatePoint(way.geom_proj, pt.geom) <= 0.5 THEN
+                  way.source ELSE way.target END)::int) AS vertex
+        FROM point_filtered AS pt
+        INNER JOIN ways AS way
+          ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy)
+        WHERE trip_id = 48
+        GROUP BY pt.trip_id,
+           pt.id
+       ) AS candidate
+    ) AS deduped
+    WHERE vertex_change
+  ) AS add_id
+) SELECT vertex.trip_id,
+  vertex.segment,
+  (pgr_dijkstra('
+    SELECT way.gid AS id,
+      way.source,
+      way.target,
+      way.length_m AS cost
+    FROM ways AS way
+    INNER JOIN trip_area
+      ON trip_area.trip_id = ' || vertex.trip_id::text || '
+        AND trip_area.geom && way.geom_proj',
+  prev.vertex,
+  vertex.vertex,
+  directed := false)).*
+FROM trip_vertex AS vertex
+INNER JOIN trip_vertex AS prev
+  ON prev.trip_id = vertex.trip_id
+    AND prev.segment = vertex.segment - 1;

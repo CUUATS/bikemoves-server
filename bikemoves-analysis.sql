@@ -156,7 +156,7 @@ FROM (
         <= 0.5 THEN way.source ELSE way.target END)::int) AS vertex
     FROM point_filtered AS pt
     INNER JOIN ways AS way
-      ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy)
+      ON ST_DWithin(pt.geom, way.geom_proj, pt.accuracy + 20)
     WHERE trip_id = 48
     GROUP BY pt.trip_id,
        pt.id

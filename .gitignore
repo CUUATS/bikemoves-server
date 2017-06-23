@@ -32,11 +32,6 @@ node_modules
 # Optional REPL history
 .node_repl_history
 
-<<<<<<< HEAD
-/data
-set_db.sh
-=======
 .DS_Store
 set_db.sh
 data/
->>>>>>> e239b950aad43a185789a2c3e09604fdf6ca305e

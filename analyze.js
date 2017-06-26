@@ -1,7 +1,4 @@
-const OSRM = require('osrm'),
-  db = require('./db.js');
-
-var osrm = new OSRM('data/illinois-latest.osrm');
+const db = require('./db.js');
 
 function clearRoutes() {
   return db.Route.destroy({

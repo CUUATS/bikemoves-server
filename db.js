@@ -1,34 +1,15 @@
-const Sequelize = require('sequelize');
+const Sequelize = require('sequelize'),
+  geo = require('./geo.js');
+
 // Define models.
-var WGS_84 = {
-    type: 'name',
-    properties: {
-      name: 'EPSG:4326'
-    }
-  },
-  toGeoJSON = function(locations) {
-    if (Array.isArray(locations)) {
-      return {
-        type: 'LineString',
-        coordinates: locations.map(function(location) {
-          return [location.longitude, location.latitude]
-        }),
-        crs: WGS_84
-      };
-    }
-    return {
-      type: 'Point',
-      coordinates: [locations.longitude, locations.latitude],
-      crs: WGS_84
-    };
-  },
-  sequelize = new Sequelize(
+var sequelize = new Sequelize(
     process.env.POSTGRES_DB,
     process.env.POSTGRES_USER,
     process.env.POSTGRES_PASSWORD, {
       dialect: 'postgres',
       host: process.env.POSTGRES_HOST,
-      port: parseInt(process.env.POSTGRES_PORT)
+      port: parseInt(process.env.POSTGRES_PORT),
+      logging: false
     }
   ),
   User = sequelize.define('user', {
@@ -120,7 +101,11 @@ var WGS_84 = {
     appVersion: {
       type: Sequelize.STRING,
       field: 'app_version'
-    }
+    },
+    matchStatus: {
+      type: Sequelize.STRING,
+      field: 'match_status'
+    },
   }, {
     classMethods: {
       fromMessage: function(msg, userID) {
@@ -131,48 +116,10 @@ var WGS_84 = {
           endTime: new Date(msg.endTime.toNumber()),
           desiredAccuracy: msg.desiredAccuracy,
           transit: msg.transit,
-          geom: toGeoJSON(msg.locations),
+          geom: geo.toGeoJSON(msg.locations),
           user_id: userID,
           debug: msg.debug,
           appVersion: msg.appVersion
-        };
-      }
-    },
-    freezeTableName: true,
-    indexes: [
-      {
-        type: 'SPATIAL',
-        method: 'GIST',
-        fields: ['geom']
-      }
-    ],
-    underscored: true
-  }),
-
-  Route = sequelize.define('route', {
-    distance: {
-      type: Sequelize.DOUBLE,
-    },
-    duration: {
-      type: Sequelize.DOUBLE,
-    },
-    confidence: {
-      type: Sequelize.DOUBLE,
-    },
-    geom: {
-      type: Sequelize.GEOMETRY('LINESTRING', 4326),
-      allowNull: false
-    }
-  }, {
-    classMethods: {
-      fromMatch: function(match, tripID) {
-        match.geometry.crs = WGS_84;
-        return {
-          distance: match.distance,
-          duration: match.duration,
-          confidence: match.confidence,
-          geom: match.geometry,
-          trip_id: tripID
         };
       }
     },
@@ -235,7 +182,7 @@ var WGS_84 = {
             event: (location.event) ? location.event : null,
             activity: (location.activity) ? location.activity : null,
             confidence: (location.confidence) ? location.confidence : null,
-            geom: toGeoJSON(location),
+            geom: geo.toGeoJSON(location),
             trip_id: tripID
           };
         });
@@ -250,7 +197,7 @@ var WGS_84 = {
       }
     ],
     underscored: true
-  });
+  }),
 
   Incident = sequelize.define('incident', {
     category : {
@@ -266,43 +213,112 @@ var WGS_84 = {
     geom: {
       type: Sequelize.GEOMETRY("POINT", 4326)
     }
-  },{
+  }, {
     classMethods: {
-      fromMessage: function(msg, userID){
-        return {
-          deviceUuid : msg.deviceUuid,
-          category : msg.category,
-          comment: msg.comment,
-          time: new Date(msg.time.toNumber()),
-          geom: toGeoJSON(msg.location),
-          user_id: userID
+        fromMessage: function(msg, userID){
+          return {
+            deviceUuid : msg.deviceUuid,
+            category : msg.category,
+            comment: msg.comment,
+            time: new Date(msg.time.toNumber()),
+            geom: geo.toGeoJSON(msg.location),
+            user_id: userID
+          }
         }
+      },
+    freezeTableName: true,
+    indexes: [
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom']
       }
-    },
-  freezeTableName: true,
-  indexes: [
-    {
-      type: 'SPATIAL',
-      method: 'GIST',
-      fields: ['geom']
-    }
-  ],
-  underscored:true
+    ],
+    underscored:true
+  }),
 
-});
+  RouteLeg = sequelize.define('route_leg', {
+    matching: {
+      type: Sequelize.INTEGER,
+    },
+    leg: {
+      type: Sequelize.INTEGER,
+    },
+    distance: {
+      type: Sequelize.DOUBLE,
+    },
+    duration: {
+      type: Sequelize.DOUBLE,
+    },
+    speed: {
+      type: Sequelize.DOUBLE,
+    },
+    speed_outlier: {
+      type: Sequelize.BOOLEAN,
+    },
+    geom: {
+      type: Sequelize.GEOMETRY('LINESTRING', 4326),
+      allowNull: false
+    }
+  }, {
+    freezeTableName: true,
+    indexes: [
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom']
+      }
+    ],
+    underscored: true
+  }),
+
+  RouteTracepoint = sequelize.define('route_tracepoint', {
+    geom: {
+      type: Sequelize.GEOMETRY('POINT', 4326),
+      allowNull: false
+    }
+  }, {
+    freezeTableName: true,
+    indexes: [
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom']
+      }
+    ],
+    underscored: true
+  });
 
 // Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
-Trip.hasMany(Route);
-
 Incident.belongsTo(User);
+RouteLeg.belongsTo(Trip);
+RouteLeg.belongsTo(Point, {as: 'startPoint'});
+RouteLeg.belongsTo(Point, {as: 'endPoint'});
+RouteTracepoint.belongsTo(Trip);
+RouteTracepoint.belongsTo(Point);
 
 // Update models.
-sequelize.sync();
+function prepare(retries) {
+  if (retries === undefined) retries = 5;
+  return sequelize.authenticate()
+    .then(() => sequelize.sync())
+    .catch(() => {
+      if (retries === 0) return reject();
+      console.log('Database unavailable: ' + (retries - 1) + ' more tries');
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          prepare(retries - 1).then(resolve);
+        }, 3000);
+      });
+    });
+};
 
 exports.User = User;
 exports.Trip = Trip;
-exports.Route = Route;
 exports.Point = Point;
 exports.Incident = Incident;
+exports.RouteLeg = RouteLeg;
+exports.RouteTracepoint = RouteTracepoint;
+exports.prepare = prepare;

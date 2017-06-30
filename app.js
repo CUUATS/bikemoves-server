@@ -108,7 +108,7 @@ app.post('/:version/incident', function(req, res) {
   });
 });
 
-loadMessages().then(() => {
+Promise.all([loadMessages(), db.prepare()]).then(() => {
   app.listen(8888);
   console.log('API ready');
 });

@@ -16,7 +16,8 @@
     "protobufjs": "^6.7.0",
     "sendmail": "^0.2.2",
     "sequelize": "^3.23.2",
-    "serve-favicon": "~2.1.3"
+    "serve-favicon": "~2.1.3",
+    "threads": "~0.8.1"
   },
   "scripts": {
     "compile_messages": "./compile_messages.sh",

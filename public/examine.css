@@ -1,0 +1,52 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  height: 100%;
+  margin: 0;
+  width: 100%;
+}
+body {
+  padding: 1em;
+  position: relative;
+}
+#map {
+  background-color: #eeeeee;
+  height: 50%;
+}
+#table-wrapper {
+  height: 50%;
+  width: 100%;
+  overflow-y: scroll;
+}
+#trips {
+  border: 1px solid #eeeeee;
+  border-collapse: collapse;
+  width: 100%;
+}
+#trips th,
+#trips td {
+  border: 1px solid #eeeeee;
+  padding: 0.1em 0.25em;
+  text-align: right;
+}
+#trips th {
+  background-color: #eeeeee;
+}
+#trips tbody tr {
+  cursor: pointer;
+}
+#trips tbody tr:hover {
+  background-color: #f8f8f8;
+}
+.leaflet-popup-content table {
+  border-collapse: collapse;
+}
+.leaflet-popup-content td,
+.leaflet-popup-content th {
+  border: 1px solid #dddddd;
+  padding: 0.1em 0.5em;
+}

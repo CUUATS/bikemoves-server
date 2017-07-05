@@ -77,3 +77,4 @@ function filterPoints(points) {
 module.exports.WGS_84 = WGS_84;
 module.exports.toGeoJSON = toGeoJSON;
 module.exports.filterPoints = filterPoints;
+module.exports.toFeature = toFeature;

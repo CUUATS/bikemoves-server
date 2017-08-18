@@ -1,6 +1,7 @@
 "use strict";
 
-const db = require('./db.js'),
+const stats = require('stats-lite'),
+  db = require('./db.js'),
   geo = require('./geo.js'),
   Queue = require('./queue.js');
 
@@ -91,6 +92,15 @@ function getRouteLegs(trip, route, points) {
         end_point_id: matchingPoints[matchingIdx][legIdx + 1].properties.id
       });
     });
+  });
+
+  let speeds = legs.map((leg) => leg.speed),
+    mean = stats.mean(speeds),
+    stdev = stats.stdev(speeds);
+
+  legs.forEach((leg) => {
+    leg.speed_outlier = leg.speed > (mean + 3 * stdev) ||
+      leg.speed < (mean - 3 * stdev);
   });
 
   return legs;

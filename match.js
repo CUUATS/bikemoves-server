@@ -87,8 +87,8 @@ function getRouteLegs(trip, route, points) {
           crs: geo.WGS_84
         },
         trip_id: trip.id,
-        start_point_id: matchingPoints[matchingIdx][legIdx].id,
-        end_point_id: matchingPoints[matchingIdx][legIdx + 1].id
+        start_point_id: matchingPoints[matchingIdx][legIdx].properties.id,
+        end_point_id: matchingPoints[matchingIdx][legIdx + 1].properties.id
       });
     });
   });

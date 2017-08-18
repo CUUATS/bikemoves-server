@@ -1,13 +1,16 @@
 #!/bin/bash
 
+SOURCE=http://download.geofabrik.de
 EXTRACT=illinois-latest
 PROFILE=bicycle
+DATA=/osrm
+MODULE=./node_modules/osrm
+BIN=$MODULE/lib/binding
 
-mkdir -p ./data
-curl -o ./data/$EXTRACT.osm.pbf http://download.geofabrik.de/north-america/us/$EXTRACT.osm.pbf
+mkdir -p $DATA
+curl -o $DATA/$EXTRACT.osm.pbf $SOURCE/north-america/us/$EXTRACT.osm.pbf
 
-./node_modules/osrm/lib/binding/osrm-extract \
-  -p ./node_modules/osrm/profiles/$PROFILE.lua ./data/$EXTRACT.osm.pbf
-./node_modules/osrm/lib/binding/osrm-contract ./data/$EXTRACT.osrm
+$BIN/osrm-extract -p $MODULE/profiles/$PROFILE.lua $DATA/$EXTRACT.osm.pbf
+$BIN/osrm-contract $DATA/$EXTRACT.osrm
 
-rm ./data/$EXTRACT.osm.pbf
+rm $DATA/$EXTRACT.osm.pbf

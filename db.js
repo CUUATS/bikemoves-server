@@ -315,6 +315,7 @@ function prepare(retries) {
     });
 };
 
+exports.sequelize = sequelize;
 exports.User = User;
 exports.Trip = Trip;
 exports.Point = Point;

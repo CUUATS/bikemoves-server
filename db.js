@@ -106,6 +106,9 @@ var sequelize = new Sequelize(
       type: Sequelize.STRING,
       field: 'match_status'
     },
+    region: {
+      type: Sequelize.STRING
+    }
   }, {
     classMethods: {
       fromMessage: function(msg, userID) {
@@ -253,8 +256,12 @@ var sequelize = new Sequelize(
     speed: {
       type: Sequelize.DOUBLE,
     },
-    speed_outlier: {
+    speedOutlier: {
       type: Sequelize.BOOLEAN,
+    },
+    routeType: {
+      type: Sequelize.STRING,
+      field: 'route_type'
     },
     geom: {
       type: Sequelize.GEOMETRY('LINESTRING', 4326),
@@ -284,6 +291,39 @@ var sequelize = new Sequelize(
         type: 'SPATIAL',
         method: 'GIST',
         fields: ['geom']
+      }
+    ],
+    underscored: true
+  }),
+
+  DemographicSummary = sequelize.define('demographic_summary', {
+    region: {
+      type: Sequelize.STRING
+    },
+    category: {
+      type: Sequelize.STRING
+    },
+    rowOrder: {
+      type: Sequelize.INTEGER,
+      field: 'row_order'
+    },
+    description: {
+      type: Sequelize.STRING
+    },
+    users: {
+      type: Sequelize.INTEGER
+    },
+    trips: {
+      type: Sequelize.INTEGER
+    },
+    distance: {
+      type: Sequelize.DOUBLE
+    }
+  }, {
+    freezeTableName: true,
+    indexes: [
+      {
+        fields: ['region']
       }
     ],
     underscored: true
@@ -322,4 +362,5 @@ exports.Point = Point;
 exports.Incident = Incident;
 exports.RouteLeg = RouteLeg;
 exports.RouteTracepoint = RouteTracepoint;
+exports.DemographicSummary = DemographicSummary;
 exports.prepare = prepare;

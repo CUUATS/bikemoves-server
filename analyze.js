@@ -3,71 +3,76 @@ const db = require('./db.js');
 class Analysis {
   constructor() {}
 
-  getResults() {
-    return Promise.all([
-      this.getDemographicQuery('age', [
-        'Not Specified',
-        'Under 15',
-        '15 to 19',
-        '20 to 24',
-        '25 to 34',
-        '35 to 44',
-        '45 to 54',
-        '55 to 64',
-        '65 to 74',
-        '75 and older'
-      ]),
-      this.getDemographicQuery('gender', [
-        'Not Specified',
-        'Male',
-        'Female'
-      ]),
-      this.getDemographicQuery('cycling_experience', [
-        'Not Specified',
-        'Beginner',
-        'Intermediate',
-        'Advanced'
-      ]),
-      this.getTripCountQuery()
-    ]).then((queries) => {
-      return {
-        demographics: {
-          age: queries[0],
-          gender: queries[1],
-          cycling_experience: queries[2]
-        },
-        stats: {
-          trip_count: queries[3]
-        }
-      };
-    });
+  runAll() {
+    return this.updateDemographics();
+  }
+
+  insert(sql) {
+    return db.sequelize.query(sql, {type: db.sequelize.QueryTypes.INSERT});
   }
 
   select(sql) {
     return db.sequelize.query(sql, {type: db.sequelize.QueryTypes.SELECT});
   }
 
-  getDemographicQuery(variable, labels) {
+  updateDemographics() {
+    return db.DemographicSummary.destroy({
+      truncate: true
+    }).then(() => {
+      return Promise.all([
+        this.insertDemographicSummary('age', [
+          'Not Specified',
+          'Under 15',
+          '15 to 19',
+          '20 to 24',
+          '25 to 34',
+          '35 to 44',
+          '45 to 54',
+          '55 to 64',
+          '65 to 74',
+          '75 and older'
+        ]),
+        this.insertDemographicSummary('gender', [
+          'Not Specified',
+          'Male',
+          'Female'
+        ]),
+        this.insertDemographicSummary('cycling_experience', [
+          'Not Specified',
+          'Beginner',
+          'Intermediate',
+          'Advanced'
+        ]),
+        this.insertTripCount()
+      ]);
+    });
+  }
+
+  insertDemographicSummary(variable, labels) {
     let values = labels.map((label, i) => {
         return `(${i}, '${label}')`;
       }).join(', '),
       sql = `
-        SELECT description,
-          users,
-          round((users::double precision /
-            sum(users) OVER () * 100)::numeric, 1) AS pct_users,
-          trips,
-          round((trips::double precision /
-            sum(trips) OVER () * 100)::numeric, 1) AS pct_trips,
-          miles,
-          round((miles::double precision /
-            sum(miles) OVER () * 100)::numeric, 1) AS pct_miles
-        FROM (
-          SELECT labels.description,
+        INSERT INTO demographic_summary (
+            region,
+            category,
+            row_order,
+            description,
+            users,
+            trips,
+            distance,
+            created_at,
+            updated_at) (
+          SELECT trip.region,
+            '${variable}' AS category,
+            labels.code AS row_order,
+            labels.description,
             count(DISTINCT usr.id) AS users,
             count(DISTINCT trip.id) AS trips,
             round(sum(ST_Length(route_leg.geom_proj) /
-              5280)::numeric, 1) AS miles
+              5280)::numeric, 1) AS distance,
+            now() AS created_at,
+            now() AS updated_at
           FROM (
             VALUES ${values}
           ) AS labels (code, description)
@@ -78,34 +83,64 @@ class Analysis {
               AND trip.match_status = 'Matched'
           INNER JOIN route_leg
             ON route_leg.trip_id = trip.id
+              AND NOT route_leg.speed_outlier
           GROUP BY labels.code,
-            labels.description
+            labels.description,
+            trip.region
           ORDER BY labels.code = 0,
             labels.code
-        ) AS stats;`;
+        );`;
 
-    return this.select(sql);
+    return this.insert(sql);
   }
 
-  getTripCountQuery() {
+  insertTripCount() {
     let sql = `
-      SELECT trip_count,
-        count(*) AS users
-      FROM (
-        SELECT user_id,
-          count(*) trip_count
-        FROM trip
-        WHERE match_status = 'Matched'
-        GROUP BY user_id
-      ) AS counts
-      GROUP BY trip_count
-      ORDER BY trip_count;`;
+      INSERT INTO demographic_summary (
+          region,
+          category,
+          row_order,
+          description,
+          users,
+          trips,
+          distance,
+          created_at,
+          updated_at) (
+        SELECT region,
+          'trip_count' AS category,
+          row_number() OVER
+            (PARTITION BY region ORDER BY trip_count) AS row_order,
+          trip_count::character varying AS description,
+          count(*) AS users,
+          trip_count AS trips,
+          NULL AS distance,
+          now() AS created_at,
+          now() AS updated_at
+        FROM (
+          SELECT region,
+            user_id,
+            count(*) trip_count
+          FROM trip
+          WHERE match_status = 'Matched'
+          GROUP BY region,
+            user_id
+        ) AS counts
+        GROUP BY region,
+          trip_count
+        ORDER BY trip_count
+      );`;
 
-    return this.select(sql);
+    return this.insert(sql);
   }
 }
 
 if (require.main === module) {
-  let analysis = new Analysis();
-  analysis.getResults().then((results) => console.log(results));
+  db.prepare()
+    .then(() => {
+      let analysis = new Analysis();
+      analysis.runAll().then(() => {
+        console.log('Analysis complete!')
+        process.exit();
+      });
+    });
 }

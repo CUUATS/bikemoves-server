@@ -101,7 +101,7 @@ function getRouteLegs(trip, route, points) {
   legs.forEach((leg) => {
     // Anything that is more than three times the standard deviation above the
     // mean or more than 30 MPH (13.4 m/s) is considered an outlier.
-    leg.speed_outlier = leg.speed > (mean + 3 * stdev) || leg.speed > 13.4;
+    leg.speedOutlier = leg.speed > (mean + 3 * stdev) || leg.speed > 13.4;
   });
 
   return legs;

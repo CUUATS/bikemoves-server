@@ -263,6 +263,9 @@ var sequelize = new Sequelize(
       type: Sequelize.STRING,
       field: 'route_type'
     },
+    nodes: {
+      type: Sequelize.ARRAY(Sequelize.BIGINT)
+    },
     geom: {
       type: Sequelize.GEOMETRY('LINESTRING', 4326),
       allowNull: false

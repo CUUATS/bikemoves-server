@@ -17,6 +17,7 @@ function getRoute(input, done) {
     overview: 'false',
     geometries: 'geojson',
     steps: true,
+    annotations: true,
     radiuses: input.points.map((point) => point.properties.accuracy + 6),
     timestamps: input.points.map((point) =>
       Math.round((new Date(point.properties.time)).getTime()/1000))
@@ -82,6 +83,7 @@ function getRouteLegs(trip, route, points) {
         distance: leg.distance,
         duration: duration,
         speed: leg.distance / duration,
+        nodes: leg.annotation.nodes,
         geom: {
           type: 'LineString',
           coordinates: coords,

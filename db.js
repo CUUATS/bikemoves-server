@@ -300,6 +300,106 @@ var sequelize = new Sequelize(
     underscored: true
   }),
 
+  Edge = sequelize.define('edge', {
+    gid: {
+      type: Sequelize.INTEGER,
+      primaryKey: true
+    },
+    region: {
+      type: Sequelize.STRING
+    },
+    users: {
+      type: Sequelize.INTEGER
+    },
+    trips: {
+      type: Sequelize.INTEGER
+    },
+    mean_speed: {
+      type: Sequelize.INTEGER
+    },
+    users_age_ns: {
+      type: Sequelize.INTEGER
+    },
+    users_age_0_15: {
+      type: Sequelize.INTEGER
+    },
+    users_age_15_19: {
+      type: Sequelize.INTEGER
+    },
+    users_age_20_24: {
+      type: Sequelize.INTEGER
+    },
+    users_age_25_34: {
+      type: Sequelize.INTEGER
+    },
+    users_age_35_44: {
+      type: Sequelize.INTEGER
+    },
+    users_age_45_54: {
+      type: Sequelize.INTEGER
+    },
+    users_age_55_64: {
+      type: Sequelize.INTEGER
+    },
+    users_age_65_74: {
+      type: Sequelize.INTEGER
+    },
+    users_age_75_plus: {
+      type: Sequelize.INTEGER
+    },
+    users_gender_ns: {
+      type: Sequelize.INTEGER
+    },
+    users_gender_male: {
+      type: Sequelize.INTEGER
+    },
+    users_gender_female: {
+      type: Sequelize.INTEGER
+    },
+    users_gender_other: {
+      type: Sequelize.INTEGER
+    },
+    users_experience_ns: {
+      type: Sequelize.INTEGER
+    },
+    users_experience_beginner: {
+      type: Sequelize.INTEGER
+    },
+    users_experience_intermediate: {
+      type: Sequelize.INTEGER
+    },
+    users_experience_advanced: {
+      type: Sequelize.INTEGER
+    },
+    geom: {
+      type: Sequelize.GEOMETRY('LINESTRING', 4326),
+      allowNull: false
+    },
+    geomProj: {
+      type: Sequelize.GEOMETRY('LINESTRING', 3435),
+      field: 'geom_proj',
+      allowNull: false
+    }
+  }, {
+    freezeTableName: true,
+    indexes: [
+      {
+        fields: ['region']
+      },
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom']
+      },
+      {
+        type: 'SPATIAL',
+        method: 'GIST',
+        fields: ['geom_proj']
+      }
+    ],
+    underscored: true
+  }),
+
   DemographicSummary = sequelize.define('demographic_summary', {
     region: {
       type: Sequelize.STRING
@@ -343,13 +443,49 @@ RouteLeg.belongsTo(Point, {as: 'endPoint'});
 RouteTracepoint.belongsTo(Trip);
 RouteTracepoint.belongsTo(Point);
 
+function initViews() {
+  let sql = `
+    CREATE OR REPLACE VIEW edge_trip AS
+    SELECT edge.gid,
+      trip.id AS trip_id,
+      trip.user_id,
+      avg(leg.speed) AS mean_speed
+    FROM edge
+    INNER JOIN (
+      SELECT edge_node.edge_gid,
+        leg_node.leg_id
+      FROM edge_node
+      INNER JOIN (
+        SELECT id AS leg_id,
+          unnest(nodes) AS node_id
+        FROM route_leg
+        WHERE speed_outlier = FALSE
+      ) AS leg_node
+        ON edge_node.node_id = leg_node.node_id
+      GROUP BY edge_node.edge_gid,
+        leg_node.leg_id
+      HAVING count(*) > 1
+    ) AS leg_edge
+      ON leg_edge.edge_gid = edge.gid
+    INNER JOIN route_leg AS leg
+      ON leg.id = leg_edge.leg_id
+    INNER JOIN trip
+      ON leg.trip_id = trip.id
+    GROUP BY edge.gid,
+      trip.id;`;
+
+  return sequelize.query(sql, {type: sequelize.QueryTypes.RAW});
+}
+
 // Update models.
 function prepare(retries) {
   if (retries === undefined) retries = 5;
   return sequelize.authenticate()
     .then(() => sequelize.sync())
-    .catch(() => {
-      if (retries === 0) return reject();
+    .then(initViews)
+    .catch((e) => {
+      if (e.name != 'SequelizeConnectionRefusedError') reject(e.message);
+      if (retries === 0) return reject('Database unavailable');
       console.log('Database unavailable: ' + (retries - 1) + ' more tries');
       return new Promise((resolve, reject) => {
         setTimeout(() => {

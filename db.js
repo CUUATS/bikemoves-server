@@ -258,6 +258,7 @@ var sequelize = new Sequelize(
     },
     speedOutlier: {
       type: Sequelize.BOOLEAN,
+      field: 'speed_outlier'
     },
     routeType: {
       type: Sequelize.STRING,

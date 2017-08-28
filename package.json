@@ -21,8 +21,11 @@
     "threads": "~0.8.1"
   },
   "scripts": {
-    "compile_messages": "./compile_messages.sh",
-    "start": "node app.js",
-    "test": "./serverTest.sh"
+    "analyze": "node ./src/analyze.js",
+    "compile": "./scripts/compile_messages.sh",
+    "examine": "node ./src/examine.js",
+    "import": "./scripts/import_data.sh",
+    "match": "node ./src/match.js",
+    "start": "node ./src/api.js"
   }
 }

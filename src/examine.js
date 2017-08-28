@@ -6,7 +6,7 @@ const express = require('express'),
   geo = require('./geo.js'),
   app = express();
 
-app.use(express.static('public'));
+app.use(express.static('src/public/examine'));
 
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');

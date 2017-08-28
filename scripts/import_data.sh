@@ -4,7 +4,7 @@ SOURCE=http://download.geofabrik.de
 EXTRACT=illinois-latest
 PROFILE=bicycle
 DATA=/osrm
-MODULE=./node_modules/osrm
+MODULE=../node_modules/osrm
 BIN=$MODULE/lib/binding
 
 mkdir -p $DATA

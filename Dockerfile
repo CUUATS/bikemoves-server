@@ -1,10 +1,9 @@
-FROM node:6.11-alpine
+FROM node:6.11.2-stretch
 
 ENV POSTGRES_PORT=5432
 
-RUN apk update && \
-    apk upgrade && \
-    apk add curl
+RUN apt-get update && \
+    apt-get install -y curl
 
 WORKDIR /usr/src/app
 

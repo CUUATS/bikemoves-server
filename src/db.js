@@ -471,7 +471,7 @@ function prepare(retries) {
     .then(() => sequelize.sync())
     .then(initViews)
     .catch((e) => {
-      if (e.name != 'SequelizeConnectionRefusedError') reject(e.message);
+      if (e.name != 'SequelizeConnectionRefusedError') throw e.name;
       if (retries === 0) return reject('Database unavailable');
       console.log('Database unavailable: ' + (retries - 1) + ' more tries');
       return new Promise((resolve, reject) => {

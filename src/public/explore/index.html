@@ -3,12 +3,90 @@
   <head>
     <meta charset="utf-8">
     <title>BikeMoves Explore</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans" rel="stylesheet">
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.css' rel='stylesheet' />
     <link rel="stylesheet" href="explore.css">
   </head>
   <body>
-    <div id="map"></div>
+    <header id="header">
+      <div class="inner">
+        <a id="logo" href="#home">
+          <span class="bikemoves">BikeMoves</span>
+          <span class="explore">Explore</span>
+        </a>
+        <nav>
+          <ul id="primary-nav">
+            <li>
+              <a href="#download">
+                <i class="fa fa-mobile" aria-hidden="true"></i>
+                Download
+              </a>
+            </li>
+            <li>
+              <a href="#demographics">
+                <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                Demographics
+              </a>
+            </li>
+            <li>
+              <a href="#data">
+                <i class="fa fa-map" aria-hidden="true"></i>
+                Data
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <article id="home">
+      <div class="inner">
+        <h1>Bike Planning.<br />On the Move.</h1>
+        <p class="description">
+          BikeMoves Illinois uses data from cyclists in our community
+          to improve bike planning for everyone.
+        </p>
+        <ul id="home-menu">
+          <li>
+            <a href="#download">
+              <i class="fa fa-mobile" aria-hidden="true"></i>
+              <strong>Download</strong>
+              <span class="text">
+                Get the BikeMoves Illinois mobile app.
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="#demographics">
+              <i class="fa fa-bar-chart" aria-hidden="true"></i>
+              <strong>Demographics</strong>
+              <span class="text">
+                Who&apos;s using BikeMoves?
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="#data">
+              <i class="fa fa-map" aria-hidden="true"></i>
+              <strong>Data</strong>
+              <span class="text">
+                Learn about cycling patterns in our community.
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </article>
+    <article id="download">
+
+    </article>
+    <article id="demographics">
+
+    </article>
+    <article id="data">
+      <div id="map"></div>
+    </article>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.js'></script>
+    <script src="https://use.fontawesome.com/e09acc63a3.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="explore.js"></script>
   </body>

@@ -66,10 +66,14 @@ class Explore {
   getJSON(url) {
     return new Promise((resolve, reject) => {
       let req = new XMLHttpRequest();
-      req.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200)
-          resolve(JSON.parse(this.responseText));
+      req.onload = () => {
+        if (req.status >= 200 && req.status < 300) {
+          resolve(JSON.parse(req.response));
+        } else {
+          reject(req.statusText);
+        }
       };
+      req.onerror = () => reject(req.statusText);
       req.open('GET', url, true);
       req.send();
     });

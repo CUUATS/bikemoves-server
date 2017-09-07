@@ -84,8 +84,15 @@ var Explore = function () {
     value: function getJSON(url) {
       return new Promise(function (resolve, reject) {
         var req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
-          if (this.readyState == 4 && this.status == 200) resolve(JSON.parse(this.responseText));
+        req.onload = function () {
+          if (req.status >= 200 && req.status < 300) {
+            resolve(JSON.parse(req.response));
+          } else {
+            reject(req.statusText);
+          }
+        };
+        req.onerror = function () {
+          return reject(req.statusText);
         };
         req.open('GET', url, true);
         req.send();

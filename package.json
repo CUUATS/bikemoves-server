@@ -23,5 +23,8 @@
     "import": "./scripts/import_data.sh",
     "match": "node ./src/match.js",
     "start": "node ./src/api.js"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.6.0"
   }
 }

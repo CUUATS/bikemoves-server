@@ -27,6 +27,35 @@ app.server.get('/config.js', (req, res) => {
   res.send('mapboxgl.accessToken = "' + process.env.MAPBOX_TOKEN + '";');
 });
 
+app.server.get('/demographics.json', (req, res) => {
+  res.header('Content-Type', 'application/json');
+  db.DemographicSummary.findAll({
+    where: {
+      region: process.env.BIKEMOVES_REGION
+    },
+    order: [
+      ['category', 'ASC'],
+      ['row_order', 'ASC']
+    ]
+  }).then((summaries) => {
+    let result = {};
+
+    summaries.forEach((summary) => {
+      let category = summary.category.replace('_', '-');
+      if (typeof result[category] === 'undefined') result[category] = [];
+
+      result[category].push({
+        description: summary.description,
+        users: summary.users,
+        trips: summary.trips,
+        distance: summary.distance
+      });
+    });
+
+    res.json(result);
+  });
+});
+
 app.layer('explore', (tile, render) => {
   render({
     edge: EDGE_QUERY

@@ -5,6 +5,7 @@
     <title>BikeMoves Explore</title>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans" rel="stylesheet">
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.css' rel='stylesheet' />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
     <link rel="stylesheet" href="explore.css">
   </head>
   <body>
@@ -80,13 +81,42 @@
 
     </article>
     <article id="demographics">
-
+      <div class="inner">
+        <h1>Demographics</h1>
+        <ul id="stats">
+          <li class="users">
+            <a href="#users">
+              <span class="value">&mdash;</span>
+              <span class="label">Users</span>
+            </a>
+          </li>
+          <li class="trips">
+            <a href="#trips">
+              <span class="value">&mdash;</span>
+              <span class="label">Trips</span>
+            </a>
+          </li>
+          <li class="distance">
+            <a href="#distance">
+              <span class="value">&mdash;</span>
+              <span class="label">Miles</span>
+            </a>
+          </li>
+        </ul>
+        <div id="charts">
+          <div class="chart ct-perfect-fourth" id="chart-age"></div>
+          <div class="chart ct-perfect-fourth" id="chart-gender"></div>
+          <div class="chart ct-perfect-fourth" id="chart-cycling-experience"></div>
+          <div class="chart ct-perfect-fourth" id="chart-trip-count"></div>
+        </div>
+      </div>
     </article>
     <article id="data">
       <div id="map"></div>
     </article>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.js'></script>
     <script src="https://use.fontawesome.com/e09acc63a3.js"></script>
+    <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="explore.js"></script>
   </body>

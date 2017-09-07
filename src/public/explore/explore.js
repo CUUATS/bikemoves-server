@@ -1,5 +1,9 @@
 var Explore = function() {
-  this.initMap();
+  this.state = {
+    chartView: 'users'
+  };
+  this.initCharts();
+  // this.initMap();
 };
 
 Explore.prototype.initMap = function() {
@@ -12,9 +16,61 @@ Explore.prototype.initMap = function() {
   map.on('load', this.addLayers.bind(this));
 };
 
+Explore.prototype.initCharts = function() {
+  var ex = this;
+  this.getJSON(this.absoluteURL('/demographics.json'), function(data) {
+    console.log(data);
+    ex.initChartViews(data);
+  });
+};
+
+Explore.prototype.initChartViews = function(data) {
+  var ex = this,
+    viewButtons = document.querySelectorAll('#stats li');
+  viewButtons.forEach(function(button) {
+    var link = button.querySelector('a'),
+      value = button.querySelector('.value'),
+      statName = button.className;
+
+    value.innerHTML = ex.formatNumber(ex.getStatTotal(data, statName), 0);
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      ex.showStatCharts(this.parentNode.className);
+    });
+    if (statName === ex.state.chartView) ex.showStatCharts(statName);
+  });
+};
+
+Explore.prototype.showStatCharts = function(statName) {
+  document.querySelectorAll('#stats li a').forEach(function(link) {
+    link.className = (link.parentNode.className === statName) ? 'active' : '';
+  });
+
+};
+
+Explore.prototype.getStatTotal = function(data, statName) {
+  return data.gender.reduce(function(sum, row) {
+    return sum + row[statName];
+  }, 0);
+};
+
+Explore.prototype.formatNumber = function(value, digits) {
+  return (+value.toFixed(digits)).toLocaleString();
+};
+
 Explore.prototype.absoluteURL = function(url) {
   return location.protocol + '//' + location.hostname + (
     location.port ? ':' + location.port : '') + url;
+};
+
+Explore.prototype.getJSON = function(url, callback) {
+  var req = new XMLHttpRequest();
+  req.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200)
+      callback(JSON.parse(this.responseText));
+  };
+  req.open('GET', url, true);
+  req.send();
 };
 
 Explore.prototype.addLayers = function() {

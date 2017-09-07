@@ -9,7 +9,6 @@ body {
 body {
   background-color: #eeeeee;
   box-sizing: border-box;
-  padding: 60px 0 0 0;
   position: relative;
 }
 .inner {
@@ -27,11 +26,12 @@ header {
   position: fixed;
   top: 0;
   width: 100%;
+  z-index: 100;
 }
 #logo {
   color: black;
   float: left;
-  font-size: 20px;
+  font-size: 15px;
   line-height: 44px;
   text-decoration: none;
   text-transform: uppercase;
@@ -56,10 +56,18 @@ nav {
   color: #222222;
   text-decoration: none;
 }
+#primary-nav .label {
+  display: none;
+}
 article {
   box-sizing: border-box;
-  padding: 25px 10px;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 0 -60px 0;
+  min-height: 100%;
+  padding: 85px 10px 25px;
+  position: relative;
   width: 100%;
 }
 h1 {
@@ -70,6 +78,7 @@ h1 {
   background-image: url(img/background-home.jpg);
   background-size: cover;
   background-position: center;
+  z-index: 50;
 }
 #home .inner {
   box-sizing: border-box;
@@ -80,26 +89,26 @@ h1 {
   text-align: center;
 }
 #home h1 {
-  font-size: 5em;
+  font-size: 2em;
 }
 #home .description {
   margin: 0 20% 30px;
-  font-size: 1.8em;
+  font-size: 1.2em;
   text-align: center;
 }
 #home-menu {
   align-items: stretch;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-around;
-  margin: 50px 0;
+  margin: 25px auto;
   padding: 0;
   position: relative;
 }
 #home-menu li {
   list-style-type: none;
   flex: 0 0 auto;
-  width: 30%;
+  width: auto;
 }
 #home-menu a {
   box-sizing: border-box;
@@ -124,22 +133,55 @@ h1 {
 #home-menu strong {
   display: block;
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.5em;
-  margin: 0 0 10px 60px;
+  font-size: 1.2em;
+  margin: 0 0 5px 60px;
 }
 #home-menu .text {
   display: block;
-  font-size: 1.2em;
   margin: 0 0 0 60px;
 }
 #download {
   background-color: #f9d89a;
+  z-index: 40;
+}
+#demographics {
+  background-color: #f8f8f8;
+  z-index: 30;
 }
 #data {
   background-color: #666666;
+  z-index: 20;
 }
 #map {
   background-color: #eeeeee;
   box-sizing: border-box;
   height: 100%;
+}
+@media screen and (min-width: 768px) {
+  #logo {
+    font-size: 20px;
+  }
+  #primary-nav .label {
+    display: inline;
+  }
+  #home h1 {
+    font-size: 5em;
+  }
+  #home .description {
+    font-size: 1.8em;
+  }
+  #home-menu {
+    flex-direction: row;
+    margin: 50px auto;
+  }
+  #home-menu li {
+    width: 30%;
+  }
+  #home-menu strong {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  #home-menu .text {
+    font-size: 1.2em;
+  }
 }

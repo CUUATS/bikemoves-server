@@ -20,13 +20,14 @@ class Explore {
   initCharts() {
     this.getJSON(this.absoluteURL('/demographics.json'))
       .then((data) => {
-        console.log(data);
-        this.initChartViews(data);
+        this.state.demographics = data;
+        this.initChartViews();
       });
   }
 
-  initChartViews(data) {
-    let viewButtons = document.querySelectorAll('#stats li');
+  initChartViews() {
+    let data = this.state.demographics,
+      viewButtons = document.querySelectorAll('#stats li');
     viewButtons.forEach((button) => {
       let link = button.querySelector('a'),
         value = button.querySelector('.value'),
@@ -35,17 +36,86 @@ class Explore {
       value.innerHTML = this.formatNumber(this.getStatTotal(data, statName), 0);
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        this.showStatCharts(statName);
+        this.state.chartView = statName;
+        this.showStatCharts();
       });
-      if (statName === this.state.chartView) this.showStatCharts(statName);
     });
+    this.showStatCharts();
+    this.drawHistogram('trip-count', 'trips', 'users');
   }
 
-  showStatCharts(statName) {
+  showStatCharts() {
+    let statName = this.state.chartView;
     document.querySelectorAll('#stats li a').forEach((link) => {
       link.className = (link.parentNode.className === statName) ? 'active' : '';
     });
+    ['age', 'gender', 'cycling-experience'].forEach(this.drawChart.bind(this));
+  }
 
+  drawChart(chartName) {
+    let container = document.querySelector(`#chart-${chartName} .chart`),
+      table = this.state.demographics[chartName],
+      statName = this.state.chartView;
+
+    let chart = new Chartist.Bar(container, {
+      labels: table.map((row) => row.description),
+      series: table.map((row) => row[statName])
+    }, {
+      axisY: {
+        onlyInteger: true
+      },
+      chartPadding: {
+        left: 25
+      },
+      distributeSeries: true
+    });
+
+    let ylabel = {
+      users: 'Total Users',
+      trips: 'Total Trips',
+      distance: 'Total Miles'
+    }[statName];
+    container.parentNode.querySelector('.label-y').innerHTML =
+      `<span class="label">${ylabel}</span>`;
+  }
+
+  drawHistogram(chartName, xName, yName) {
+    let container = document.querySelector(`#chart-${chartName} .chart`),
+      table = this.state.demographics[chartName],
+      x = table.map((row) => row[xName]),
+      y = table.map((row) => row[yName]),
+      xMin = Math.min.apply(null, x),
+      xMax = Math.max.apply(null, x),
+      numBars = xMax - xMin + 1,
+      labelFreq = Math.ceil(numBars / 10 / 5) * 5,
+      values = [],
+      labels = [];
+
+    for (let i = xMin; i <= xMax; i++) {
+      labels.push(((i - xMin + 1) % labelFreq === 0) ? i.toString() : '');
+      let idx = x.indexOf(i);
+      values.push((idx === -1) ? 0 : y[idx]);
+    }
+
+    let chart = new Chartist.Bar(container, {
+      labels: labels,
+      series: [values]
+    }, {
+      axisX: {
+        showGrid: false
+      },
+      axisY: {
+        onlyInteger: true
+      },
+      chartPadding: {
+        left: 25
+      }
+    });
+
+    chart.on('draw', (data) => {
+      if (data.type !== 'bar') return;
+      data.element._node.style['stroke-width'] = (100 / numBars) + '%';
+    });
   }
 
   getStatTotal(data, statName) {

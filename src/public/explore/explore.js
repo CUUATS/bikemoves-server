@@ -32,16 +32,17 @@ var Explore = function () {
       var _this = this;
 
       this.getJSON(this.absoluteURL('/demographics.json')).then(function (data) {
-        console.log(data);
-        _this.initChartViews(data);
+        _this.state.demographics = data;
+        _this.initChartViews();
       });
     }
   }, {
     key: 'initChartViews',
-    value: function initChartViews(data) {
+    value: function initChartViews() {
       var _this2 = this;
 
-      var viewButtons = document.querySelectorAll('#stats li');
+      var data = this.state.demographics,
+          viewButtons = document.querySelectorAll('#stats li');
       viewButtons.forEach(function (button) {
         var link = button.querySelector('a'),
             value = button.querySelector('.value'),
@@ -50,16 +51,95 @@ var Explore = function () {
         value.innerHTML = _this2.formatNumber(_this2.getStatTotal(data, statName), 0);
         link.addEventListener('click', function (e) {
           e.preventDefault();
-          _this2.showStatCharts(statName);
+          _this2.state.chartView = statName;
+          _this2.showStatCharts();
         });
-        if (statName === _this2.state.chartView) _this2.showStatCharts(statName);
       });
+      this.showStatCharts();
+      this.drawHistogram('trip-count', 'trips', 'users');
     }
   }, {
     key: 'showStatCharts',
-    value: function showStatCharts(statName) {
+    value: function showStatCharts() {
+      var statName = this.state.chartView;
       document.querySelectorAll('#stats li a').forEach(function (link) {
         link.className = link.parentNode.className === statName ? 'active' : '';
+      });
+      ['age', 'gender', 'cycling-experience'].forEach(this.drawChart.bind(this));
+    }
+  }, {
+    key: 'drawChart',
+    value: function drawChart(chartName) {
+      var container = document.querySelector('#chart-' + chartName + ' .chart'),
+          table = this.state.demographics[chartName],
+          statName = this.state.chartView;
+
+      var chart = new Chartist.Bar(container, {
+        labels: table.map(function (row) {
+          return row.description;
+        }),
+        series: table.map(function (row) {
+          return row[statName];
+        })
+      }, {
+        axisY: {
+          onlyInteger: true
+        },
+        chartPadding: {
+          left: 25
+        },
+        distributeSeries: true
+      });
+
+      var ylabel = {
+        users: 'Total Users',
+        trips: 'Total Trips',
+        distance: 'Total Miles'
+      }[statName];
+      container.parentNode.querySelector('.label-y').innerHTML = '<span class="label">' + ylabel + '</span>';
+    }
+  }, {
+    key: 'drawHistogram',
+    value: function drawHistogram(chartName, xName, yName) {
+      var container = document.querySelector('#chart-' + chartName + ' .chart'),
+          table = this.state.demographics[chartName],
+          x = table.map(function (row) {
+        return row[xName];
+      }),
+          y = table.map(function (row) {
+        return row[yName];
+      }),
+          xMin = Math.min.apply(null, x),
+          xMax = Math.max.apply(null, x),
+          numBars = xMax - xMin + 1,
+          labelFreq = Math.ceil(numBars / 10 / 5) * 5,
+          values = [],
+          labels = [];
+
+      for (var i = xMin; i <= xMax; i++) {
+        labels.push((i - xMin + 1) % labelFreq === 0 ? i.toString() : '');
+        var idx = x.indexOf(i);
+        values.push(idx === -1 ? 0 : y[idx]);
+      }
+
+      var chart = new Chartist.Bar(container, {
+        labels: labels,
+        series: [values]
+      }, {
+        axisX: {
+          showGrid: false
+        },
+        axisY: {
+          onlyInteger: true
+        },
+        chartPadding: {
+          left: 25
+        }
+      });
+
+      chart.on('draw', function (data) {
+        if (data.type !== 'bar') return;
+        data.element._node.style['stroke-width'] = 100 / numBars + '%';
       });
     }
   }, {

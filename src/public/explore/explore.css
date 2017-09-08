@@ -66,12 +66,14 @@ article {
   justify-content: center;
   margin: 0 0 -60px 0;
   min-height: 100%;
-  padding: 85px 10px 25px;
+  padding: 100px 10px 40px;
   position: relative;
   width: 100%;
 }
 h1 {
   font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  margin: 0 0 1em;
   text-transform: uppercase;
 }
 #home {
@@ -184,8 +186,96 @@ h1 {
   font-size: 0.9em;
   text-transform: uppercase;
 }
-#demographics #charts .chart {
-  
+#demographics #charts .chart-wrapper {
+  margin: 15px 0;
+  position: relative;
+}
+#demographics #charts h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3em;
+  margin: 0 0 0.25em;
+  text-align: center;
+  text-transform: uppercase;
+}
+#demographics .label-x,
+#demographics .label-y {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9em;
+}
+#demographics .label-x {
+  text-align: center;
+}
+#demographics .label-y {
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 1.25em;
+}
+#demographics .label-y .label {
+  left: -600px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: rotate(270deg);
+  transform-origin: center top;
+  white-space: nowrap;
+  width: 1200px;
+}
+#demographics .ct-bar {
+  stroke-width: 8%;
+}
+#demographics .ct-series-a .ct-bar {
+  stroke: #cccccc;
+}
+#demographics #chart-age .ct-series-b .ct-bar {
+  stroke: #c7e9b4;
+}
+#demographics #chart-age .ct-series-c .ct-bar {
+  stroke: #7fcdbb;
+}
+#demographics #chart-age .ct-series-d .ct-bar {
+  stroke: #41b6c4;
+}
+#demographics #chart-age .ct-series-e .ct-bar {
+  stroke: #1d91c0;
+}
+#demographics #chart-age .ct-series-f .ct-bar {
+  stroke: #225ea8;
+}
+#demographics #chart-age .ct-series-g .ct-bar {
+  stroke: #253494;
+}
+#demographics #chart-age .ct-series-h .ct-bar {
+  stroke: #081d58;
+}
+#demographics #chart-age .ct-series-i .ct-bar {
+  stroke: #081d58;
+}
+#demographics #chart-age .ct-series-j .ct-bar {
+  stroke: #081d58;
+}
+#demographics #chart-gender .ct-series-b .ct-bar {
+  stroke: #abdda4;
+}
+#demographics #chart-gender .ct-series-c .ct-bar {
+  stroke: #b2abd2;
+}
+#demographics #chart-gender .ct-series-d .ct-bar {
+  stroke: #fdae61;
+}
+#demographics #chart-cycling-experience .ct-series-b .ct-bar {
+  stroke: #fecc5c;
+}
+#demographics #chart-cycling-experience .ct-series-c .ct-bar {
+  stroke: #fd8d3c;
+}
+#demographics #chart-cycling-experience .ct-series-d .ct-bar {
+  stroke: #e31a1c;
+}
+#demographics #chart-trip-count .ct-series-a .ct-bar {
+  stroke: #67a9cf;
 }
 #data {
   background-color: #666666;
@@ -222,5 +312,14 @@ h1 {
   }
   #home-menu .text {
     font-size: 1.2em;
+  }
+  #demographics #charts {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  #demographics #charts .chart-wrapper {
+    width: 47%;
   }
 }

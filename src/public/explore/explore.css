@@ -76,6 +76,12 @@ h1 {
   margin: 0 0 1em;
   text-transform: uppercase;
 }
+h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3em;
+  margin: 0 0 0.25em;
+  text-transform: uppercase;
+}
 #home {
   background-image: url(img/background-home.jpg);
   background-size: cover;
@@ -146,6 +152,76 @@ h1 {
   background-color: #f9d89a;
   z-index: 40;
 }
+#download .slider {
+  height: 600px;
+  position: relative;
+  width: 100%;
+}
+#download .slide {
+  left: 50%;
+  max-height: 100%;
+  max-width: 100%;
+  position: absolute;
+  text-decoration: none;
+  top: 0;
+  transform: translate(-50%, 0);
+}
+#download .slide1 {
+  animation: fade 21s infinite;
+  -webkit-animation: fade 21s infinite;
+}
+#download .slide2 {
+  animation: fade2 21s infinite;
+  -webkit-animation: fade2 21s infinite;
+}
+#download .slide3 {
+  animation: fade3 21s infinite;
+  -webkit-animation: fade3 21s infinite;
+}
+@keyframes fade1 {
+  0% { opacity: 0 }
+  5% { opacity: 1 }
+  33.333% { opacity: 1 }
+  38.333% { opacity: 0 }
+  100% { opacity: 0 }
+}
+@keyframes fade2 {
+  0% { opacity: 0 }
+  33.333% { opacity: 0 }
+  38.333% { opacity: 1 }
+  63.333% { opacity: 1 }
+  68.333% { opacity: 0 }
+  100% { opacity: 0 }
+}
+@keyframes fade3 {
+  0% { opacity: 1 }
+  5% { opacity: 0 }
+  63.333% { opacity: 0 }
+  68.333% { opacity: 1 }
+  100% { opacity: 1 }
+}
+#download .features {
+  display: none;
+}
+#download .features strong {
+  font-family: 'Montserrat', sans-serif;
+}
+#download .download-buttons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1em 0 1em -12px;
+  padding: 0;
+}
+#download .download-buttons li {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#download .download-buttons li.ios {
+  padding: 13px;
+}
 #demographics {
   background-color: #f8f8f8;
   z-index: 30;
@@ -191,11 +267,7 @@ h1 {
   position: relative;
 }
 #demographics #charts h2 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.3em;
-  margin: 0 0 0.25em;
   text-align: center;
-  text-transform: uppercase;
 }
 #demographics .label-x,
 #demographics .label-y {
@@ -312,6 +384,21 @@ h1 {
   }
   #home-menu .text {
     font-size: 1.2em;
+  }
+  #download .inner > * {
+    margin-left: 35%;
+  }
+  #download .slider {
+    float: left;
+    margin-left: 0;
+    margin-top: -48px;
+    width: 30%;
+  }
+  #download .features {
+    display: block;
+  }
+  #download .download-buttons {
+    justify-content: flex-start;
   }
   #demographics #charts {
     display: flex;

@@ -149,7 +149,7 @@ class Analysis {
         SELECT edge_trip.gid,
           count(DISTINCT edge_trip.trip_id) AS trips,
           count(DISTINCT edge_trip.user_id) AS users,
-          avg(edge_trip.mean_speed) AS mean_speed
+          avg(edge_trip.mean_speed) * 2.23694 AS mean_speed
         FROM edge_trip
         GROUP BY edge_trip.gid
       ) AS summary

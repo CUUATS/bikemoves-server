@@ -84,13 +84,15 @@ class Explore {
         series: options.series
       });
       let container = document.querySelector(`#chart-${options.id}`);
+      if (options.title) container.querySelector(`.title`).innerHTML =
+        options.title;
       if (options.xLabel) container.querySelector(`.label-x`).innerHTML =
         options.xLabel;
       if (options.yLabel) container.querySelector(`.label-y .label`).innerHTML =
         options.yLabel;
     } else {
       let container = document.querySelector(`#chart-${options.id}`);
-      container.innerHTML = `<h2>${options.title}</h2>` +
+      container.innerHTML = `<h2 class="title">${options.title}</h2>` +
         `<div class="chart ${options.cssClass}"></div>` +
         `<div class="label-x">${options.xLabel}</div>` +
         `<div class="label-y"><span class="label">${options.yLabel}</span></div>`;

@@ -97,11 +97,12 @@ var Explore = function () {
           series: options.series
         });
         var container = document.querySelector('#chart-' + options.id);
+        if (options.title) container.querySelector('.title').innerHTML = options.title;
         if (options.xLabel) container.querySelector('.label-x').innerHTML = options.xLabel;
         if (options.yLabel) container.querySelector('.label-y .label').innerHTML = options.yLabel;
       } else {
         var _container = document.querySelector('#chart-' + options.id);
-        _container.innerHTML = '<h2>' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
+        _container.innerHTML = '<h2 class="title">' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
 
         chart = new Chartist.Bar(_container.querySelector('.chart'), {
           labels: options.labels,

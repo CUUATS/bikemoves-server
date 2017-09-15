@@ -48,11 +48,8 @@ class Distribution {
   }
 
   checkStops(size, start) {
-    console.log('Checking stops:', size, start);
     let stops = this.getStops(size, start),
       score = this.scoreStops(stops);
-
-    console.log('Stops and score:', stops, score);
 
     if (score > this.best.score) {
       this.best.score = score;
@@ -62,8 +59,7 @@ class Distribution {
 
   fit() {
     let maxSize = Math.ceil((this.max - this.min) / this.n);
-    console.log('maxSize', maxSize);
-
+    
     // TODO: Improve stop checking performance by eliminating unlikely
     // possibilities.
     for (let size = 1; size <= maxSize; size++) {

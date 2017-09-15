@@ -59,14 +59,14 @@ class Distribution {
 
   fit() {
     let maxSize = Math.ceil((this.max - this.min) / this.n);
-    
+
     // TODO: Improve stop checking performance by eliminating unlikely
     // possibilities.
     for (let size = 1; size <= maxSize; size++) {
       if (this.zeroBased) {
         this.checkStops(size, size);
       } else {
-        for (let start = this.min; start +
+        for (let start = this.min + 1; start +
             size * (this.n - 2) < this.max; start++)
           this.checkStops(size, start);
       }

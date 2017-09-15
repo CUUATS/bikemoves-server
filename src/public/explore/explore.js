@@ -89,15 +89,28 @@ var Explore = function () {
   }, {
     key: 'drawChart',
     value: function drawChart(options, chartOptions) {
-      var container = document.querySelector('#chart-' + options.id);
-      container.innerHTML = '<h2>' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
+      var chart = this.charts[options.id];
 
-      var chart = new Chartist.Bar(container.querySelector('.chart'), {
-        labels: options.labels,
-        series: options.series
-      }, chartOptions || {});
+      if (chart) {
+        chart.update({
+          labels: options.labels,
+          series: options.series
+        });
+        var container = document.querySelector('#chart-' + options.id);
+        if (options.xLabel) container.querySelector('.label-x').innerHTML = options.xLabel;
+        if (options.yLabel) container.querySelector('.label-y .label').innerHTML = options.yLabel;
+      } else {
+        var _container = document.querySelector('#chart-' + options.id);
+        _container.innerHTML = '<h2>' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
 
-      this.charts[options.id] = chart;
+        chart = new Chartist.Bar(_container.querySelector('.chart'), {
+          labels: options.labels,
+          series: options.series
+        }, chartOptions || {});
+
+        this.charts[options.id] = chart;
+      }
+
       return chart;
     }
   }, {
@@ -111,43 +124,34 @@ var Explore = function () {
           series = table.map(function (row) {
         return row[statName];
       }),
+          xLabel = {
+        age: 'Age',
+        gender: 'Gender',
+        'cycling-experience': 'Cycling Experience'
+      }[chartName],
           yLabel = {
         users: 'Total Users',
         trips: 'Total Trips',
         distance: 'Total Miles'
       }[statName];
 
-      if (this.charts[chartName]) {
-        this.charts[chartName].update({
-          labels: labels,
-          series: series
-        });
-        document.querySelector('#chart-' + chartName + ' .label-y .label').innerHTML = yLabel;
-      } else {
-        var xLabel = {
-          age: 'Age',
-          gender: 'Gender',
-          'cycling-experience': 'Cycling Experience'
-        }[chartName];
-
-        this.drawChart({
-          id: chartName,
-          title: xLabel,
-          cssClass: 'ct-octave',
-          xLabel: xLabel,
-          yLabel: yLabel,
-          labels: labels,
-          series: series
-        }, {
-          axisY: {
-            onlyInteger: true
-          },
-          chartPadding: {
-            left: 25
-          },
-          distributeSeries: true
-        });
-      }
+      this.drawChart({
+        id: chartName,
+        title: xLabel,
+        cssClass: 'ct-octave',
+        xLabel: xLabel,
+        yLabel: yLabel,
+        labels: labels,
+        series: series
+      }, {
+        axisY: {
+          onlyInteger: true
+        },
+        chartPadding: {
+          left: 25
+        },
+        distributeSeries: true
+      });
     }
   }, {
     key: 'drawStatHistogram',
@@ -258,7 +262,9 @@ var Explore = function () {
     }
   }, {
     key: 'getMapViewPaintProperties',
-    value: function getMapViewPaintProperties(viewName) {
+    value: function getMapViewPaintProperties() {
+      var viewName = this.state.mapView;
+
       if (viewName === 'users-speed') return {
         'line-color': {
           type: 'interval',
@@ -304,24 +310,68 @@ var Explore = function () {
         type: 'line',
         source: 'explore',
         'source-layer': 'edge',
-        paint: this.getMapViewPaintProperties(this.state.mapView),
+        paint: this.getMapViewPaintProperties(),
         layout: {
           'line-cap': 'round'
         }
       }, 'road-label-small');
+
+      this.drawLegend();
     }
   }, {
     key: 'updateMapView',
     value: function updateMapView() {
-      var props = this.getMapViewPaintProperties(this.state.mapView);
+      var props = this.getMapViewPaintProperties();
       for (var propName in props) {
         this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
-      }
+      }this.drawLegend();
+    }
+  }, {
+    key: 'drawLegendChart',
+    value: function drawLegendChart(chartId, propName, title, xLabel, yLabel, values) {
+      var stats = this.data.statistics[propName],
+          labels = stats.stops.map(function (stop) {
+        if (stop.upper === stop.lower + 1) return stop.lower.toString();
+        return stop.lower + ' to ' + (stop.upper - 1);
+      }),
+          series = stats.stops.map(function (stop) {
+        return stop.count;
+      });
+
+      var chart = this.drawChart({
+        id: chartId,
+        title: title,
+        cssClass: 'ct-octave',
+        xLabel: xLabel,
+        yLabel: yLabel,
+        labels: labels,
+        series: [series]
+      }, {
+        axisX: {
+          showGrid: false
+        },
+        axisY: {
+          onlyInteger: true
+        }
+      });
+
+      chart.on('draw', function (data) {
+        if (data.type !== 'bar') return;
+        var value = values[data.index],
+            cssProp = isNaN(value) ? 'stroke' : 'stroke-width';
+
+        data.element._node.style[cssProp] = value;
+      });
     }
   }, {
     key: 'drawLegend',
     value: function drawLegend() {
-      var props = this.getMapViewPaintProperties(this.state.mapView);
+      this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH', 'Miles', this.edgeColors);
+      if (this.state.mapView === 'users-speed') {
+        this.drawLegendChart('edge-width', 'users', 'Users', 'Users', 'Miles', this.edgeWidths);
+      } else {
+        this.drawLegendChart('edge-width', 'trips', 'Trips', 'Trips', 'Miles', this.edgeWidths);
+      }
     }
   }]);
 

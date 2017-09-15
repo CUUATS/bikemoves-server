@@ -85,8 +85,8 @@ app.server.get('/statistics.json', (req, res) => {
   res.header('Content-Type', 'application/json');
 
   let speed = fitDist('mean_speed', 5, false),
-    trips = fitDist('trips', 5, true),
-    users = fitDist('users', 5, true);
+    trips = fitDist('trips', 5, false),
+    users = fitDist('users', 5, false);
 
   Promise.all([speed, trips, users])
     .then((results) => {

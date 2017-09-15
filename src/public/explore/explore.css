@@ -262,22 +262,22 @@ h2 {
   font-size: 0.9em;
   text-transform: uppercase;
 }
-#demographics #charts .chart-wrapper {
+.chart-wrapper {
   margin: 15px 0;
   position: relative;
 }
-#demographics #charts h2 {
+.chart-wrapper h2 {
   text-align: center;
 }
-#demographics .label-x,
-#demographics .label-y {
+.chart-wrapper .label-x,
+.chart-wrapper .label-y {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.9em;
 }
-#demographics .label-x {
+.chart-wrapper .label-x {
   text-align: center;
 }
-#demographics .label-y {
+.chart-wrapper .label-y {
   height: 100%;
   left: 0;
   overflow: hidden;
@@ -285,7 +285,7 @@ h2 {
   top: 0;
   width: 1.25em;
 }
-#demographics .label-y .label {
+.chart-wrapper .label-y .label {
   left: -600px;
   position: absolute;
   text-align: center;
@@ -295,10 +295,10 @@ h2 {
   white-space: nowrap;
   width: 1200px;
 }
-#demographics .ct-bar {
+.chart-wrapper .ct-bar {
   stroke-width: 8%;
 }
-#demographics .ct-series-a .ct-bar {
+.chart-wrapper .ct-series-a .ct-bar {
   stroke: #cccccc;
 }
 #demographics #chart-age .ct-series-b .ct-bar {
@@ -371,9 +371,11 @@ h2 {
 }
 #data .style-select {
   width: auto;
+  z-index: 10;
 }
 #data .ss-selected-option {
-  background-image: linear-gradient(to bottom, #222222, #111111);
+  background-image: none;
+  background-color: #444444;
   border-color: #444444;
   color: white;
   font-family: 'Montserrat', sans-serif;
@@ -389,11 +391,24 @@ h2 {
   top: 42px;
 }
 #data .style-select .ss-dropdown .ss-option {
-  background-color: #444444;
+  background-color: #111111;
   color: white;
 }
 #data .style-select .ss-dropdown .ss-option.highlighted {
   background-color: #333333;
+}
+#data .chart-wrapper h2 {
+  font-size: 1.1em;
+}
+#data .ct-label {
+  color: #bbbbbb;
+}
+#data .ct-grids .ct-grid {
+  stroke: #999999;
+}
+#data .label-x,
+#data .label-y {
+  color: #dddddd;
 }
 @media screen and (min-width: 768px) {
   #logo {

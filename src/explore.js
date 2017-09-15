@@ -1,4 +1,5 @@
-const express = require('express'),
+const apicache = require('apicache'),
+  express = require('express'),
   db = require('./db.js'),
   geo = require('./geo.js'),
   Distribution = require('./distribution.js'),
@@ -20,6 +21,8 @@ const app = new Tilesplash({
   port: parseInt(process.env.POSTGRES_PORT),
   database: process.env.POSTGRES_DB
 });
+
+const cache = apicache.middleware;
 
 function edgeStatisticsQuery(column) {
   let sql = `
@@ -52,7 +55,7 @@ app.server.get('/config.js', (req, res) => {
   res.send('mapboxgl.accessToken = "' + process.env.MAPBOX_TOKEN + '";');
 });
 
-app.server.get('/demographics.json', (req, res) => {
+app.server.get('/demographics.json', cache('24 hours'), (req, res) => {
   res.header('Content-Type', 'application/json');
   db.DemographicSummary.findAll({
     where: {
@@ -81,7 +84,7 @@ app.server.get('/demographics.json', (req, res) => {
   });
 });
 
-app.server.get('/statistics.json', (req, res) => {
+app.server.get('/statistics.json', cache('24 hours'), (req, res) => {
   res.header('Content-Type', 'application/json');
 
   let speed = fitDist('mean_speed', 5, false),

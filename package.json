@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@turf/turf": "^4.6.1",
+    "apicache": "^1.0.0",
     "body-parser": "^1.17.2",
     "express": "^4.15.4",
     "osrm": "^5.11.0",

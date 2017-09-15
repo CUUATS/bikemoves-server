@@ -9,54 +9,73 @@ var Explore = function () {
     _classCallCheck(this, Explore);
 
     this.state = {
-      chartView: 'users'
+      chartView: 'users',
+      mapView: 'users-speed'
     };
+    this.charts = {};
+    this.data = {};
+    this.edgeColors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#ffffcc'];
+    this.edgeWidths = [3, 6, 9, 12, 15];
+
     this.initCharts();
-    // this.initMap();
+    this.initMap();
   }
 
   _createClass(Explore, [{
     key: 'initMap',
     value: function initMap() {
-      this.map = map = new mapboxgl.Map({
+      var _this = this;
+
+      var getStats = this.getJSON(this.absoluteURL('/statistics.json')).then(function (statistics) {
+        return _this.data.statistics = statistics;
+      });
+
+      this.map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/light-v9',
+        style: 'mapbox://styles/mapbox/dark-v9',
         center: [-88.227203, 40.109403],
         zoom: 13
       });
-      map.on('load', this.addLayers.bind(this));
+
+      var mapLoad = new Promise(function (resolve, reject) {
+        _this.map.on('load', resolve);
+      });
+
+      Promise.all([getStats, mapLoad]).then(this.addLayers.bind(this));
+
+      this.initMapViewSelect();
     }
   }, {
     key: 'initCharts',
     value: function initCharts() {
-      var _this = this;
+      var _this2 = this;
 
       this.getJSON(this.absoluteURL('/demographics.json')).then(function (data) {
-        _this.state.demographics = data;
-        _this.initChartViews();
+        _this2.data.demographics = data;
+        _this2.initChartViews();
       });
     }
   }, {
     key: 'initChartViews',
     value: function initChartViews() {
-      var _this2 = this;
+      var _this3 = this;
 
-      var data = this.state.demographics,
+      var data = this.data.demographics,
           viewButtons = document.querySelectorAll('#stats li');
       viewButtons.forEach(function (button) {
         var link = button.querySelector('a'),
             value = button.querySelector('.value'),
             statName = button.className;
 
-        value.innerHTML = _this2.formatNumber(_this2.getStatTotal(data, statName), 0);
+        value.innerHTML = _this3.formatNumber(_this3.getStatTotal(data, statName), 0);
         link.addEventListener('click', function (e) {
           e.preventDefault();
-          _this2.state.chartView = statName;
-          _this2.showStatCharts();
+          _this3.state.chartView = statName;
+          _this3.showStatCharts();
         });
       });
       this.showStatCharts();
-      this.drawHistogram('trip-count', 'trips', 'users');
+      this.drawStatHistogram('trip-count', 'trips', 'users');
     }
   }, {
     key: 'showStatCharts',
@@ -65,44 +84,75 @@ var Explore = function () {
       document.querySelectorAll('#stats li a').forEach(function (link) {
         link.className = link.parentNode.className === statName ? 'active' : '';
       });
-      ['age', 'gender', 'cycling-experience'].forEach(this.drawChart.bind(this));
+      ['age', 'gender', 'cycling-experience'].forEach(this.drawStatChart.bind(this));
     }
   }, {
     key: 'drawChart',
-    value: function drawChart(chartName) {
-      var container = document.querySelector('#chart-' + chartName + ' .chart'),
-          table = this.state.demographics[chartName],
-          statName = this.state.chartView;
+    value: function drawChart(options, chartOptions) {
+      var container = document.querySelector('#chart-' + options.id);
+      container.innerHTML = '<h2>' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
 
-      var chart = new Chartist.Bar(container, {
-        labels: table.map(function (row) {
-          return row.description;
-        }),
-        series: table.map(function (row) {
-          return row[statName];
-        })
-      }, {
-        axisY: {
-          onlyInteger: true
-        },
-        chartPadding: {
-          left: 25
-        },
-        distributeSeries: true
-      });
+      var chart = new Chartist.Bar(container.querySelector('.chart'), {
+        labels: options.labels,
+        series: options.series
+      }, chartOptions || {});
 
-      var ylabel = {
+      this.charts[options.id] = chart;
+      return chart;
+    }
+  }, {
+    key: 'drawStatChart',
+    value: function drawStatChart(chartName) {
+      var table = this.data.demographics[chartName],
+          statName = this.state.chartView,
+          labels = table.map(function (row) {
+        return row.description;
+      }),
+          series = table.map(function (row) {
+        return row[statName];
+      }),
+          yLabel = {
         users: 'Total Users',
         trips: 'Total Trips',
         distance: 'Total Miles'
       }[statName];
-      container.parentNode.querySelector('.label-y').innerHTML = '<span class="label">' + ylabel + '</span>';
+
+      if (this.charts[chartName]) {
+        this.charts[chartName].update({
+          labels: labels,
+          series: series
+        });
+        document.querySelector('#chart-' + chartName + ' .label-y .label').innerHTML = yLabel;
+      } else {
+        var xLabel = {
+          age: 'Age',
+          gender: 'Gender',
+          'cycling-experience': 'Cycling Experience'
+        }[chartName];
+
+        this.drawChart({
+          id: chartName,
+          title: xLabel,
+          cssClass: 'ct-octave',
+          xLabel: xLabel,
+          yLabel: yLabel,
+          labels: labels,
+          series: series
+        }, {
+          axisY: {
+            onlyInteger: true
+          },
+          chartPadding: {
+            left: 25
+          },
+          distributeSeries: true
+        });
+      }
     }
   }, {
-    key: 'drawHistogram',
-    value: function drawHistogram(chartName, xName, yName) {
-      var container = document.querySelector('#chart-' + chartName + ' .chart'),
-          table = this.state.demographics[chartName],
+    key: 'drawStatHistogram',
+    value: function drawStatHistogram(chartName, xName, yName) {
+      var table = this.data.demographics[chartName],
           x = table.map(function (row) {
         return row[xName];
       }),
@@ -122,7 +172,12 @@ var Explore = function () {
         values.push(idx === -1 ? 0 : y[idx]);
       }
 
-      var chart = new Chartist.Bar(container, {
+      var chart = this.drawChart({
+        id: chartName,
+        title: 'Trips per User',
+        cssClass: 'ct-octave',
+        xLabel: 'Trips',
+        yLabel: 'Users',
         labels: labels,
         series: [values]
       }, {
@@ -179,6 +234,58 @@ var Explore = function () {
       });
     }
   }, {
+    key: 'initMapViewSelect',
+    value: function initMapViewSelect() {
+      var _this4 = this;
+
+      // Apply styleSelect.
+      window.returnExports('#select-map-view');
+
+      var select = document.getElementById('select-map-view');
+      select.addEventListener('change', function (e) {
+        var viewName = select.options[select.selectedIndex].value;
+        if (_this4.state.mapView === viewName) return;
+        _this4.state.mapView = viewName;
+        _this4.updateMapView();
+      });
+    }
+  }, {
+    key: 'getStops',
+    value: function getStops(propName, values) {
+      return this.data.statistics[propName].stops.map(function (stop, i) {
+        return [stop.lower, values[i]];
+      });
+    }
+  }, {
+    key: 'getMapViewPaintProperties',
+    value: function getMapViewPaintProperties(viewName) {
+      if (viewName === 'users-speed') return {
+        'line-color': {
+          type: 'interval',
+          property: 'mean_speed',
+          stops: this.getStops('speed', this.edgeColors)
+        },
+        'line-width': {
+          type: 'interval',
+          property: 'users',
+          stops: this.getStops('users', this.edgeWidths)
+        }
+      };
+
+      if (viewName === 'trips-speed') return {
+        'line-color': {
+          type: 'interval',
+          property: 'mean_speed',
+          stops: this.getStops('speed', this.edgeColors)
+        },
+        'line-width': {
+          type: 'interval',
+          property: 'trips',
+          stops: this.getStops('trips', this.edgeWidths)
+        }
+      };
+    }
+  }, {
     key: 'addLayers',
     value: function addLayers() {
       this.map.addSource('explore', {
@@ -197,22 +304,24 @@ var Explore = function () {
         type: 'line',
         source: 'explore',
         'source-layer': 'edge',
-        paint: {
-          'line-color': {
-            type: 'interval',
-            property: 'mean_speed',
-            stops: [[1, '#d7191c'], [2, '#fdae61'], [3, '#ffffbf'], [4, '#abd9e9'], [5, '#2c7bb6']]
-          },
-          'line-width': {
-            type: 'interval',
-            property: 'users',
-            stops: [[2, 4], [4, 8], [6, 12], [8, 16]]
-          }
-        },
+        paint: this.getMapViewPaintProperties(this.state.mapView),
         layout: {
           'line-cap': 'round'
         }
       }, 'road-label-small');
+    }
+  }, {
+    key: 'updateMapView',
+    value: function updateMapView() {
+      var props = this.getMapViewPaintProperties(this.state.mapView);
+      for (var propName in props) {
+        this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
+      }
+    }
+  }, {
+    key: 'drawLegend',
+    value: function drawLegend() {
+      var props = this.getMapViewPaintProperties(this.state.mapView);
     }
   }]);
 

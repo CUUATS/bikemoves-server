@@ -350,13 +350,50 @@ h2 {
   stroke: #67a9cf;
 }
 #data {
-  background-color: #666666;
+  background-color: #222222;
+  color: white;
   z-index: 20;
 }
-#map {
-  background-color: #eeeeee;
-  box-sizing: border-box;
+#data,
+#data .inner {
   height: 100%;
+}
+#data #map {
+  background-color: #333333;
+  box-sizing: border-box;
+  height: calc(100% - 48px);
+}
+#data #map-controls label {
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 0.25em;
+  text-transform: uppercase;
+}
+#data .style-select {
+  width: auto;
+}
+#data .ss-selected-option {
+  background-image: linear-gradient(to bottom, #222222, #111111);
+  border-color: #444444;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  padding: 10px 6px;
+}
+#data .style-select .ss-selected-option::after {
+  color: #666666;
+  top: 10px;
+}
+#data .style-select .ss-dropdown {
+  border-color: #666666;
+  box-shadow: none;
+  top: 42px;
+}
+#data .style-select .ss-dropdown .ss-option {
+  background-color: #444444;
+  color: white;
+}
+#data .style-select .ss-dropdown .ss-option.highlighted {
+  background-color: #333333;
 }
 @media screen and (min-width: 768px) {
   #logo {
@@ -408,5 +445,13 @@ h2 {
   }
   #demographics #charts .chart-wrapper {
     width: 47%;
+  }
+  #map {
+    float: left;
+    width: 68%;
+  }
+  #map-controls {
+    float: right;
+    width: 30%;
   }
 }

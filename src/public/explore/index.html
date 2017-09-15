@@ -6,6 +6,7 @@
     <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans" rel="stylesheet">
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.css' rel='stylesheet' />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <link rel="stylesheet" href="styleselect.css">
     <link rel="stylesheet" href="explore.css">
   </head>
   <body>
@@ -153,39 +154,32 @@
           </li>
         </ul>
         <div id="charts">
-          <div id="chart-age" class="chart-wrapper">
-            <h2>Age</h2>
-            <div class="chart ct-octave"></div>
-            <div class="label-x">Age</div>
-            <div class="label-y"></div>
-          </div>
-          <div id="chart-gender" class="chart-wrapper">
-            <h2>Gender</h2>
-            <div class="chart ct-octave"></div>
-            <div class="label-x">Gender</div>
-            <div class="label-y"></div>
-          </div>
-          <div id="chart-cycling-experience" class="chart-wrapper">
-            <h2>Cycling Experience</h2>
-            <div class="chart ct-octave"></div>
-            <div class="label-x">Cycling Experience</div>
-            <div class="label-y"></div>
-          </div>
-          <div id="chart-trip-count" class="chart-wrapper">
-            <h2>Trips per User</h2>
-            <div class="chart ct-octave"></div>
-            <div class="label-x">Trips</div>
-            <div class="label-y"><span class="label">Users</span></div>
-          </div>
+          <div id="chart-age" class="chart-wrapper"></div>
+          <div id="chart-gender" class="chart-wrapper"></div>
+          <div id="chart-cycling-experience" class="chart-wrapper"></div>
+          <div id="chart-trip-count" class="chart-wrapper"></div>
         </div>
       </div>
     </article>
     <article id="data">
-      <div id="map"></div>
+      <div class="inner">
+        <h1>Explore BikeMoves Data</h1>
+        <div id="map"></div>
+        <div id="map-controls">
+          <label for="map-view">Map View</label>
+          <select class="" name="map-view" id="select-map-view">
+            <option value="users-speed">Users and Average Speed</option>
+            <option value="trips-speed">Trips and Average Speed</option>
+          </select>
+          <div id="chart-edge-color" class="chart-wrapper"></div>
+          <div id="chart-edge-width" class="chart-wrapper"></div>
+        </div>
+      </div>
     </article>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.js'></script>
     <script src="https://use.fontawesome.com/e09acc63a3.js"></script>
     <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script type="text/javascript" src="styleselect.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="explore.js"></script>
   </body>

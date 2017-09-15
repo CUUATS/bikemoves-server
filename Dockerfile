@@ -9,6 +9,7 @@ WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app/
 RUN npm install topojson
+RUN npm install https://github.com/CUUATS/tilesplash.git
 RUN npm install && npm cache clean
 COPY . /usr/src/app
 

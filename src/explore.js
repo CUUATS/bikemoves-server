@@ -1,6 +1,7 @@
 const express = require('express'),
   db = require('./db.js'),
   geo = require('./geo.js'),
+  Distribution = require('./distribution.js'),
   Tilesplash = require('tilesplash');
 
 const EDGE_QUERY = `
@@ -20,9 +21,9 @@ const app = new Tilesplash({
   database: process.env.POSTGRES_DB
 });
 
-function getDist(valCol) {
+function edgeStatisticsQuery(column) {
   let sql = `
-    SELECT ${valCol}::int AS value,
+    SELECT ${column}::int AS value,
       sum(ST_Length(edge.geom_proj)) / 5280 AS count
     FROM edge
     WHERE users >= 2
@@ -32,81 +33,11 @@ function getDist(valCol) {
   return db.sequelize.query(sql, {type: db.sequelize.QueryTypes.SELECT});
 }
 
-function makeStopValues(n, size, current, max) {
-  let stops = [current];
-  for (let i = 1; i < n - 1; i++) {
-    current += size;
-    stops.push(current);
-  }
-  stops.push(max);
-  return stops;
-}
-
-function getStops(data, n, size, start) {
-  let stops = makeStopValues(n, size, start, data[data.length - 1].value),
-    i = 0,
-    grandTotal = data.map((d) => d.count).reduce((sum, ct) => sum + ct, 0),
-    cumulativeTotal = 0;
-
-  return stops.map((stop) => {
-    let stopTotal = 0;
-
-    while (i < data.length && data[i].value <= stop) {
-      cumulativeTotal += data[i].count;
-      stopTotal += data[i].count;
-      i++;
-    }
-
-    return {
-      value: stop,
-      count: stopTotal,
-      percentile: cumulativeTotal / grandTotal
-    };
+function fitDist(column, n, zeroBased) {
+  return edgeStatisticsQuery(column).then((rows) => {
+    let dist = new Distribution(rows, n, zeroBased);
+    return dist.fit();
   });
-}
-
-function scoreStops(stops) {
-  let n = stops.length;
-  return 1 - stops
-    .map((stop, i) => Math.abs(stop.percentile - ((i + 1) / n)))
-    .reduce((sum, score) => sum + score, 0);
-}
-
-function checkStops(best, n, size, start, data) {
-  let stops = getStops(data, n, size, start),
-    score = scoreStops(stops);
-
-  if (score > best.score) {
-    best.score = score;
-    best.stops = stops;
-  }
-}
-
-function fitDist(data, n, zeroBased) {
-  let minVal = data[0].value,
-    maxVal = data[data.length - 1].value,
-    maxSize = Math.ceil((maxVal - minVal) / n);
-
-  let best = {
-    max: maxVal,
-    min: minVal,
-    score: -1,
-    stops: []
-  };
-
-
-  // TODO: Improve stop checking performance by eliminating unlikely
-  // possibilities.
-  for (let size = 1; size <= maxSize; size++) {
-    if (zeroBased) {
-      checkStops(best, n, size, size, data);
-    } else {
-      for (let start = minVal; start + size * (n - 2) < maxVal; start++)
-        checkStops(best, n, size, start, data);
-    }
-  }
-
-  return best;
 }
 
 app.server.use('/styleselect.css',
@@ -150,12 +81,12 @@ app.server.get('/demographics.json', (req, res) => {
   });
 });
 
-app.server.get('/map.json', (req, res) => {
+app.server.get('/statistics.json', (req, res) => {
   res.header('Content-Type', 'application/json');
 
-  let speed = getDist('mean_speed').then((rows) => fitDist(rows, 5, false)),
-    trips = getDist('trips').then((rows) => fitDist(rows, 5, true)),
-    users = getDist('users').then((rows) => fitDist(rows, 5, true));
+  let speed = fitDist('mean_speed', 5, false),
+    trips = fitDist('trips', 5, true),
+    users = fitDist('users', 5, true);
 
   Promise.all([speed, trips, users])
     .then((results) => {

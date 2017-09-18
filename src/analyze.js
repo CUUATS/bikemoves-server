@@ -20,39 +20,35 @@ class Analysis {
   }
 
   updateDemographics() {
-    return db.DemographicSummary.destroy({
-      truncate: true
-    }).then(() => {
-      return Promise.all([
-        this.insertDemographicSummary('age', [
-          'Not Specified',
-          'Under 15',
-          '15 to 19',
-          '20 to 24',
-          '25 to 34',
-          '35 to 44',
-          '45 to 54',
-          '55 to 64',
-          '65 to 74',
-          '75 and older'
-        ]),
-        this.insertDemographicSummary('gender', [
-          'Not Specified',
-          'Male',
-          'Female',
-          'Other'
-        ]),
-        this.insertDemographicSummary('cycling_experience', [
-          'Not Specified',
-          'Beginner',
-          'Intermediate',
-          'Advanced'
-        ]),
-        this.insertTripCount(),
-        this.updateEdgeTripStatistics(),
-        this.updateEdgeUserStatistics()
-      ]);
-    });
+    return Promise.all([
+      this.insertDemographicSummary('age', [
+        'Not Specified',
+        'Under 15',
+        '15 to 19',
+        '20 to 24',
+        '25 to 34',
+        '35 to 44',
+        '45 to 54',
+        '55 to 64',
+        '65 to 74',
+        '75 and older'
+      ]),
+      this.insertDemographicSummary('gender', [
+        'Not Specified',
+        'Male',
+        'Female',
+        'Other'
+      ]),
+      this.insertDemographicSummary('cycling_experience', [
+        'Not Specified',
+        'Beginner',
+        'Intermediate',
+        'Advanced'
+      ]),
+      this.insertTripCount(),
+      this.updateEdgeTripStatistics(),
+      this.updateEdgeUserStatistics()
+    ]);
   }
 
   insertDemographicSummary(variable, labels) {
@@ -96,7 +92,12 @@ class Analysis {
             trip.region
           ORDER BY labels.code = 0,
             labels.code
-        );`;
+        ) ON CONFLICT (region, category, description) DO UPDATE
+        SET row_order = excluded.row_order,
+          users = excluded.users,
+          trips = excluded.trips,
+          distance = excluded.distance,
+          updated_at = excluded.updated_at;`;
 
     return this.insert(sql);
   }
@@ -135,7 +136,12 @@ class Analysis {
         GROUP BY region,
           trip_count
         ORDER BY trip_count
-      );`;
+      ) ON CONFLICT (region, category, description) DO UPDATE
+      SET row_order = excluded.row_order,
+        users = excluded.users,
+        trips = excluded.trips,
+        distance = excluded.distance,
+        updated_at = excluded.updated_at;`;
 
     return this.insert(sql);
   }

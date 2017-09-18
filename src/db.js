@@ -415,6 +415,10 @@ const DemographicSummary = sequelize.define('demographic_summary', {
   indexes: [
     {
       fields: ['region']
+    },
+    {
+      fields: ['region', 'category', 'description'],
+      unique: true
     }
   ],
   underscored: true

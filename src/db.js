@@ -96,7 +96,6 @@ const Trip = sequelize.define('trip', {
   debug: {
     type: Sequelize.BOOLEAN,
     field: 'debug'
-
   },
   appVersion: {
     type: Sequelize.STRING,
@@ -108,6 +107,16 @@ const Trip = sequelize.define('trip', {
   },
   region: {
     type: Sequelize.STRING
+  },
+  gender: {
+    type: Sequelize.INTEGER
+  },
+  age: {
+    type: Sequelize.INTEGER
+  },
+  cyclingExperience: {
+    type: Sequelize.INTEGER,
+    field: 'cycling_experience'
   }
 }, {
   freezeTableName: true,
@@ -121,7 +130,7 @@ const Trip = sequelize.define('trip', {
   underscored: true
 });
 
-Trip.fromMessage = function(msg, userID) {
+Trip.fromMessage = function(msg, user, region) {
   return {
     origin: msg.origin,
     destination: msg.destination,
@@ -130,9 +139,13 @@ Trip.fromMessage = function(msg, userID) {
     desiredAccuracy: msg.desiredAccuracy,
     transit: msg.transit,
     geom: geo.toGeoJSON(msg.locations),
-    user_id: userID,
+    user_id: user.id,
     debug: msg.debug,
-    appVersion: msg.appVersion
+    appVersion: msg.appVersion,
+    region: region,
+    gender: user.gender,
+    age: user.age,
+    cyclingExperience: user.cyclingExperience
   };
 };
 

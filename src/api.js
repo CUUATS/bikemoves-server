@@ -6,6 +6,8 @@ const express = require('express'),
   db = require('./db.js'),
   SendMail = require('sendmail');
 
+const region = process.env.BIKEMOVES_REGION;
+
 let app = express(),
   sendmail = SendMail(),
   UserMessage,
@@ -82,7 +84,7 @@ app.post('/:version/trip', function(req, res) {
   db.User.findOrCreate({
     where: {deviceUuid: tripMsg.deviceUuid}
   }).spread(function(user, created) {
-    return db.Trip.create(db.Trip.fromMessage(tripMsg, user.id));
+    return db.Trip.create(db.Trip.fromMessage(tripMsg, user, region));
   }).then(function(trip) {
     return db.Point.bulkCreate(db.Point.fromTripMessage(tripMsg, trip.id));
   }).then(function() {

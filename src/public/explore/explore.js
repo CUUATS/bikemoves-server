@@ -16,18 +16,52 @@ var Explore = function () {
     this.data = {};
     this.edgeColors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#ffffcc'];
     this.edgeWidths = [3, 6, 9, 12, 15];
-
+    this.scrolling = false;
     this.initCharts();
     this.initMap();
+    this.initScroll();
   }
 
   _createClass(Explore, [{
-    key: 'initMap',
-    value: function initMap() {
+    key: 'initScroll',
+    value: function initScroll() {
       var _this = this;
 
+      var scrollTimer = void 0;
+      window.addEventListener('scroll', function (e) {
+        if (scrollTimer) clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(_this.onScroll.bind(_this), 200);
+      });
+      this.onScroll();
+    }
+  }, {
+    key: 'onScroll',
+    value: function onScroll() {
+      this.setActiveNavItem(this.getCurrentArticleIdx());
+    }
+  }, {
+    key: 'getCurrentArticleIdx',
+    value: function getCurrentArticleIdx() {
+      var absOffset = [].slice.call(document.querySelectorAll('article')).map(function (el) {
+        return Math.abs(el.getBoundingClientRect().top);
+      });
+
+      return absOffset.indexOf(Math.min.apply(null, absOffset));
+    }
+  }, {
+    key: 'setActiveNavItem',
+    value: function setActiveNavItem(idx) {
+      document.querySelectorAll('header a').forEach(function (el, i) {
+        el.className = idx === i ? 'active' : 'inactive';
+      });
+    }
+  }, {
+    key: 'initMap',
+    value: function initMap() {
+      var _this2 = this;
+
       var getStats = this.getJSON(this.absoluteURL('/statistics.json')).then(function (statistics) {
-        return _this.data.statistics = statistics;
+        return _this2.data.statistics = statistics;
       });
 
       this.map = new mapboxgl.Map({
@@ -38,7 +72,7 @@ var Explore = function () {
       });
 
       var mapLoad = new Promise(function (resolve, reject) {
-        _this.map.on('load', resolve);
+        _this2.map.on('load', resolve);
       });
 
       Promise.all([getStats, mapLoad]).then(this.addLayers.bind(this));
@@ -48,17 +82,17 @@ var Explore = function () {
   }, {
     key: 'initCharts',
     value: function initCharts() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.getJSON(this.absoluteURL('/demographics.json')).then(function (data) {
-        _this2.data.demographics = data;
-        _this2.initChartViews();
+        _this3.data.demographics = data;
+        _this3.initChartViews();
       });
     }
   }, {
     key: 'initChartViews',
     value: function initChartViews() {
-      var _this3 = this;
+      var _this4 = this;
 
       var data = this.data.demographics,
           viewButtons = document.querySelectorAll('#stats li');
@@ -67,11 +101,11 @@ var Explore = function () {
             value = button.querySelector('.value'),
             statName = button.className;
 
-        value.innerHTML = _this3.formatNumber(_this3.getStatTotal(data, statName), 0);
+        value.innerHTML = _this4.formatNumber(_this4.getStatTotal(data, statName), 0);
         link.addEventListener('click', function (e) {
           e.preventDefault();
-          _this3.state.chartView = statName;
-          _this3.showStatCharts();
+          _this4.state.chartView = statName;
+          _this4.showStatCharts();
         });
       });
       this.showStatCharts();
@@ -241,7 +275,7 @@ var Explore = function () {
   }, {
     key: 'initMapViewSelect',
     value: function initMapViewSelect() {
-      var _this4 = this;
+      var _this5 = this;
 
       // Apply styleSelect.
       window.returnExports('#select-map-view');
@@ -249,9 +283,9 @@ var Explore = function () {
       var select = document.getElementById('select-map-view');
       select.addEventListener('change', function (e) {
         var viewName = select.options[select.selectedIndex].value;
-        if (_this4.state.mapView === viewName) return;
-        _this4.state.mapView = viewName;
-        _this4.updateMapView();
+        if (_this5.state.mapView === viewName) return;
+        _this5.state.mapView = viewName;
+        _this5.updateMapView();
       });
     }
   }, {

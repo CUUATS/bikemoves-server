@@ -55,9 +55,14 @@ nav {
   border-bottom: 3px solid transparent;
   color: #222222;
   text-decoration: none;
+  transition: all 0.1s ease-out;
 }
 #primary-nav .label {
   display: none;
+}
+#primary-nav a.active,
+#primary-nav a:hover {
+  color: #225ea8;
 }
 article {
   box-sizing: border-box;

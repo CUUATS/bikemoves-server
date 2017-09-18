@@ -14,9 +14,36 @@ class Explore {
       '#ffffcc'
     ];
     this.edgeWidths = [3, 6, 9, 12, 15];
-
+    this.scrolling = false;
     this.initCharts();
     this.initMap();
+    this.initScroll();
+  }
+
+  initScroll() {
+    let scrollTimer;
+    window.addEventListener('scroll', (e) => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(this.onScroll.bind(this), 200);
+    });
+    this.onScroll();
+  }
+
+  onScroll() {
+    this.setActiveNavItem(this.getCurrentArticleIdx());
+  }
+
+  getCurrentArticleIdx() {
+    let absOffset = [].slice.call(document.querySelectorAll('article'))
+      .map((el) => Math.abs(el.getBoundingClientRect().top));
+
+    return absOffset.indexOf(Math.min.apply(null, absOffset));
+  }
+
+  setActiveNavItem(idx) {
+    document.querySelectorAll('header a').forEach((el, i) => {
+      el.className = (idx === i) ? 'active' : 'inactive';
+    });
   }
 
   initMap() {

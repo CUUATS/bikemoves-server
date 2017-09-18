@@ -70,7 +70,7 @@ class Analysis {
             '${variable}' AS category,
             labels.code AS row_order,
             labels.description,
-            count(DISTINCT usr.id) AS users,
+            count(DISTINCT trip.user_id) AS users,
             count(DISTINCT trip.id) AS trips,
             round(sum(route_leg.distance * 0.000621371)::numeric, 1)
               AS distance,
@@ -79,10 +79,8 @@ class Analysis {
           FROM (
             VALUES ${values}
           ) AS labels (code, description)
-          LEFT JOIN public.user AS usr
-            ON coalesce(usr.${variable}, 0) = labels.code
           INNER JOIN trip
-            ON trip.user_id = usr.id
+            ON coalesce(trip.${variable}, 0) = labels.code
               AND trip.match_status = 'Matched'
           INNER JOIN route_leg
             ON route_leg.trip_id = trip.id
@@ -188,39 +186,40 @@ class Analysis {
         users_experience_advanced = summary.users_experience_advanced
       FROM (
         SELECT gid,
-          coalesce(sum((usr.age = 0
-            OR usr.age IS NOT DISTINCT FROM NULL)::integer), 0) AS user_age_ns,
-          coalesce(sum((usr.age = 1)::integer), 0) AS users_age_0_15,
-          coalesce(sum((usr.age = 2)::integer), 0) AS users_age_15_19,
-          coalesce(sum((usr.age = 3)::integer), 0) AS users_age_20_24,
-          coalesce(sum((usr.age = 4)::integer), 0) AS users_age_25_34,
-          coalesce(sum((usr.age = 5)::integer), 0) AS users_age_35_44,
-          coalesce(sum((usr.age = 6)::integer), 0) AS users_age_45_54,
-          coalesce(sum((usr.age = 7)::integer), 0) AS users_age_55_64,
-          coalesce(sum((usr.age = 8)::integer), 0) AS users_age_65_74,
-          coalesce(sum((usr.age = 9)::integer), 0) AS users_age_75_plus,
-          coalesce(sum((usr.gender = 0
-            OR usr.gender IS NOT DISTINCT FROM NULL)::integer), 0)
+          coalesce(sum((edge_user.age = 0
+            OR edge_user.age IS NOT DISTINCT FROM NULL)::integer), 0) AS user_age_ns,
+          coalesce(sum((edge_user.age = 1)::integer), 0) AS users_age_0_15,
+          coalesce(sum((edge_user.age = 2)::integer), 0) AS users_age_15_19,
+          coalesce(sum((edge_user.age = 3)::integer), 0) AS users_age_20_24,
+          coalesce(sum((edge_user.age = 4)::integer), 0) AS users_age_25_34,
+          coalesce(sum((edge_user.age = 5)::integer), 0) AS users_age_35_44,
+          coalesce(sum((edge_user.age = 6)::integer), 0) AS users_age_45_54,
+          coalesce(sum((edge_user.age = 7)::integer), 0) AS users_age_55_64,
+          coalesce(sum((edge_user.age = 8)::integer), 0) AS users_age_65_74,
+          coalesce(sum((edge_user.age = 9)::integer), 0) AS users_age_75_plus,
+          coalesce(sum((edge_user.gender = 0
+            OR edge_user.gender IS NOT DISTINCT FROM NULL)::integer), 0)
             AS user_gender_ns,
-          coalesce(sum((usr.gender = 1)::integer), 0) AS users_gender_male,
-          coalesce(sum((usr.gender = 2)::integer), 0) AS users_gender_female,
-          coalesce(sum((usr.gender = 3)::integer), 0) AS users_gender_other,
-          coalesce(sum((usr.cycling_experience = 0
-            OR usr.cycling_experience IS NOT DISTINCT FROM NULL)::integer), 0)
+          coalesce(sum((edge_user.gender = 1)::integer), 0) AS users_gender_male,
+          coalesce(sum((edge_user.gender = 2)::integer), 0) AS users_gender_female,
+          coalesce(sum((edge_user.gender = 3)::integer), 0) AS users_gender_other,
+          coalesce(sum((edge_user.cycling_experience = 0
+            OR edge_user.cycling_experience IS NOT DISTINCT FROM NULL)::integer), 0)
             AS users_experience_ns,
-          coalesce(sum((usr.cycling_experience = 1)::integer), 0)
+          coalesce(sum((edge_user.cycling_experience = 1)::integer), 0)
             AS users_experience_beginner,
-          coalesce(sum((usr.cycling_experience = 2)::integer), 0)
+          coalesce(sum((edge_user.cycling_experience = 2)::integer), 0)
             AS users_experience_intermediate,
-          coalesce(sum((usr.cycling_experience = 3)::integer), 0)
+          coalesce(sum((edge_user.cycling_experience = 3)::integer), 0)
             AS users_experience_advanced
         FROM (
           SELECT DISTINCT gid,
-            user_id
+            user_id,
+            age,
+            gender,
+            cycling_experience
           FROM edge_trip
         ) AS edge_user
-        INNER JOIN public.user AS usr
-          ON edge_user.user_id = usr.id
         GROUP BY edge_user.gid
       ) AS summary
       WHERE edge.gid = summary.gid;`;

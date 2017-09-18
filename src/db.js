@@ -143,9 +143,9 @@ Trip.fromMessage = function(msg, user, region) {
     debug: msg.debug,
     appVersion: msg.appVersion,
     region: region,
-    gender: user.gender,
-    age: user.age,
-    cyclingExperience: user.cyclingExperience
+    gender: user.gender || 0,
+    age: user.age || 0,
+    cyclingExperience: user.cyclingExperience || 0
   };
 };
 
@@ -453,6 +453,9 @@ function initViews() {
     SELECT edge.gid,
       trip.id AS trip_id,
       trip.user_id,
+      trip.age,
+      trip.gender,
+      trip.cycling_experience,
       avg(leg.speed) AS mean_speed
     FROM edge
     INNER JOIN (

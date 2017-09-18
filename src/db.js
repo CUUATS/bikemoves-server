@@ -312,7 +312,7 @@ Edge = sequelize.define('edge', {
     type: Sequelize.INTEGER
   },
   mean_speed: {
-    type: Sequelize.INTEGER
+    type: Sequelize.DOUBLE
   },
   users_age_ns: {
     type: Sequelize.INTEGER

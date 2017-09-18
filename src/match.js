@@ -8,7 +8,10 @@ const stats = require('stats-lite'),
 function getRoute(input, done) {
   if (typeof this.osrm === 'undefined' || this.network !== input.network) {
     const OSRM = require('osrm');
-    this.osrm = new OSRM('/osrm/' + input.network);
+    this.osrm = new OSRM({
+      algorithm: 'MLD',
+      path: '/osrm/' + input.network
+    });
     this.network = input.network;
   }
 

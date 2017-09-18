@@ -44,6 +44,7 @@ nav {
 }
 #primary-nav {
   margin: 0;
+  padding: 0;
 }
 #primary-nav li {
   display: inline;
@@ -140,9 +141,6 @@ h2 {
 #home-menu .fa {
   font-size: 2.5em;
   float: left;
-}
-#home-menu .fa-mobile {
-  font-size: 4em;
 }
 #home-menu strong {
   display: block;

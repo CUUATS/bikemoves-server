@@ -77,13 +77,13 @@ article {
 }
 h1 {
   font-family: 'Montserrat', sans-serif;
-  font-size: 24px;
+  font-size: 18px;
   margin: 0 0 1em;
   text-transform: uppercase;
 }
 h2 {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.3em;
+  font-size: 14px;
   margin: 0 0 0.25em;
   text-transform: uppercase;
 }
@@ -105,8 +105,8 @@ h2 {
   font-size: 2em;
 }
 #home .description {
-  margin: 0 20% 30px;
-  font-size: 1.2em;
+  margin: 0 10% 15px;
+  font-size: 1em;
   text-align: center;
 }
 #home-menu {
@@ -127,6 +127,7 @@ h2 {
   box-sizing: border-box;
   color: black;
   display: block;
+  font-size: 0.85em;
   height: 100%;
   padding: 15px;
   text-align: left;
@@ -359,14 +360,11 @@ h2 {
   color: white;
   z-index: 20;
 }
-#data,
-#data .inner {
-  height: 100%;
-}
 #data #map {
   background-color: #333333;
   box-sizing: border-box;
-  height: calc(100% - 48px);
+  height: calc(100vh - 250px);
+  margin-bottom: 15px;
 }
 #data #map-controls label {
   display: block;
@@ -403,7 +401,7 @@ h2 {
   background-color: #333333;
 }
 #data .chart-wrapper h2 {
-  font-size: 1.1em;
+  font-size: 0.9em;
 }
 #data .ct-label {
   color: #bbbbbb;
@@ -415,7 +413,19 @@ h2 {
 #data .label-y {
   color: #dddddd;
 }
+#data #chart-edge-width::after {
+  clear: both;
+  content: 0;
+  display: block;
+  height: 0;
+}
 @media screen and (min-width: 768px) {
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 1.3em;
+  }
   #logo {
     font-size: 20px;
   }
@@ -427,6 +437,7 @@ h2 {
   }
   #home .description {
     font-size: 1.8em;
+    margin: 0 20% 30px;
   }
   #home-menu {
     flex-direction: row;
@@ -434,6 +445,9 @@ h2 {
   }
   #home-menu li {
     width: 30%;
+  }
+  #home-menu a {
+    font-size: 1em;
   }
   #home-menu strong {
     font-size: 1.5em;
@@ -466,8 +480,17 @@ h2 {
   #demographics #charts .chart-wrapper {
     width: 47%;
   }
-  #map {
+  #data,
+  #data .inner {
+    height: 100%;
+  }
+  #data .chart-wrapper h2 {
+    font-size: 1.1em;
+  }
+  #data #map {
     float: left;
+    height: calc(100% - 48px);
+    margin-bottom: 0;
     width: 68%;
   }
   #map-controls {

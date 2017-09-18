@@ -39,7 +39,8 @@ class Analysis {
         this.insertDemographicSummary('gender', [
           'Not Specified',
           'Male',
-          'Female'
+          'Female',
+          'Other'
         ]),
         this.insertDemographicSummary('cycling_experience', [
           'Not Specified',

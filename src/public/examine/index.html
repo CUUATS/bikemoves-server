@@ -3,26 +3,40 @@
   <head>
     <meta charset="utf-8">
     <title>BikeMoves Examine</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans" rel="stylesheet">
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.css' rel='stylesheet' />
     <link rel="stylesheet" href="examine.css">
   </head>
   <body>
-    <div id="map"></div>
-    <div id="table-wrapper">
-      <table id="trips">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Start Time</th>
-            <th>Duration</th>
-            <th>Distance</th>
-            <th>Origin</th>
-            <th>Destination</th>
-            <th>User</th>
-          </tr>
-        </thead>
-      </table>
-    </div>
+    <header id="header">
+      <div class="inner">
+        <a id="logo" href="#home">
+          <span class="bikemoves">BikeMoves</span>
+          <span class="explore">Examine</span>
+        </a>
+      </div>
+    </header>
+    <article id="main">
+      <div class="inner">
+        <div id="map"></div>
+        <div id="table-wrapper">
+          <table id="trips">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Start Time</th>
+                <th>Duration</th>
+                <th>Distance</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>User</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </article>
+    <script src="https://use.fontawesome.com/e09acc63a3.js"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.js'></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="examine.js"></script>

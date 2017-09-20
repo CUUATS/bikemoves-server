@@ -1,23 +1,88 @@
-* {
-  box-sizing: border-box;
-}
 html,
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 16px;
   height: 100%;
   margin: 0;
   width: 100%;
 }
 body {
-  padding: 1em;
+  background-color: #eeeeee;
+  box-sizing: border-box;
   position: relative;
 }
+.inner {
+  margin: 0 auto;
+  max-width: 1200px;
+  width: 100%;
+}
+header {
+  background-color: #222222;
+  border-bottom: 1px solid #dddddd;
+  box-sizing: border-box;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  color: white;
+  height: 60px;
+  padding: 8px 10px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+#logo {
+  color: white;
+  float: left;
+  font-size: 15px;
+  line-height: 44px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+#logo .bikemoves {
+  font-family: 'Montserrat', sans-serif;
+}
+nav {
+  float: right;
+}
+#primary-nav {
+  margin: 0;
+  padding: 0;
+}
+#primary-nav li {
+  display: inline;
+  line-height: 44px;
+  list-style-type: none;
+  margin-left: 15px;
+}
+#primary-nav a {
+  border-bottom: 3px solid transparent;
+  color: white;
+  text-decoration: none;
+  transition: all 0.1s ease-out;
+}
+#primary-nav .label {
+  display: none;
+}
+#primary-nav a.active,
+#primary-nav a:hover {
+  color: #225ea8;
+}
+#main {
+  box-sizing: border-box;
+  height: 100%;
+  padding-top: 59px;
+  position: relative;
+}
+#main .inner {
+  border-left: 1px solid #cccccc;
+  border-right: 1px solid #cccccc;
+  height: 100%;
+}
 #map {
-  background-color: #eeeeee;
+  background-color: white;
   height: 50%;
 }
 #table-wrapper {
+  background-color: white;
   height: 50%;
   width: 100%;
   overflow-y: scroll;
@@ -49,4 +114,19 @@ body {
 .popup-table th {
   border: 1px solid #dddddd;
   padding: 0.1em 0.5em;
+}
+
+@media screen and (min-width: 768px) {
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 1.3em;
+  }
+  #logo {
+    font-size: 20px;
+  }
+  #primary-nav .label {
+    display: inline;
+  }
 }

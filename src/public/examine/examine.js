@@ -156,6 +156,21 @@ var Examine = function () {
       return row;
     }
   }, {
+    key: 'pad',
+    value: function pad(n, w) {
+      var d = n.toString();
+      return d.length >= w ? d : new Array(w - d.length + 1).join('0') + d;
+    }
+  }, {
+    key: 'formatDuration',
+    value: function formatDuration(duration) {
+      var hours = this.pad(duration.hours(), 2),
+          minutes = this.pad(duration.minutes(), 2),
+          seconds = this.pad(duration.seconds(), 2);
+
+      return [hours, minutes, seconds].join(':');
+    }
+  }, {
     key: 'initTable',
     value: function initTable() {
       var _this5 = this;
@@ -166,9 +181,9 @@ var Examine = function () {
 
       this.getJSON('/api/trips').then(function (res) {
         res.trips.forEach(function (trip) {
-          var start = new Date(trip.startTime),
-              end = new Date(trip.endTime);
-          var row = _this5.makeRow([trip.id, start.toLocaleString(), Math.round((trip.endTime - trip.startTime) / 1000), trip.distance.toFixed(2), _this5.locationTypes[trip.origin], _this5.locationTypes[trip.destination], trip.userId]);
+          var start = moment(trip.startTime),
+              end = moment(trip.endTime);
+          var row = _this5.makeRow([trip.id, start.format('M/D/YYYY'), start.format('h:mm:ss a'), _this5.formatDuration(moment.duration(end.diff(start))), trip.distance.toFixed(2) + ' mi', _this5.locationTypes[trip.origin], _this5.locationTypes[trip.destination], trip.userId]);
           row.addEventListener('click', function () {
             return _this5.populateMap(trip.id, trip.bbox);
           });

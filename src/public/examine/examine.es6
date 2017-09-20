@@ -146,6 +146,19 @@ class Examine {
     return row;
   }
 
+  pad(n, w) {
+    let d = n.toString();
+    return (d.length >= w) ? d : new Array(w - d.length + 1).join('0') + d;
+  }
+
+  formatDuration(duration) {
+    let hours = this.pad(duration.hours(), 2),
+      minutes = this.pad(duration.minutes(), 2),
+      seconds = this.pad(duration.seconds(), 2);
+
+    return [hours, minutes, seconds].join(':');
+  }
+
   initTable() {
     let table = document.getElementById('trips'),
       tbody = document.createElement('tbody');
@@ -153,13 +166,14 @@ class Examine {
 
     this.getJSON('/api/trips').then((res) => {
       res.trips.forEach((trip) => {
-        var start = new Date(trip.startTime),
-          end = new Date(trip.endTime);
+        var start = moment(trip.startTime),
+          end = moment(trip.endTime);
         var row = this.makeRow([
           trip.id,
-          start.toLocaleString(),
-          Math.round((trip.endTime - trip.startTime)/1000),
-          trip.distance.toFixed(2),
+          start.format('M/D/YYYY'),
+          start.format('h:mm:ss a'),
+          this.formatDuration(moment.duration(end.diff(start))),
+          trip.distance.toFixed(2) + ' mi',
           this.locationTypes[trip.origin],
           this.locationTypes[trip.destination],
           trip.userId

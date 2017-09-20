@@ -8,6 +8,10 @@ const express = require('express'),
 
 app.use(express.static('src/public/examine'));
 
+app.use('/lib/moment.js',
+  express.static('node_modules/moment/min/moment.min.js'));
+
+
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');
   res.send('mapboxgl.accessToken = "' + process.env.MAPBOX_TOKEN + '";');

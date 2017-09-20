@@ -42,11 +42,11 @@ body {
 #trips tbody tr:hover {
   background-color: #f8f8f8;
 }
-.leaflet-popup-content table {
+.popup-table {
   border-collapse: collapse;
 }
-.leaflet-popup-content td,
-.leaflet-popup-content th {
+.popup-table td,
+.popup-table th {
   border: 1px solid #dddddd;
   padding: 0.1em 0.5em;
 }

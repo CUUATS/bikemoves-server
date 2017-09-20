@@ -10,7 +10,7 @@ app.use(express.static('src/public/examine'));
 
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');
-  res.send('window.mapboxToken = "' + process.env.MAPBOX_TOKEN + '";');
+  res.send('mapboxgl.accessToken = "' + process.env.MAPBOX_TOKEN + '";');
 });
 
 app.get('/api/trips', (req, res) => {
@@ -24,60 +24,74 @@ app.get('/api/trips', (req, res) => {
   }).then((trips) => {
     res.json({
       trips: trips.map((trip) => {
+        let geom = turf.feature(trip.geom);
         return {
           id: trip.id,
           startTime: trip.startTime.getTime(),
           endTime: trip.endTime.getTime(),
-          distance: turf.lineDistance(turf.feature(trip.geom), 'miles'),
+          distance: turf.lineDistance(geom, 'miles'),
           origin: trip.origin,
           destination: trip.destination,
-          userId: trip.user_id
+          userId: trip.user_id,
+          bbox: turf.bbox(geom)
         };
       })
     });
   });
 });
 
-app.get('/api/trips/:id', (req, res) => {
-  var id = parseInt(req.params.id);
-  if (isNaN(id)) return res.sendStatus(404);
-  Promise.all([
-    db.Trip.findById(id),
-    db.Point.findAll({
-      where: {
-        trip_id: id
-      },
-      order: [
-        ['time', 'ASC']
-      ]
-    }),
-    db.RouteLeg.findAll({
-      where: {
-        trip_id: id
-      },
-      order: [
-        ['matching', 'ASC'],
-        ['leg', 'ASC']
-      ]
-    }),
-    db.RouteTracepoint.findAll({
-      where: {
-        trip_id: id
-      }
-    })
-  ]).then((records) => {
-    var trip = records[0],
-      points = records[1],
-      legs = records[2],
-      tracepoints = records[3];
-    if (!trip) return res.sendStatus(404);
-    res.send({
-      trip: geo.toFeature(trip),
-      points: turf.featureCollection(geo.filterPoints(points)),
-      legs: geo.toFeature(legs),
-      tracepoints: geo.toFeature(tracepoints)
+function parseTripID(req, res, next) {
+  req.tripID = parseInt(req.params.id);
+  if (isNaN(req.tripID)) return res.sendStatus(404);
+  next();
+}
+
+app.get('/api/trips/:id.geojson', parseTripID, (req, res) => {
+  db.Trip.findById(req.tripID)
+    .then((trip) => {
+      if (!trip) return res.sendStatus(404);
+      res.json(turf.featureCollection([geo.toFeature(trip)]));
     });
-  });
+});
+
+app.get('/api/points/:id.geojson', parseTripID, (req, res) => {
+  db.Point.findAll({
+    where: {
+      trip_id: req.tripID
+    },
+    order: [
+      ['time', 'ASC']
+    ]
+  }).then((points) => {
+      if (!points.length) return res.sendStatus(404);
+      res.json(turf.featureCollection(geo.filterPoints(points)));
+    });
+});
+
+app.get('/api/legs/:id.geojson', parseTripID, (req, res) => {
+  db.RouteLeg.findAll({
+    where: {
+      trip_id: req.tripID
+    },
+    order: [
+      ['matching', 'ASC'],
+      ['leg', 'ASC']
+    ]
+  }).then((legs) => {
+      if (!legs.length) return res.sendStatus(404);
+      res.json(geo.toFeature(legs));
+    });
+});
+
+app.get('/api/tracepoints/:id.geojson', parseTripID, (req, res) => {
+  db.RouteTracepoint.findAll({
+    where: {
+      trip_id: req.tripID
+    }
+  }).then((tracepoints) => {
+      if (!tracepoints.length) return res.sendStatus(404);
+      res.json(geo.toFeature(tracepoints));
+    });
 });
 
 db.prepare()

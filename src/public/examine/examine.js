@@ -144,18 +144,6 @@ var Examine = function () {
       });
     }
   }, {
-    key: 'makeRow',
-    value: function makeRow(values) {
-      var row = document.createElement('tr');
-      values.forEach(function (value) {
-        var cell = document.createElement('td'),
-            content = document.createTextNode(value);
-        cell.appendChild(content);
-        row.appendChild(cell);
-      });
-      return row;
-    }
-  }, {
     key: 'pad',
     value: function pad(n, w) {
       var d = n.toString();
@@ -171,24 +159,47 @@ var Examine = function () {
       return [hours, minutes, seconds].join(':');
     }
   }, {
-    key: 'initTable',
-    value: function initTable() {
+    key: 'getTableRows',
+    value: function getTableRows() {
       var _this5 = this;
 
-      var table = document.getElementById('trips'),
-          tbody = document.createElement('tbody');
-      table.appendChild(tbody);
+      return Object.values(this.data.trips).map(function (trip) {
+        var start = moment(trip.startTime),
+            end = moment(trip.endTime),
+            row = [trip.id, start.format('M/D/YYYY'), start.format('h:mm:ss a'), _this5.formatDuration(moment.duration(end.diff(start))), trip.distance.toFixed(2) + ' mi', _this5.locationTypes[trip.origin], _this5.locationTypes[trip.destination], trip.userId];
+
+        var attrs = 'id="trip-' + trip.id + '"';
+        if (_this5.state.trip && _this5.state.trip.id === trip.id) attrs += ' class="selected"';
+
+        return '<tr ' + attrs + '><td>' + row.join('</td><td>') + '</td></tr>';
+      });
+    }
+  }, {
+    key: 'initTable',
+    value: function initTable() {
+      var _this6 = this;
 
       this.getJSON('/api/trips').then(function (res) {
+        _this6.data.trips = {};
         res.trips.forEach(function (trip) {
-          var start = moment(trip.startTime),
-              end = moment(trip.endTime);
-          var row = _this5.makeRow([trip.id, start.format('M/D/YYYY'), start.format('h:mm:ss a'), _this5.formatDuration(moment.duration(end.diff(start))), trip.distance.toFixed(2) + ' mi', _this5.locationTypes[trip.origin], _this5.locationTypes[trip.destination], trip.userId]);
-          row.addEventListener('click', function () {
-            return _this5.populateMap(trip.id, trip.bbox);
-          });
-          tbody.appendChild(row);
+          return _this6.data.trips[trip.id] = trip;
         });
+        _this6.clusterize = new Clusterize({
+          rows: _this6.getTableRows(),
+          scrollId: 'trips-scroll',
+          contentId: 'trips-content'
+        });
+      });
+
+      var content = document.getElementById('trips-content');
+      content.addEventListener('click', function (e) {
+        if (e.target.nodeName != 'TD') return;
+        var tripId = parseInt(e.target.parentNode.childNodes[0].textContent);
+        if (!isNaN(tripId)) {
+          _this6.state.trip = _this6.data.trips[tripId];
+          _this6.populateMap(tripId, _this6.state.trip.bbox);
+          _this6.clusterize.update(_this6.getTableRows());
+        }
       });
     }
   }, {

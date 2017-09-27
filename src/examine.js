@@ -11,6 +11,11 @@ app.use(express.static('src/public/examine'));
 app.use('/lib/moment.js',
   express.static('node_modules/moment/min/moment.min.js'));
 
+app.use('/lib/clusterize.js',
+  express.static('node_modules/clusterize.js/clusterize.min.js'));
+
+app.use('/lib/clusterize.css',
+  express.static('node_modules/clusterize.js/clusterize.css'));
 
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');

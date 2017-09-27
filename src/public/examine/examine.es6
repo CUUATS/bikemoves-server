@@ -135,17 +135,6 @@ class Examine {
     });
   }
 
-  makeRow(values) {
-    var row = document.createElement('tr');
-    values.forEach(function(value) {
-      var cell = document.createElement('td'),
-        content = document.createTextNode(value);
-      cell.appendChild(content);
-      row.appendChild(cell);
-    });
-    return row;
-  }
-
   pad(n, w) {
     let d = n.toString();
     return (d.length >= w) ? d : new Array(w - d.length + 1).join('0') + d;
@@ -159,16 +148,11 @@ class Examine {
     return [hours, minutes, seconds].join(':');
   }
 
-  initTable() {
-    let table = document.getElementById('trips'),
-      tbody = document.createElement('tbody');
-    table.appendChild(tbody);
-
-    this.getJSON('/api/trips').then((res) => {
-      res.trips.forEach((trip) => {
-        var start = moment(trip.startTime),
-          end = moment(trip.endTime);
-        var row = this.makeRow([
+  getTableRows() {
+    return Object.values(this.data.trips).map((trip) => {
+      let start = moment(trip.startTime),
+        end = moment(trip.endTime),
+        row = [
           trip.id,
           start.format('M/D/YYYY'),
           start.format('h:mm:ss a'),
@@ -177,11 +161,36 @@ class Examine {
           this.locationTypes[trip.origin],
           this.locationTypes[trip.destination],
           trip.userId
-        ]);
-        row.addEventListener('click', () =>
-          this.populateMap(trip.id, trip.bbox));
-        tbody.appendChild(row);
+        ];
+
+      let attrs = `id="trip-${trip.id}"`;
+      if (this.state.trip && this.state.trip.id === trip.id)
+        attrs += ' class="selected"';
+
+    return `<tr ${attrs}><td>${row.join('</td><td>')}</td></tr>`;
+    });
+  }
+
+  initTable() {
+    this.getJSON('/api/trips').then((res) => {
+      this.data.trips = {};
+      res.trips.forEach((trip) => this.data.trips[trip.id] = trip);
+      this.clusterize = new Clusterize({
+        rows: this.getTableRows(),
+        scrollId: 'trips-scroll',
+        contentId: 'trips-content'
       });
+    });
+
+    let content = document.getElementById('trips-content');
+    content.addEventListener('click', (e) => {
+      if (e.target.nodeName != 'TD') return;
+      let tripId = parseInt(e.target.parentNode.childNodes[0].textContent);
+      if (!isNaN(tripId)) {
+        this.state.trip = this.data.trips[tripId];
+        this.populateMap(tripId, this.state.trip.bbox);
+        this.clusterize.update(this.getTableRows());
+      }
     });
   }
 

@@ -101,6 +101,7 @@ nav {
 }
 .trips-table th {
   background-color: #e0e0e0;
+  font-family: 'Montserrat', sans-serif;
 }
 #trips-header-scroll {
   overflow-y: scroll;

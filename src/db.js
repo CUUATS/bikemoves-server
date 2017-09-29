@@ -105,6 +105,9 @@ const Trip = sequelize.define('trip', {
     type: Sequelize.STRING,
     field: 'match_status'
   },
+  alternatives: {
+    type: Sequelize.ARRAY(Sequelize.STRING)
+  },
   region: {
     type: Sequelize.STRING
   },

@@ -440,6 +440,7 @@ const DemographicSummary = sequelize.define('demographic_summary', {
 // Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
+Point.belongsTo(Trip);
 Incident.belongsTo(User);
 RouteLeg.belongsTo(Trip);
 RouteLeg.belongsTo(Point, {as: 'startPoint'});

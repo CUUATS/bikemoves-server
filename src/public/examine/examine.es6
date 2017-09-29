@@ -49,9 +49,6 @@ class Examine {
       paint: {
         'line-color': '#999999',
         'line-width': 3
-      },
-      layout: {
-        'line-cap': 'round'
       }
     }, 'road-label-small');
     this.map.addLayer({
@@ -64,9 +61,21 @@ class Examine {
       }
     }, 'road-label-small');
     this.map.addLayer({
+      id: 'bikemoves-legs-fastest',
+      type: 'line',
+      source: 'legs',
+      filter: ['==', 'routeType', 'Fastest'],
+      paint: {
+        'line-color': '#96539b',
+        'line-dasharray': [1, 0.5],
+        'line-width': 4
+      }
+    }, 'road-label-small');
+    this.map.addLayer({
       id: 'bikemoves-legs',
       type: 'line',
       source: 'legs',
+      filter: ['==', 'routeType', 'Actual'],
       paint: {
         'line-color': {
           type: 'interval',
@@ -80,9 +89,6 @@ class Examine {
           ]
         },
         'line-width': 6
-      },
-      layout: {
-        'line-cap': 'round'
       }
     }, 'road-label-small');
     this.map.addLayer({

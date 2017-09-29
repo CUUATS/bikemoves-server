@@ -70,6 +70,7 @@ class Matches {
             radiuses: points.map((point) => point.properties.accuracy + 6),
             timestamps: points.map((point) =>
               Math.round((new Date(point.properties.time)).getTime()/1000)),
+            routeType: 'Actual',
             tripId: trip.id,
             pointIds: points.map((point) => point.properties.id)
           }).then((res) => {

@@ -2,6 +2,7 @@ const apicache = require('apicache'),
   express = require('express'),
   db = require('./db.js'),
   geo = require('./geo.js'),
+  utils = require('./utils.js'),
   Distribution = require('./distribution.js'),
   Tilesplash = require('tilesplash');
 
@@ -43,8 +44,9 @@ function fitDist(column, n, zeroBased) {
   });
 }
 
-utils.serveLib(app, 'styleselect/css/styleselect.css', 'styleselect.css');
-utils.serveLib(app, 'styleselect/js/styleselect.js', 'styleselect.js');
+utils.serveLib(app.server,
+  'styleselect/css/styleselect.css', 'styleselect.css');
+utils.serveLib(app.server, 'styleselect/js/styleselect.js', 'styleselect.js');
 
 app.server.use(express.static('src/public/explore'));
 

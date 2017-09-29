@@ -1,21 +1,15 @@
-"use strict";
-
 const express = require('express'),
   turf = require('@turf/turf'),
   db = require('./db.js'),
   geo = require('./geo.js'),
+  utils = require('./utils.js'),
   app = express();
 
 app.use(express.static('src/public/examine'));
 
-app.use('/lib/moment.js',
-  express.static('node_modules/moment/min/moment.min.js'));
-
-app.use('/lib/clusterize.js',
-  express.static('node_modules/clusterize.js/clusterize.min.js'));
-
-app.use('/lib/clusterize.css',
-  express.static('node_modules/clusterize.js/clusterize.css'));
+utils.serveLib(app, 'moment/min/moment.min.js', 'moment.js');
+utils.serveLib(app, 'clusterize.js/clusterize.min.js', 'clusterize.js');
+utils.serveLib(app, 'clusterize.js/clusterize.css', 'clusterize.css');
 
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');

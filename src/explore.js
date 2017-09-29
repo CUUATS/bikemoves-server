@@ -43,10 +43,8 @@ function fitDist(column, n, zeroBased) {
   });
 }
 
-app.server.use('/styleselect.css',
-  express.static('node_modules/styleselect/css/styleselect.css'));
-app.server.use('/styleselect.js',
-  express.static('node_modules/styleselect/js/styleselect.js'));
+utils.serveLib(app, 'styleselect/css/styleselect.css', 'styleselect.css');
+utils.serveLib(app, 'styleselect/js/styleselect.js', 'styleselect.js');
 
 app.server.use(express.static('src/public/explore'));
 

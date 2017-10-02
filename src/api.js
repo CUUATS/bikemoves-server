@@ -59,7 +59,7 @@ var sendEmailNotification = function(msg) {
     from: process.env.BIKEMOVES_NOTIFICATION_FROM,
     to: process.env.BIKEMOVES_NOTIFICATION_TO,
     subject: 'BikeMoves: New incident report',
-    content: 'Category:\n' + msg.category + '\n\n' +
+    text: 'Category:\n' + msg.category + '\n\n' +
       'Comment:\n' + msg.comment + '\n\n' +
       'Location:\n' + mapUrl + '\n\n' +
       'Submitted:\n' + date.toLocaleString() + '\n\n'

@@ -50,6 +50,7 @@ class Matches {
   match() {
     let queue = new Queue(10, Infinity);
     return this.getTrips().then((trips) => {
+      console.log(`Matching ${trips.length} trips...`);
       return Promise.all(trips.map((trip) => {
         return queue.add(() => {
           return trip.getPoints({
@@ -96,5 +97,9 @@ db.prepare()
   .then(() => {
     let matches = new Matches();
     return matches.match();
+  })
+  .then(() => {
+    console.log('Updating edge relationships...');
+    return db.insertIntoRouteLegEdge();
   })
   .then(() => process.exit());

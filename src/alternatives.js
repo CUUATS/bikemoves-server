@@ -63,6 +63,7 @@ class Alternatives {
 
   find() {
     return this.getTrips().then((trips) => {
+      console.log(`Finding alternatives for ${trips.length} trips...`);
       return Promise.all(trips.map((trip) => {
         return this.queue.add(() => {
           return this.getEndpoints(trip);
@@ -99,5 +100,9 @@ db.prepare()
   .then(() => {
     let alts = new Alternatives('Fastest');
     return alts.find();
+  })
+  .then(() => {
+    console.log('Updating edge relationships...');
+    return db.insertIntoRouteLegEdge();
   })
   .then(() => process.exit());

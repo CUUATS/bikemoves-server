@@ -6,15 +6,6 @@ const apicache = require('apicache'),
   Distribution = require('./distribution.js'),
   Tilesplash = require('tilesplash');
 
-const EDGE_QUERY = `
-  SELECT users,
-    trips,
-    mean_speed,
-    ST_AsGeoJSON(geom) AS the_geom_geojson
-  FROM edge
-  WHERE users >= 2
-    AND ST_Intersects(geom, !bbox_4326!)`;
-
 const app = new Tilesplash({
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
@@ -25,20 +16,13 @@ const app = new Tilesplash({
 
 const cache = apicache.middleware;
 
-function edgeStatisticsQuery(column) {
-  let sql = `
-    SELECT ${column}::int AS value,
-      sum(ST_Length(edge.geom_proj)) / 5280 AS count
-    FROM edge
-    WHERE users >= 2
-    GROUP BY value
-    ORDER BY value`;
-
-  return db.sequelize.query(sql, {type: db.sequelize.QueryTypes.SELECT});
-}
+const EDGE_OPTIONS = {
+  minUsers: 2
+};
+const EDGE_TILE_SQL = db.getEdgeTileSQL(EDGE_OPTIONS);
 
 function fitDist(column, n, zeroBased) {
-  return edgeStatisticsQuery(column).then((rows) => {
+  return db.getEdgeStatistics(column, EDGE_OPTIONS).then((rows) => {
     let dist = new Distribution(rows, n, zeroBased);
     return dist.fit();
   });
@@ -56,54 +40,38 @@ app.server.get('/config.js', (req, res) => {
 });
 
 app.server.get('/demographics.json', cache('24 hours'), (req, res) => {
-  res.header('Content-Type', 'application/json');
-  db.DemographicSummary.findAll({
-    where: {
-      region: process.env.BIKEMOVES_REGION
-    },
-    order: [
-      ['category', 'ASC'],
-      ['row_order', 'ASC']
-    ]
-  }).then((summaries) => {
-    let result = {};
-
-    summaries.forEach((summary) => {
-      let category = summary.category.replace('_', '-');
-      if (typeof result[category] === 'undefined') result[category] = [];
-
-      result[category].push({
-        description: summary.description,
-        users: summary.users,
-        trips: summary.trips,
-        distance: summary.distance
-      });
+  Promise.all([
+    db.getDemographics('age', db.AGE_CHOICES),
+    db.getDemographics('gender', db.GENDER_CHOICES),
+    db.getDemographics('cycling_experience', db.CYCLING_EXPERIENCE_CHOICES),
+    db.getTripCount()
+  ]).then(([age, gender, cycling_experience, trip_count]) => {
+    res.json({
+      age: age,
+      gender: gender,
+      'cycling-experience': cycling_experience,
+      'trip-count': trip_count
     });
-
-    res.json(result);
   });
 });
 
 app.server.get('/statistics.json', cache('24 hours'), (req, res) => {
-  res.header('Content-Type', 'application/json');
-
-  let speed = fitDist('mean_speed', 5, false),
-    trips = fitDist('trips', 5, false),
-    users = fitDist('users', 5, false);
-
-  Promise.all([speed, trips, users])
-    .then((results) => {
-      res.json({
-        speed: results[0],
-        trips: results[1],
-        users: results[2]
-      });
+  Promise.all([
+    fitDist('mean_speed', 5, false),
+    fitDist('trips', 5, false),
+    fitDist('users', 5, false)
+  ]).then(([speed, trips, users]) => {
+    res.json({
+      speed: speed,
+      trips: trips,
+      users: users
     });
+  });
 });
 
 app.layer('explore', (tile, render) => {
   render({
-    edge: EDGE_QUERY
+    edge: EDGE_TILE_SQL
   });
 });
 

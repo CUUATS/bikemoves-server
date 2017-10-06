@@ -1,3 +1,6 @@
+const pg = require('pg');
+pg.defaults.parseInt8 = true;
+
 const Sequelize = require('sequelize'),
   geo = require('./geo.js');
 
@@ -12,6 +15,33 @@ const sequelize = new Sequelize(
     logging: false
   }
 );
+
+const AGE_CHOICES = [
+  'Not Specified',
+  'Under 15',
+  '15 to 19',
+  '20 to 24',
+  '25 to 34',
+  '35 to 44',
+  '45 to 54',
+  '55 to 64',
+  '65 to 74',
+  '75 and older'
+];
+
+const GENDER_CHOICES = [
+  'Not Specified',
+  'Male',
+  'Female',
+  'Other'
+];
+
+const CYCLING_EXPERIENCE_CHOICES = [
+  'Not Specified',
+  'Beginner',
+  'Intermediate',
+  'Advanced'
+];
 
 const User = sequelize.define('user', {
   deviceUuid: {
@@ -313,76 +343,36 @@ const RouteTracepoint = sequelize.define('route_tracepoint', {
   underscored: true
 });
 
-Edge = sequelize.define('edge', {
-  gid: {
-    type: Sequelize.INTEGER,
+const Node = sequelize.define('node', {
+  id: {
+    type: Sequelize.BIGINT,
     primaryKey: true
   },
+  endpoint: {
+    type: Sequelize.BOOLEAN
+  },
+  geom: {
+    type: Sequelize.GEOMETRY('LINESTRING', 4326),
+    allowNull: false
+  }
+}, {
+  freezeTableName: true,
+  indexes: [
+    {
+      type: 'SPATIAL',
+      method: 'GIST',
+      fields: ['geom']
+    }
+  ],
+  underscored: true
+});
+
+const Edge = sequelize.define('edge', {
   region: {
     type: Sequelize.STRING
   },
-  users: {
-    type: Sequelize.INTEGER
-  },
-  trips: {
-    type: Sequelize.INTEGER
-  },
-  mean_speed: {
-    type: Sequelize.DOUBLE
-  },
-  users_age_ns: {
-    type: Sequelize.INTEGER
-  },
-  users_age_0_15: {
-    type: Sequelize.INTEGER
-  },
-  users_age_15_19: {
-    type: Sequelize.INTEGER
-  },
-  users_age_20_24: {
-    type: Sequelize.INTEGER
-  },
-  users_age_25_34: {
-    type: Sequelize.INTEGER
-  },
-  users_age_35_44: {
-    type: Sequelize.INTEGER
-  },
-  users_age_45_54: {
-    type: Sequelize.INTEGER
-  },
-  users_age_55_64: {
-    type: Sequelize.INTEGER
-  },
-  users_age_65_74: {
-    type: Sequelize.INTEGER
-  },
-  users_age_75_plus: {
-    type: Sequelize.INTEGER
-  },
-  users_gender_ns: {
-    type: Sequelize.INTEGER
-  },
-  users_gender_male: {
-    type: Sequelize.INTEGER
-  },
-  users_gender_female: {
-    type: Sequelize.INTEGER
-  },
-  users_gender_other: {
-    type: Sequelize.INTEGER
-  },
-  users_experience_ns: {
-    type: Sequelize.INTEGER
-  },
-  users_experience_beginner: {
-    type: Sequelize.INTEGER
-  },
-  users_experience_intermediate: {
-    type: Sequelize.INTEGER
-  },
-  users_experience_advanced: {
-    type: Sequelize.INTEGER
+  refs: {
+    type: Sequelize.ARRAY(Sequelize.BIGINT)
   },
   geom: {
     type: Sequelize.GEOMETRY('LINESTRING', 4326),
@@ -403,43 +393,6 @@ Edge = sequelize.define('edge', {
   underscored: true
 });
 
-const DemographicSummary = sequelize.define('demographic_summary', {
-  region: {
-    type: Sequelize.STRING
-  },
-  category: {
-    type: Sequelize.STRING
-  },
-  rowOrder: {
-    type: Sequelize.INTEGER,
-    field: 'row_order'
-  },
-  description: {
-    type: Sequelize.STRING
-  },
-  users: {
-    type: Sequelize.INTEGER
-  },
-  trips: {
-    type: Sequelize.INTEGER
-  },
-  distance: {
-    type: Sequelize.DOUBLE
-  }
-}, {
-  freezeTableName: true,
-  indexes: [
-    {
-      fields: ['region']
-    },
-    {
-      fields: ['region', 'category', 'description'],
-      unique: true
-    }
-  ],
-  underscored: true
-});
-
 // Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
@@ -450,42 +403,166 @@ RouteLeg.belongsTo(Point, {as: 'startPoint'});
 RouteLeg.belongsTo(Point, {as: 'endPoint'});
 RouteTracepoint.belongsTo(Trip);
 RouteTracepoint.belongsTo(Point);
+RouteLeg.belongsToMany(Edge, {through: 'route_leg_edge'});
+Edge.belongsToMany(RouteLeg, {through: 'route_leg_edge'});
 
 function initViews() {
   let sql = `
-    CREATE OR REPLACE VIEW edge_trip AS
-    SELECT edge.gid,
+  CREATE OR REPLACE VIEW edge_trip AS
+  SELECT rle.edge_id,
+      leg.route_type,
       trip.id AS trip_id,
-      trip.user_id,
-      trip.age,
-      trip.gender,
-      trip.cycling_experience,
-      avg(leg.speed) AS mean_speed
-    FROM edge
-    INNER JOIN (
-      SELECT edge_node.edge_gid,
-        leg_node.leg_id
-      FROM edge_node
-      INNER JOIN (
-        SELECT id AS leg_id,
-          unnest(nodes) AS node_id
-        FROM route_leg
-        WHERE speed_outlier = FALSE
-      ) AS leg_node
-        ON edge_node.node_id = leg_node.node_id
-      GROUP BY edge_node.edge_gid,
-        leg_node.leg_id
-      HAVING count(*) > 1
-    ) AS leg_edge
-      ON leg_edge.edge_gid = edge.gid
+      avg(speed) AS mean_speed
+    FROM route_leg_edge AS rle
     INNER JOIN route_leg AS leg
-      ON leg.id = leg_edge.leg_id
+      ON rle.route_leg_id = leg.id
     INNER JOIN trip
       ON leg.trip_id = trip.id
-    GROUP BY edge.gid,
+    GROUP BY rle.edge_id,
+      leg.route_type,
       trip.id;`;
 
   return sequelize.query(sql, {type: sequelize.QueryTypes.RAW});
+}
+
+function getQueryOptions(options) {
+  return Object.assign({
+    minUsers: 0,
+    region: process.env.BIKEMOVES_REGION
+  }, options || {});
+}
+
+function insertIntoRouteLegEdge() {
+  let sql = `
+  INSERT INTO route_leg_edge (
+    SELECT DISTINCT now() AS created_at,
+      now() AS updated_at,
+      segment.route_leg_id,
+      edge.id AS edge_id
+    FROM edge
+    INNER JOIN (
+      SELECT route_leg_id,
+        node_id AS start_id,
+        lead(node_id, 1) OVER
+          (PARTITION BY route_leg_id ORDER BY node_idx) AS end_id
+      FROM (
+        SELECT route_leg_id,
+          node_id,
+          node_idx
+        FROM (
+          SELECT leg.id AS route_leg_id,
+            node.id AS node_id,
+            node.idx AS node_idx
+          FROM route_leg AS leg,
+            unnest(leg.nodes) WITH ORDINALITY node(id, idx)
+          WHERE leg.id NOT IN (
+            SELECT DISTINCT route_leg_id
+            FROM route_leg_edge
+          ) AND node.id IN (
+            SELECT DISTINCT id
+            FROM node
+          )
+        ) AS leg_node
+      ) AS filtered
+    ) AS segment
+    ON edge.refs @> ARRAY[SEGMENT.start_id, segment.end_id]
+      AND segment.end_id IS DISTINCT FROM NULL
+  );`;
+
+  return sequelize.query(sql, {type: sequelize.QueryTypes.RAW});
+}
+
+function getDemographics(trip_column, choices, options) {
+  options = getQueryOptions(options);
+
+  let sql = `
+    SELECT choices.description,
+      count(DISTINCT trip.user_id) AS users,
+      count(DISTINCT trip.id) AS trips,
+      round(sum(route_leg.distance * 0.000621371)::numeric,
+        1)::double precision AS distance
+    FROM unnest(ARRAY['${choices.join("', '")}'])
+      WITH ORDINALITY choices(description, code)
+    INNER JOIN trip
+      ON coalesce(trip.${trip_column}, 0) = choices.code - 1
+        AND trip.match_status = 'Matched'
+        AND trip.region = '${options.region}'
+    INNER JOIN route_leg
+      ON route_leg.trip_id = trip.id
+        AND NOT route_leg.speed_outlier
+    GROUP BY choices.code,
+      choices.description
+    ORDER BY choices.code = 1,
+      choices.code;`;
+
+  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
+}
+
+function getTripCount(options) {
+  options = getQueryOptions(options);
+
+  let sql = `
+    SELECT trip_count::character varying AS description,
+      count(*) AS users,
+      trip_count AS trips,
+      NULL AS distance
+    FROM (
+      SELECT user_id,
+        count(*) trip_count
+      FROM trip
+      WHERE match_status = 'Matched'
+        AND region = '${options.region}'
+      GROUP BY user_id
+    ) AS counts
+    GROUP BY trip_count
+    ORDER BY trip_count;`;
+
+  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
+}
+
+function getEdgeSQL(options) {
+  options = getQueryOptions(options);
+
+  let sql = `
+    SELECT count(DISTINCT trip.user_id)::integer AS users,
+      count(DISTINCT trip.id)::integer AS trips,
+      avg(edge_trip.mean_speed) * 2.23694 AS mean_speed,
+      edge.length AS length,
+      edge.geom
+    FROM edge
+    INNER JOIN edge_trip
+      ON edge_trip.edge_id = edge.id
+        AND edge_trip.route_type = 'Actual'
+    INNER JOIN trip
+      ON edge_trip.trip_id = trip.id
+        AND trip.region = '${options.region}'
+    GROUP BY edge.id`;
+
+  if (options.minUsers)
+    sql += ` HAVING count(DISTINCT trip.user_id) >= ${options.minUsers}`;
+
+  return sql;
+}
+
+function getEdgeStatistics(column, options) {
+  let sql = `
+    SELECT ${column}::int AS value,
+      sum(length) * 0.000621371 AS count
+    FROM (${getEdgeSQL(options)}) AS edge_info
+    GROUP BY value
+    ORDER BY value;`;
+
+  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
+}
+
+function getEdgeTileSQL(options) {
+  return `
+    SELECT users,
+      trips,
+      mean_speed,
+      ST_AsGeoJSON(geom) AS the_geom_geojson
+    FROM (${getEdgeSQL(options)}) AS edge_info
+    WHERE ST_Intersects(geom, !bbox_4326!)`;
 }
 
 // Update models.
@@ -506,6 +583,9 @@ function prepare(retries) {
     });
 };
 
+exports.AGE_CHOICES = AGE_CHOICES;
+exports.GENDER_CHOICES = GENDER_CHOICES;
+exports.CYCLING_EXPERIENCE_CHOICES = CYCLING_EXPERIENCE_CHOICES;
 exports.sequelize = sequelize;
 exports.User = User;
 exports.Trip = Trip;
@@ -514,5 +594,9 @@ exports.Incident = Incident;
 exports.RouteLeg = RouteLeg;
 exports.RouteTracepoint = RouteTracepoint;
 exports.Edge = Edge;
-exports.DemographicSummary = DemographicSummary;
 exports.prepare = prepare;
+exports.insertIntoRouteLegEdge = insertIntoRouteLegEdge;
+exports.getDemographics = getDemographics;
+exports.getTripCount = getTripCount;
+exports.getEdgeStatistics = getEdgeStatistics;
+exports.getEdgeTileSQL = getEdgeTileSQL;

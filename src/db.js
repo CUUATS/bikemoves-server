@@ -220,6 +220,9 @@ const Point = sequelize.define('point', {
   freezeTableName: true,
   indexes: [
     {
+      fields: ['id']
+    },
+    {
       type: 'SPATIAL',
       method: 'GIST',
       fields: ['geom']
@@ -318,6 +321,12 @@ const RouteLeg = sequelize.define('route_leg', {
   freezeTableName: true,
   indexes: [
     {
+      fields: ['id']
+    },
+    {
+      fields: ['route_type']
+    },
+    {
       type: 'SPATIAL',
       method: 'GIST',
       fields: ['geom']
@@ -359,6 +368,9 @@ const Node = sequelize.define('node', {
   freezeTableName: true,
   indexes: [
     {
+      fields: ['id']
+    },
+    {
       type: 'SPATIAL',
       method: 'GIST',
       fields: ['geom']
@@ -378,6 +390,9 @@ const Edge = sequelize.define('edge', {
 }, {
   freezeTableName: true,
   indexes: [
+    {
+      fields: ['id']
+    },
     {
       fields: ['refs'],
       using: 'gin'
@@ -405,22 +420,53 @@ RouteLeg.belongsToMany(Edge, {through: 'route_leg_edge'});
 Edge.belongsToMany(RouteLeg, {through: 'route_leg_edge'});
 
 function initViews() {
-  let sql = `
-  CREATE OR REPLACE VIEW edge_trip AS
-  SELECT rle.edge_id,
-      leg.route_type,
-      trip.id AS trip_id,
-      avg(speed) AS mean_speed
-    FROM route_leg_edge AS rle
-    INNER JOIN route_leg AS leg
-      ON rle.route_leg_id = leg.id
-    INNER JOIN trip
-      ON leg.trip_id = trip.id
-    GROUP BY rle.edge_id,
-      leg.route_type,
-      trip.id;`;
+  let views_sql = [
+    `CREATE OR REPLACE VIEW edge_trip AS
+    SELECT rle.edge_id,
+        leg.route_type,
+        trip.id AS trip_id,
+        avg(speed) AS mean_speed
+      FROM route_leg_edge AS rle
+      INNER JOIN route_leg AS leg
+        ON rle.route_leg_id = leg.id
+      INNER JOIN trip
+        ON leg.trip_id = trip.id
+      GROUP BY rle.edge_id,
+        leg.route_type,
+        trip.id;`,
 
-  return sequelize.query(sql, {type: sequelize.QueryTypes.RAW});
+    `CREATE OR REPLACE VIEW edge_diff AS
+    SELECT coalesce(et_actual.edge_id, et_fastest.edge_id) AS edge_id,
+      coalesce(et_actual.trip_id, et_fastest.trip_id) AS trip_id,
+      CASE WHEN et_actual.trip_id IS NOT DISTINCT FROM NULL
+        THEN 1 ELSE -1 END AS net
+    FROM (
+      SELECT *
+      FROM edge_trip
+      WHERE route_type = 'Actual'
+    ) AS et_actual
+    FULL OUTER JOIN (
+      SELECT *
+      FROM edge_trip
+      WHERE route_type = 'Fastest'
+    ) AS et_fastest
+      ON et_actual.trip_id = et_fastest.trip_id
+        AND et_actual.edge_id = et_fastest.edge_id
+    INNER JOIN (
+      SELECT trip_id,
+        sum(CASE WHEN route_type = 'Actual' THEN distance ELSE 0 END) /
+        sum(CASE WHEN route_type = 'Fastest' THEN distance ELSE 0 END) AS ratio
+      FROM route_leg
+      GROUP BY trip_id
+    ) AS dist_comp
+      ON dist_comp.trip_id = coalesce(et_actual.trip_id, et_fastest.trip_id)
+        AND (dist_comp.ratio >= 0.8 OR dist_comp.ratio <= 1.5)
+    WHERE (et_actual.trip_id IS NOT DISTINCT FROM NULL
+      OR et_fastest.trip_ID IS NOT DISTINCT FROM NULL);`
+  ];
+
+  return Promise.all(views_sql.map(
+    (sql) => sequelize.query(sql, {type: sequelize.QueryTypes.RAW})));
 }
 
 function getQueryOptions(options) {
@@ -522,22 +568,35 @@ function getEdgeSQL(options) {
   options = getQueryOptions(options);
 
   let sql = `
-    SELECT count(DISTINCT trip.user_id)::integer AS users,
-      count(DISTINCT trip.id)::integer AS trips,
-      avg(edge_trip.mean_speed) * 2.23694 AS mean_speed,
-      edge.length AS length,
+    SELECT edge_info.users,
+      edge_info.trips,
+      edge_info.mean_speed,
+      edge_info.trips_diff,
+      edge.length,
       edge.geom
-    FROM edge
-    INNER JOIN edge_trip
-      ON edge_trip.edge_id = edge.id
-        AND edge_trip.route_type = 'Actual'
-    INNER JOIN trip
-      ON edge_trip.trip_id = trip.id
-        AND trip.region = '${options.region}'
-    GROUP BY edge.id`;
+      FROM (
+        SELECT edge_trip.edge_id,
+          count(DISTINCT trip.user_id)::integer AS users,
+          count(DISTINCT trip.id)::integer AS trips,
+          avg(edge_trip.mean_speed) * 2.23694 AS mean_speed,
+          coalesce(sum(edge_diff.net), 0) AS trips_diff
+        FROM edge
+        INNER JOIN edge_trip
+          ON edge_trip.edge_id = edge.id
+            AND edge_trip.route_type = 'Actual'
+        INNER JOIN trip
+          ON edge_trip.trip_id = trip.id
+            AND trip.region = '${options.region}'
+        LEFT JOIN edge_diff
+         ON edge_trip.edge_id = edge_diff.edge_id
+            AND edge_trip.trip_id = edge_diff.trip_id
+        GROUP BY edge_trip.edge_id
+        ) AS edge_info
+      INNER JOIN edge
+        ON edge.id = edge_info.edge_id`;
 
   if (options.minUsers)
-    sql += ` HAVING count(DISTINCT trip.user_id) >= ${options.minUsers}`;
+    sql += ` WHERE users >= ${options.minUsers}`;
 
   return sql;
 }

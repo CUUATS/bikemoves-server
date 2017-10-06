@@ -9,8 +9,9 @@
     "clusterize.js": "^0.17.6",
     "express": "^4.15.4",
     "moment": "^2.18.1",
-    "osrm": "^5.11.0",
+    "osrm": "5.11.0",
     "pg": "^7.2.0",
+    "promise-queue": "^2.2.3",
     "protobufjs": "^6.8.0",
     "sendmail": "^1.2.0",
     "sequelize": "^4.7.5",
@@ -20,7 +21,7 @@
     "tilesplash": "^3.1.3"
   },
   "scripts": {
-    "analyze": "node ./src/analyze.js",
+    "alternatives": "node ./src/alternatives.js",
     "compile": "./scripts/compile_messages.sh",
     "examine": "node ./src/examine.js",
     "explore": "node ./src/explore.js",

@@ -368,9 +368,6 @@ const Node = sequelize.define('node', {
 });
 
 const Edge = sequelize.define('edge', {
-  region: {
-    type: Sequelize.STRING
-  },
   refs: {
     type: Sequelize.ARRAY(Sequelize.BIGINT)
   },
@@ -381,9 +378,6 @@ const Edge = sequelize.define('edge', {
 }, {
   freezeTableName: true,
   indexes: [
-    {
-      fields: ['region']
-    },
     {
       type: 'SPATIAL',
       method: 'GIST',

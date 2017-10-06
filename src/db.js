@@ -379,6 +379,10 @@ const Edge = sequelize.define('edge', {
   freezeTableName: true,
   indexes: [
     {
+      fields: ['refs'],
+      using: 'gin'
+    },
+    {
       type: 'SPATIAL',
       method: 'GIST',
       fields: ['geom']

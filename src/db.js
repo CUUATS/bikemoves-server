@@ -429,6 +429,8 @@ function initViews() {
       FROM route_leg_edge AS rle
       INNER JOIN route_leg AS leg
         ON rle.route_leg_id = leg.id
+          AND (leg.speed_outlier IS NOT DISTINCT FROM NULL
+            OR leg.speed_outlier = FALSE)
       INNER JOIN trip
         ON leg.trip_id = trip.id
       GROUP BY rle.edge_id,
@@ -438,7 +440,7 @@ function initViews() {
     `CREATE OR REPLACE VIEW edge_diff AS
     SELECT coalesce(et_actual.edge_id, et_fastest.edge_id) AS edge_id,
       coalesce(et_actual.trip_id, et_fastest.trip_id) AS trip_id,
-      CASE WHEN et_actual.trip_id IS NOT DISTINCT FROM NULL
+      CASE WHEN et_actual.trip_id IS DISTINCT FROM NULL
         THEN 1 ELSE -1 END AS net
     FROM (
       SELECT *
@@ -571,19 +573,22 @@ function getEdgeSQL(options) {
     SELECT edge_info.users,
       edge_info.trips,
       edge_info.mean_speed,
-      edge_info.trips_diff,
+      edge_info.preference,
       edge.length,
       edge.geom
       FROM (
         SELECT edge_trip.edge_id,
-          count(DISTINCT trip.user_id)::integer AS users,
-          count(DISTINCT trip.id)::integer AS trips,
-          avg(edge_trip.mean_speed) * 2.23694 AS mean_speed,
-          coalesce(sum(edge_diff.net), 0) AS trips_diff
+          count(DISTINCT CASE WHEN edge_trip.route_type = 'Actual'
+            THEN trip.user_id ELSE NULL END)::integer AS users,
+          count(DISTINCT CASE WHEN edge_trip.route_type = 'Actual'
+            THEN trip.id ELSE NULL END)::integer AS trips,
+          coalesce(avg(CASE WHEN edge_trip.route_type = 'Actual'
+            THEN edge_trip.mean_speed ELSE NULL END), 0) * 2.23694
+            AS mean_speed,
+          coalesce(sum(edge_diff.net), 0) AS preference
         FROM edge
         INNER JOIN edge_trip
           ON edge_trip.edge_id = edge.id
-            AND edge_trip.route_type = 'Actual'
         INNER JOIN trip
           ON edge_trip.trip_id = trip.id
             AND trip.region = '${options.region}'
@@ -596,16 +601,25 @@ function getEdgeSQL(options) {
         ON edge.id = edge_info.edge_id`;
 
   if (options.minUsers)
-    sql += ` WHERE users >= ${options.minUsers}`;
+    sql = `SELECT
+        CASE WHEN users >= ${options.minUsers} THEN users ELSE 0 END AS users,
+        CASE WHEN users >= ${options.minUsers} THEN trips ELSE 0 END AS trips,
+        mean_speed,
+        preference,
+        length,
+        geom
+      FROM (${sql}) AS unfiltered`;
 
   return sql;
 }
 
-function getEdgeStatistics(column, options) {
+function getEdgeStatistics(column, options, min) {
+  let where = (column != 'preference') ? `WHERE ${column} > 0` : '';
   let sql = `
     SELECT ${column}::int AS value,
       sum(length) * 0.000621371 AS count
     FROM (${getEdgeSQL(options)}) AS edge_info
+    ${where}
     GROUP BY value
     ORDER BY value;`;
 
@@ -617,6 +631,7 @@ function getEdgeTileSQL(options) {
     SELECT users,
       trips,
       mean_speed,
+      preference,
       ST_AsGeoJSON(geom) AS the_geom_geojson
     FROM (${getEdgeSQL(options)}) AS edge_info
     WHERE ST_Intersects(geom, !bbox_4326!)`;

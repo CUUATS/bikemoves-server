@@ -59,12 +59,14 @@ app.server.get('/statistics.json', cache('24 hours'), (req, res) => {
   Promise.all([
     fitDist('mean_speed', 5, false),
     fitDist('trips', 5, false),
-    fitDist('users', 5, false)
-  ]).then(([speed, trips, users]) => {
+    fitDist('users', 5, false),
+    fitDist('preference', 5, false)
+  ]).then(([speed, trips, users, preference]) => {
     res.json({
       speed: speed,
       trips: trips,
-      users: users
+      users: users,
+      preference: preference
     });
   });
 });

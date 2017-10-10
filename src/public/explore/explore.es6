@@ -2,7 +2,7 @@ class Explore {
   constructor() {
     this.state = {
       chartView: 'users',
-      mapView: 'users-speed'
+      mapView: 'users'
     };
     this.charts = {};
     this.data = {};
@@ -263,33 +263,49 @@ class Explore {
   }
 
   getMapViewPaintProperties() {
-    let viewName = this.state.mapView;
-
-    if (viewName === 'users-speed') return {
-      'line-color': {
-        type: 'interval',
-        property: 'mean_speed',
-        stops: this.getStops('speed', this.edgeColors)
+    let viewName = this.state.mapView,
+      defaults = {
+        'line-width': 10,
+        'line-color': '#dddddd'
       },
-      'line-width': {
-        type: 'interval',
-        property: 'users',
-        stops: this.getStops('users', this.edgeWidths)
-      }
+      props = {};
+
+    if (viewName === 'users') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'users',
+          stops: this.getStops('users', this.edgeColors)
+        }
+      };
+    } else if (viewName === 'trips') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'trips',
+          stops: this.getStops('trips', this.edgeColors)
+        }
+      };
+    } else if (viewName === 'speed') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'mean_speed',
+          stops: this.getStops('speed', this.edgeColors)
+        }
+      };
+    } else if (viewName === 'preference') {
+      console.log('Preference view', this.getStops('preference', this.edgeColors));
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'preference',
+          stops: this.getStops('preference', this.edgeColors)
+        }
+      };
     };
 
-    if (viewName === 'trips-speed') return {
-      'line-color': {
-        type: 'interval',
-        property: 'mean_speed',
-        stops: this.getStops('speed', this.edgeColors)
-      },
-      'line-width': {
-        type: 'interval',
-        property: 'trips',
-        stops: this.getStops('trips', this.edgeWidths)
-      }
-    };
+    return Object.assign(defaults, props);
   }
 
   addLayers() {
@@ -311,6 +327,7 @@ class Explore {
       type: 'line',
       source: 'explore',
       'source-layer': 'edge',
+      filter: this.getMapLayerFilter(),
       paint: this.getMapViewPaintProperties(),
       layout: {
         'line-cap': 'round'
@@ -320,10 +337,16 @@ class Explore {
     this.drawLegend();
   }
 
+  getMapLayerFilter() {
+    if (this.state.mapView === 'preference') return null;
+    return ['>', 'users', 0];
+  }
+
   updateMapView() {
     let props = this.getMapViewPaintProperties();
     for (let propName in props)
       this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
+    this.map.setFilter('bikemoves-edge', this.getMapLayerFilter());
     this.drawLegend();
   }
 
@@ -362,14 +385,20 @@ class Explore {
   }
 
   drawLegend() {
-    this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH',
-      'Miles', this.edgeColors);
-    if (this.state.mapView === 'users-speed') {
-      this.drawLegendChart('edge-width', 'users', 'Users', 'Users',
-        'Miles', this.edgeWidths);
-    } else {
-      this.drawLegendChart('edge-width', 'trips', 'Trips', 'Trips',
-        'Miles', this.edgeWidths);
+    let viewName = this.state.mapView;
+
+    if (viewName === 'users') {
+      this.drawLegendChart('edge-color', 'users', 'Users', 'Users',
+        'Miles', this.edgeColors);
+    } else if (viewName === 'trips') {
+      this.drawLegendChart('edge-color', 'trips', 'Trips', 'Trips',
+        'Miles', this.edgeColors);
+    } else if (viewName === 'speed') {
+      this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH',
+        'Miles', this.edgeColors);
+    } else if (viewName === 'preference') {
+      this.drawLegendChart('edge-color', 'preference', 'Preference',
+        'Net Trips', 'Miles', this.edgeColors);
     }
   }
 }

@@ -295,7 +295,6 @@ class Explore {
         }
       };
     } else if (viewName === 'preference') {
-      console.log('Preference view', this.getStops('preference', this.edgeColors));
       props = {
         'line-color': {
           type: 'interval',

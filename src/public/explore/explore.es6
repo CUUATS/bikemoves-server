@@ -246,7 +246,7 @@ class Explore {
 
   initMapViewSelect() {
     // Apply styleSelect.
-    window.returnExports('#select-map-view');
+    styleSelect('#select-map-view');
 
     let select = document.getElementById('select-map-view');
     select.addEventListener('change', (e) => {

@@ -278,7 +278,7 @@ var Explore = function () {
       var _this5 = this;
 
       // Apply styleSelect.
-      window.returnExports('#select-map-view');
+      styleSelect('#select-map-view');
 
       var select = document.getElementById('select-map-view');
       select.addEventListener('change', function (e) {

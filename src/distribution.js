@@ -1,16 +1,21 @@
+const Combinatorics = require('js-combinatorics');
+
 class Distribution {
 
-  constructor(data, n, zeroBased) {
-    this.data = data.slice();
-    this.n = n;
-    this.zeroBased = zeroBased;
-
+  constructor(data) {
+    this.totalCount = data.map((item) => item.count)
+      .reduce((sum, count) => sum + count, 0);
     this.min = data[0].value;
     this.max = data[data.length - 1].value;
-    this.best = {
-      score: -1,
-      stops: []
-    };
+
+    let agg = 0;
+    this.data = data.map((item) => {
+      agg += item.count;
+      return {
+        value: item.value,
+        percentile: agg / this.totalCount
+      };
+    });
   }
 
   getStops(size, start) {
@@ -41,9 +46,9 @@ class Distribution {
     });
   }
 
-  scoreStops(stops) {
+  scoreStops(stops, profile) {
     return 1 - stops
-      .map((stop, i) => Math.abs(stop.percentile - ((i + 1) / this.n)))
+      .map((stop, i) => Math.abs(stop.percentile - profile[i]))
       .reduce((sum, score) => sum + score, 0);
   }
 
@@ -57,28 +62,71 @@ class Distribution {
     }
   }
 
-  fit() {
-    let maxSize = Math.ceil((this.max - this.min) / this.n);
+  validateStops(stops, options) {
+    for (let i = 1; i < stops.length; i++) {
+      let current = stops[i],
+        prev = stops[i - 1],
+        next = stops[i + 1],
+        opposite = stops[stops.length - i];
 
-    // TODO: Improve stop checking performance by eliminating unlikely
-    // possibilities.
-    for (let size = 1; size <= maxSize; size++) {
-      if (this.zeroBased) {
-        this.checkStops(size, size);
-      } else {
-        for (let start = this.min + 1; start +
-            size * (this.n - 2) < this.max; start++)
-          this.checkStops(size, start);
-      }
+      if (options.equal && next !== undefined && prev !== undefined
+          && current - prev !== next - current) return false;
+
+      if (options.center !== null
+          && options.center - current !== opposite - options.center)
+        return false;
     }
+    return true;
+  }
+
+  fit(n, options) {
+    options = Object.assign({
+      equal: true,
+      center: null,
+      profile: Array(n).map((v, i) => i / n)
+    }, options);
+
+    let values = this.data.map((item) => item.value);
+    let best = {
+      score: -1,
+      stops: []
+    };
+
+    Combinatorics.combination(values, n).forEach((stops) => {
+      console.log(stops, this.validateStops(stops, options));
+      // if (!this.validateStops(stops, options)) return;
+
+      // let score = this.scoreStops(stops, profile);
+      // if (score > best.score) {
+      //   best.score = score;
+      //   best.stops = stops;
+      // }
+    });
 
     return {
       min: this.min,
       max: this.max,
-      score: this.best.score,
-      stops: this.best.stops
+      score: best.score,
+      stops: best.stops
     };
   }
 }
 
 module.exports = Distribution;
+
+if (require.main === module) {
+  let dist = new Distribution([
+    {value: 1, count: 13.2},
+    {value: 2, count: 1.4},
+    {value: 3, count: 5.0},
+    {value: 6, count: 8.1},
+    {value: 7, count: 11.5},
+    {value: 8, count: 7.9},
+    {value: 12, count: 4.2}
+  ]);
+  console.log('totalCount', dist.totalCount);
+  console.log('min', dist.min);
+  console.log('max', dist.max);
+  console.log('data', dist.data);
+  dist.fit(5);
+}

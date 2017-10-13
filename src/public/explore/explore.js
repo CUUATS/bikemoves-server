@@ -170,7 +170,7 @@ var Explore = function () {
         distance: 'Total Miles'
       }[statName];
 
-      this.drawChart({
+      var chart = this.drawChart({
         id: chartName,
         title: xLabel,
         cssClass: 'ct-octave',
@@ -186,6 +186,12 @@ var Explore = function () {
           left: 25
         },
         distributeSeries: true
+      });
+
+      chart.on('draw', function (data) {
+        if (data.type !== 'bar') return;
+        var node = data.element._node;
+        node.setAttribute('class', node.getAttribute('class') + ' ct-bar-' + labels[data.seriesIndex].toLowerCase().replace(/ /g, '-'));
       });
     }
   }, {

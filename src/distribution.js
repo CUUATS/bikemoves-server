@@ -1,3 +1,4 @@
+const assert = require('assert');
 const Combinatorics = require('js-combinatorics');
 
 class Distribution {
@@ -13,108 +14,97 @@ class Distribution {
       agg += item.count;
       return {
         value: item.value,
+        count: item.count,
         percentile: agg / this.totalCount
       };
     });
   }
 
-  getStops(size, start) {
-    let stops = [(this.zeroBased) ? 0 : this.min, start];
-    for (let i = 1; i < this.n - 1; i++) stops.push(start + i * size);
+  format(stops) {
+    let i = 0;
+    stops = stops.concat([this.max + 1]);
 
-    let i = 0,
-      grandTotal = 0,
-      cumulativeTotal = 0;
-
-    return stops.slice(1).concat([Infinity]).map((upper) => {
-      let stopTotal = 0;
-      while (i < this.data.length && this.data[i].value < upper) {
-        stopTotal += this.data[i].count;
+    let stopInfo = stops.map((stop, s) => {
+      let count = 0;
+      while(i < this.data.length && this.data[i].value < stop) {
+        count += this.data[i].count;
         i++;
       }
-      grandTotal += stopTotal;
-      return stopTotal;
-    }).map((stopTotal, stopIdx) => {
-      cumulativeTotal += stopTotal;
-
       return {
-        lower: stops[stopIdx],
-        upper: (stopIdx === this.n - 1) ? this.max : stops[stopIdx + 1],
-        count: stopTotal,
-        percentile: cumulativeTotal / grandTotal
+        lower: (s === 0) ? this.min : stops[s - 1],
+        upper: stop,
+        count: count
       };
+    });
+
+    return {
+      min: this.min,
+      max: this.max,
+      stops: stopInfo
+    };
+  }
+
+  quantiles(options) {
+    let i = 0;
+    return options.profile.map((pct) => {
+      while (i < this.data.length && this.data[i].percentile < pct) i++;
+      if (i === 0 || this.data[i].percentile - pct <
+        pct - this.data[i - 1].percentile) return this.data[i].value;
+      return this.data[i - 1].value;
     });
   }
 
-  scoreStops(stops, profile) {
-    return 1 - stops
-      .map((stop, i) => Math.abs(stop.percentile - profile[i]))
-      .reduce((sum, score) => sum + score, 0);
-  }
+  adjust(quantiles, options) {
+    if (options.equal) {
+      let size = 0;
+      for (let i = 1; i < quantiles.length; i++)
+        size += quantiles[i] - quantiles[i - 1];
+      size = Math.round(size / (quantiles.length - 1));
 
-  checkStops(size, start) {
-    let stops = this.getStops(size, start),
-      score = this.scoreStops(stops);
+      let start = (quantiles[0] > this.min) ? quantiles[0] : quantiles[0] + 1;
+      while (size > 1 && start + size * (quantiles.length - 1) >= this.max)
+        size--;
 
-    if (score > this.best.score) {
-      this.best.score = score;
-      this.best.stops = stops;
+      return quantiles.map((q, i) => start + size * i);
+    } else if (options.center !== null) {
+      let center = options.center;
+      let diff = quantiles.map((q) => Math.abs(center - q));
+      let mirror = [];
+      for (let i = 0; i < Math.floor(quantiles.length / 2); i++)
+        mirror.push(Math.floor((diff[i] + diff[diff.length - i - 1]) / 2));
+
+      let stops = [];
+      for (let i = 0; i < mirror.length; i++) stops.push(center - mirror[i]);
+      if (quantiles.length % 2 === 1) stops.push(center);
+      for (let i = mirror.length - 1; i >= 0; i--)
+        stops.push(center + mirror[i]);
+
+      return stops;
     }
-  }
 
-  validateStops(stops, options) {
-    for (let i = 1; i < stops.length; i++) {
-      let current = stops[i],
-        prev = stops[i - 1],
-        next = stops[i + 1],
-        opposite = stops[stops.length - i];
-
-      if (options.equal && next !== undefined && prev !== undefined
-          && current - prev !== next - current) return false;
-
-      if (options.center !== null
-          && options.center - current !== opposite - options.center)
-        return false;
-    }
-    return true;
+    return quantiles;
   }
 
   fit(n, options) {
     options = Object.assign({
       equal: true,
       center: null,
-      profile: Array(n).map((v, i) => i / n)
+      profile: Array(n - 1).fill(null).map((v, i) => (1 + i) / n)
     }, options);
 
-    let values = this.data.map((item) => item.value);
-    let best = {
-      score: -1,
-      stops: []
-    };
+    assert.equal(n - 1, options.profile.length,
+      'Profile length must be equal to n - 1');
 
-    Combinatorics.combination(values, n).forEach((stops) => {
-      console.log(stops, this.validateStops(stops, options));
-      // if (!this.validateStops(stops, options)) return;
-
-      // let score = this.scoreStops(stops, profile);
-      // if (score > best.score) {
-      //   best.score = score;
-      //   best.stops = stops;
-      // }
-    });
-
-    return {
-      min: this.min,
-      max: this.max,
-      score: best.score,
-      stops: best.stops
-    };
+    let quantiles = this.quantiles(options);
+    let stops = this.adjust(quantiles, options);
+    return this.format(stops);
   }
 }
 
 module.exports = Distribution;
 
 if (require.main === module) {
+
   let dist = new Distribution([
     {value: 1, count: 13.2},
     {value: 2, count: 1.4},
@@ -122,11 +112,27 @@ if (require.main === module) {
     {value: 6, count: 8.1},
     {value: 7, count: 11.5},
     {value: 8, count: 7.9},
-    {value: 12, count: 4.2}
+    {value: 12, count: 4.5}
   ]);
-  console.log('totalCount', dist.totalCount);
-  console.log('min', dist.min);
-  console.log('max', dist.max);
-  console.log('data', dist.data);
-  dist.fit(5);
+
+  assert.deepEqual(dist.fit(5), {
+    min: 1,
+    max: 12,
+    stops:
+     [ { lower: 1, upper: 2, count: 13.2 },
+       { lower: 2, upper: 4, count: 6.4 },
+       { lower: 4, upper: 6, count: 0 },
+       { lower: 6, upper: 8, count: 19.6 },
+       { lower: 8, upper: 13, count: 12.4 } ] });
+
+  assert.deepEqual(dist.fit(5, {center: 6, equal: false}), {
+    min: 1,
+    max: 12,
+    stops:
+     [ { lower: 1, upper: 3, count: 14.6 },
+       { lower: 3, upper: 5, count: 5 },
+       { lower: 5, upper: 7, count: 8.1 },
+       { lower: 7, upper: 9, count: 19.4 },
+       { lower: 9, upper: 13, count: 4.5 } ] });
+
 }

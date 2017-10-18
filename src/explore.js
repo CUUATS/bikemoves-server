@@ -21,10 +21,10 @@ const EDGE_OPTIONS = {
 };
 const EDGE_TILE_SQL = db.getEdgeTileSQL(EDGE_OPTIONS);
 
-function fitDist(column, n, zeroBased) {
+function fitDist(column, n, options) {
   return db.getEdgeStatistics(column, EDGE_OPTIONS).then((rows) => {
-    let dist = new Distribution(rows, n, zeroBased);
-    return dist.fit();
+    let dist = new Distribution(rows);
+    return dist.fit(n, options);
   });
 }
 
@@ -57,10 +57,14 @@ app.server.get('/demographics.json', cache('24 hours'), (req, res) => {
 
 app.server.get('/statistics.json', cache('24 hours'), (req, res) => {
   Promise.all([
-    fitDist('mean_speed', 5, false),
-    fitDist('trips', 5, false),
-    fitDist('users', 5, false),
-    fitDist('preference', 5, false)
+    fitDist('mean_speed', 5),
+    fitDist('trips', 5),
+    fitDist('users', 5),
+    fitDist('preference', 5, {
+      center: 0,
+      equal: false,
+      profile: [0.05, 0.1, 0.9, 0.95]
+    })
   ]).then(([speed, trips, users, preference]) => {
     res.json({
       speed: speed,

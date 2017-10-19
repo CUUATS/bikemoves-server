@@ -6,14 +6,20 @@ class Explore {
     };
     this.charts = {};
     this.data = {};
-    this.edgeColors = [
+    this.continuousColors = [
       '#253494',
       '#2c7fb8',
       '#41b6c4',
       '#a1dab4',
       '#ffffcc'
     ];
-    this.edgeWidths = [3, 6, 9, 12, 15];
+    this.divergingColors = [
+      '#d7191c',
+      '#fdae61',
+      '#ffffbf',
+      '#abd9e9',
+      '#2c7bb6'
+    ];
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -169,6 +175,8 @@ class Explore {
       distributeSeries: true
     });
 
+    chart.off('draw');
+
     chart.on('draw', (data) => {
       if (data.type !== 'bar') return;
       let node = data.element._node;
@@ -273,7 +281,12 @@ class Explore {
   getMapViewPaintProperties() {
     let viewName = this.state.mapView,
       defaults = {
-        'line-width': 10,
+        'line-width': {
+          stops: [
+            [12, 2],
+            [15, 10]
+          ]
+        },
         'line-color': '#dddddd'
       },
       props = {};
@@ -283,7 +296,7 @@ class Explore {
         'line-color': {
           type: 'interval',
           property: 'users',
-          stops: this.getStops('users', this.edgeColors)
+          stops: this.getStops('users', this.continuousColors)
         }
       };
     } else if (viewName === 'trips') {
@@ -291,7 +304,7 @@ class Explore {
         'line-color': {
           type: 'interval',
           property: 'trips',
-          stops: this.getStops('trips', this.edgeColors)
+          stops: this.getStops('trips', this.continuousColors)
         }
       };
     } else if (viewName === 'speed') {
@@ -299,7 +312,7 @@ class Explore {
         'line-color': {
           type: 'interval',
           property: 'mean_speed',
-          stops: this.getStops('speed', this.edgeColors)
+          stops: this.getStops('speed', this.continuousColors)
         }
       };
     } else if (viewName === 'preference') {
@@ -307,7 +320,7 @@ class Explore {
         'line-color': {
           type: 'interval',
           property: 'preference',
-          stops: this.getStops('preference', this.edgeColors)
+          stops: this.getStops('preference', this.divergingColors)
         }
       };
     };
@@ -345,7 +358,14 @@ class Explore {
   }
 
   getMapLayerFilter() {
-    if (this.state.mapView === 'preference') return null;
+    if (this.state.mapView === 'preference') {
+      let exclude = this.data.statistics['preference'].stops[2];
+
+      return ['any',
+        ['>=', 'preference', exclude.upper],
+        ['<', 'preference', exclude.lower]
+      ];
+    }
     return ['>', 'users', 0];
   }
 
@@ -357,13 +377,16 @@ class Explore {
     this.drawLegend();
   }
 
-  drawLegendChart(chartId, propName, title, xLabel, yLabel, values) {
+  drawLegendChart(chartId, propName, title, xLabel, yLabel, values, exclude) {
+    exclude = exclude || [];
+    values = values.filter((v, i) => exclude.indexOf(i) === -1);
     let stats = this.data.statistics[propName],
       labels = stats.stops.map((stop) => {
         if (stop.upper === stop.lower + 1) return stop.lower.toString();
         return `${stop.lower} to ${stop.upper - 1}`;
-      }),
-      series = stats.stops.map((stop) => stop.count);
+      }).filter((v, i) => exclude.indexOf(i) === -1),
+      series = stats.stops.map((stop) => stop.count)
+        .filter((v, i) => exclude.indexOf(i) === -1);
 
     let chart = this.drawChart({
       id: chartId,
@@ -382,6 +405,8 @@ class Explore {
       }
     });
 
+    chart.off('draw');
+
     chart.on('draw', (data) => {
       if (data.type !== 'bar') return;
       let value = values[data.index],
@@ -389,6 +414,8 @@ class Explore {
 
       data.element._node.style[cssProp] = value;
     });
+
+    chart.update();
   }
 
   drawLegend() {
@@ -396,16 +423,16 @@ class Explore {
 
     if (viewName === 'users') {
       this.drawLegendChart('edge-color', 'users', 'Users', 'Users',
-        'Miles', this.edgeColors);
+        'Miles', this.continuousColors);
     } else if (viewName === 'trips') {
       this.drawLegendChart('edge-color', 'trips', 'Trips', 'Trips',
-        'Miles', this.edgeColors);
+        'Miles', this.continuousColors);
     } else if (viewName === 'speed') {
       this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH',
-        'Miles', this.edgeColors);
+        'Miles', this.continuousColors);
     } else if (viewName === 'preference') {
       this.drawLegendChart('edge-color', 'preference', 'Preference',
-        'Net Trips', 'Miles', this.edgeColors);
+        'Net Trips', 'Miles', this.divergingColors, [2]);
     }
   }
 }

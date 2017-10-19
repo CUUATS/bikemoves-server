@@ -14,8 +14,8 @@ var Explore = function () {
     };
     this.charts = {};
     this.data = {};
-    this.edgeColors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#ffffcc'];
-    this.edgeWidths = [3, 6, 9, 12, 15];
+    this.continuousColors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#ffffcc'];
+    this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -188,6 +188,8 @@ var Explore = function () {
         distributeSeries: true
       });
 
+      chart.off('draw');
+
       chart.on('draw', function (data) {
         if (data.type !== 'bar') return;
         var node = data.element._node;
@@ -306,7 +308,9 @@ var Explore = function () {
     value: function getMapViewPaintProperties() {
       var viewName = this.state.mapView,
           defaults = {
-        'line-width': 10,
+        'line-width': {
+          stops: [[12, 2], [15, 10]]
+        },
         'line-color': '#dddddd'
       },
           props = {};
@@ -316,7 +320,7 @@ var Explore = function () {
           'line-color': {
             type: 'interval',
             property: 'users',
-            stops: this.getStops('users', this.edgeColors)
+            stops: this.getStops('users', this.continuousColors)
           }
         };
       } else if (viewName === 'trips') {
@@ -324,7 +328,7 @@ var Explore = function () {
           'line-color': {
             type: 'interval',
             property: 'trips',
-            stops: this.getStops('trips', this.edgeColors)
+            stops: this.getStops('trips', this.continuousColors)
           }
         };
       } else if (viewName === 'speed') {
@@ -332,7 +336,7 @@ var Explore = function () {
           'line-color': {
             type: 'interval',
             property: 'mean_speed',
-            stops: this.getStops('speed', this.edgeColors)
+            stops: this.getStops('speed', this.continuousColors)
           }
         };
       } else if (viewName === 'preference') {
@@ -340,7 +344,7 @@ var Explore = function () {
           'line-color': {
             type: 'interval',
             property: 'preference',
-            stops: this.getStops('preference', this.edgeColors)
+            stops: this.getStops('preference', this.divergingColors)
           }
         };
       };
@@ -378,7 +382,11 @@ var Explore = function () {
   }, {
     key: 'getMapLayerFilter',
     value: function getMapLayerFilter() {
-      if (this.state.mapView === 'preference') return null;
+      if (this.state.mapView === 'preference') {
+        var exclude = this.data.statistics['preference'].stops[2];
+
+        return ['any', ['>=', 'preference', exclude.upper], ['<', 'preference', exclude.lower]];
+      }
       return ['>', 'users', 0];
     }
   }, {
@@ -392,14 +400,22 @@ var Explore = function () {
     }
   }, {
     key: 'drawLegendChart',
-    value: function drawLegendChart(chartId, propName, title, xLabel, yLabel, values) {
+    value: function drawLegendChart(chartId, propName, title, xLabel, yLabel, values, exclude) {
+      exclude = exclude || [];
+      values = values.filter(function (v, i) {
+        return exclude.indexOf(i) === -1;
+      });
       var stats = this.data.statistics[propName],
           labels = stats.stops.map(function (stop) {
         if (stop.upper === stop.lower + 1) return stop.lower.toString();
         return stop.lower + ' to ' + (stop.upper - 1);
+      }).filter(function (v, i) {
+        return exclude.indexOf(i) === -1;
       }),
           series = stats.stops.map(function (stop) {
         return stop.count;
+      }).filter(function (v, i) {
+        return exclude.indexOf(i) === -1;
       });
 
       var chart = this.drawChart({
@@ -419,6 +435,8 @@ var Explore = function () {
         }
       });
 
+      chart.off('draw');
+
       chart.on('draw', function (data) {
         if (data.type !== 'bar') return;
         var value = values[data.index],
@@ -426,6 +444,8 @@ var Explore = function () {
 
         data.element._node.style[cssProp] = value;
       });
+
+      chart.update();
     }
   }, {
     key: 'drawLegend',
@@ -433,13 +453,13 @@ var Explore = function () {
       var viewName = this.state.mapView;
 
       if (viewName === 'users') {
-        this.drawLegendChart('edge-color', 'users', 'Users', 'Users', 'Miles', this.edgeColors);
+        this.drawLegendChart('edge-color', 'users', 'Users', 'Users', 'Miles', this.continuousColors);
       } else if (viewName === 'trips') {
-        this.drawLegendChart('edge-color', 'trips', 'Trips', 'Trips', 'Miles', this.edgeColors);
+        this.drawLegendChart('edge-color', 'trips', 'Trips', 'Trips', 'Miles', this.continuousColors);
       } else if (viewName === 'speed') {
-        this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH', 'Miles', this.edgeColors);
+        this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH', 'Miles', this.continuousColors);
       } else if (viewName === 'preference') {
-        this.drawLegendChart('edge-color', 'preference', 'Preference', 'Net Trips', 'Miles', this.edgeColors);
+        this.drawLegendChart('edge-color', 'preference', 'Preference', 'Net Trips', 'Miles', this.divergingColors, [2]);
       }
     }
   }]);

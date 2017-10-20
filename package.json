@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@turf/turf": "^4.6.1",
+    "@turf/turf": "^4.7.3",
     "apicache": "^1.0.0",
     "body-parser": "^1.17.2",
     "clusterize.js": "^0.17.6",
@@ -23,6 +23,7 @@
   },
   "scripts": {
     "alternatives": "node ./src/alternatives.js",
+    "browserify": "./scripts/browserify.sh",
     "compile": "./scripts/compile_messages.sh",
     "examine": "node ./src/examine.js",
     "explore": "node ./src/explore.js",

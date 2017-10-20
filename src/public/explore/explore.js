@@ -75,7 +75,10 @@ var Explore = function () {
         _this2.map.on('load', resolve);
       });
 
-      Promise.all([getStats, mapLoad]).then(this.addLayers.bind(this));
+      Promise.all([getStats, mapLoad]).then(function () {
+        _this2.addMapLayers();
+        _this2.initMapEvents();
+      });
 
       this.initMapViewSelect();
     }
@@ -352,8 +355,8 @@ var Explore = function () {
       return Object.assign(defaults, props);
     }
   }, {
-    key: 'addLayers',
-    value: function addLayers() {
+    key: 'addMapLayers',
+    value: function addMapLayers() {
       this.map.addSource('explore', {
         type: 'vector',
         tilejson: '2.2.0',
@@ -378,6 +381,37 @@ var Explore = function () {
       }, 'road-label-small');
 
       this.drawLegend();
+    }
+  }, {
+    key: 'initMapEvents',
+    value: function initMapEvents() {
+      var _this6 = this;
+
+      this.map.on('mouseenter', 'bikemoves-edge', function () {
+        return _this6.map.getCanvas().style.cursor = 'pointer';
+      });
+
+      this.map.on('mouseleave', 'bikemoves-edge', function () {
+        return _this6.map.getCanvas().style.cursor = '';
+      });
+
+      this.map.on('click', 'bikemoves-edge', function (e) {
+        var feature = e.features[0];
+        if (!feature) return;
+
+        var midpoint = turf.along(feature.geometry, turf.lineDistance(feature.geometry) * 0.5);
+
+        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this6.formatFeatureProperties(feature.properties)).addTo(_this6.map);
+
+        _this6.map.easeTo({
+          center: midpoint.geometry.coordinates
+        });
+      });
+    }
+  }, {
+    key: 'formatFeatureProperties',
+    value: function formatFeatureProperties(props) {
+      return '<h2>Segment Details</h2>\n      <table>\n        <thead><tr><th>Property</th><th>Value</th></tr></thead>\n        <tbody>\n          <tr><td>Users</td><td>' + props.users + '</td></tr>\n          <tr><td>Trips</td><td>' + props.trips + '</td></tr>\n          <tr><td>Average Speed</td><td>' + props.mean_speed.toFixed(1) + ' MPH</td></tr>\n          <tr><td>Preference</td><td>' + props.preference + '</td></tr>\n        </tbody>\n      </table>';
     }
   }, {
     key: 'getMapLayerFilter',

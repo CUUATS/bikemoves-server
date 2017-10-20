@@ -67,7 +67,10 @@ class Explore {
       this.map.on('load', resolve);
     });
 
-    Promise.all([getStats, mapLoad]).then(this.addLayers.bind(this));
+    Promise.all([getStats, mapLoad]).then(() => {
+      this.addMapLayers();
+      this.initMapEvents();
+    });
 
     this.initMapViewSelect();
   }
@@ -328,7 +331,7 @@ class Explore {
     return Object.assign(defaults, props);
   }
 
-  addLayers() {
+  addMapLayers() {
     this.map.addSource('explore', {
       type: 'vector',
       tilejson: '2.2.0',
@@ -355,6 +358,44 @@ class Explore {
     }, 'road-label-small');
 
     this.drawLegend();
+  }
+
+  initMapEvents() {
+    this.map.on('mouseenter', 'bikemoves-edge', () =>
+      this.map.getCanvas().style.cursor = 'pointer');
+
+    this.map.on('mouseleave', 'bikemoves-edge', () =>
+      this.map.getCanvas().style.cursor = '');
+
+    this.map.on('click', 'bikemoves-edge', (e) => {
+      let feature = e.features[0];
+      if (!feature) return;
+
+      let midpoint = turf.along(feature.geometry,
+        turf.lineDistance(feature.geometry) * 0.5);
+
+      new mapboxgl.Popup()
+        .setLngLat(midpoint.geometry.coordinates)
+        .setHTML(this.formatFeatureProperties(feature.properties))
+        .addTo(this.map);
+
+      this.map.easeTo({
+        center: midpoint.geometry.coordinates
+      });
+    });
+  }
+
+  formatFeatureProperties(props) {
+    return `<h2>Segment Details</h2>
+      <table>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Users</td><td>${props.users}</td></tr>
+          <tr><td>Trips</td><td>${props.trips}</td></tr>
+          <tr><td>Average Speed</td><td>${props.mean_speed.toFixed(1)} MPH</td></tr>
+          <tr><td>Preference</td><td>${props.preference}</td></tr>
+        </tbody>
+      </table>`;
   }
 
   getMapLayerFilter() {

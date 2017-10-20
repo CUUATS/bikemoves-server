@@ -424,6 +424,21 @@ h2 {
   font-size: 0.9em;
   font-style: italic;
 }
+.mapboxgl-popup {
+  color: black;
+}
+.mapboxgl-popup table {
+  border: 1px solid #dddddd;
+  border-collapse: collapse;
+}
+.mapboxgl-popup th,
+.mapboxgl-popup td {
+  padding: 2px 10px;
+  text-align: left;
+}
+.mapboxgl-popup tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
 @media screen and (min-width: 768px) {
   h1 {
     font-size: 24px;

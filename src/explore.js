@@ -29,8 +29,11 @@ function fitDist(column, n, options) {
 }
 
 utils.serveLib(app.server,
-  'styleselect/css/styleselect.css', 'styleselect.css');
-utils.serveLib(app.server, 'styleselect/js/styleselect.js', 'styleselect.js');
+  'node_modules/styleselect/css/styleselect.css', 'styleselect.css');
+utils.serveLib(app.server,
+  'node_modules/styleselect/js/styleselect.js', 'styleselect.js');
+utils.serveLib(app.server,
+  'src/public/lib/turf-browser.js', 'turf.js');
 
 app.server.use(express.static('src/public/explore'));
 

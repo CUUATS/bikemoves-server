@@ -22,6 +22,7 @@ class Explore {
     ];
     this.edgeLayer = 'explore-edge';
     this.pathLayer = 'bikemoves-bike-path';
+    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
     this.rackLayer = 'bikemoves-bike-rack';
     this.scrolling = false;
     this.initCharts();
@@ -395,8 +396,25 @@ class Explore {
       source: 'bikemoves',
       'source-layer': 'bike_path',
       paint: {
-        'line-color': '#000000',
+        'line-color': '#ffffff',
         'line-dasharray': [2, 2],
+        'line-width': {
+          stops: [
+            [12, 0.5],
+            [15, 2.5]
+          ]
+        }
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: this.pathShadowLayer,
+      type: 'line',
+      source: 'bikemoves',
+      'source-layer': 'bike_path',
+      paint: {
+        'line-color': '#000000',
+        'line-dasharray': [0, 2, 2],
         'line-width': {
           stops: [
             [12, 0.5],
@@ -419,7 +437,7 @@ class Explore {
             [20, 6]
           ]
         },
-        'circle-color': '#999999',
+        'circle-color': '#ffffff',
         'circle-stroke-color': '#000000',
         'circle-stroke-width': {
           stops: [
@@ -430,7 +448,18 @@ class Explore {
       }
     }, 'road-label-small');
 
+    this.initLayerToggle('legend-item-bike-rack', [this.rackLayer]);
+    this.initLayerToggle('legend-item-bike-path',
+      [this.pathLayer, this.pathShadowLayer]);
+
     this.drawLegend();
+  }
+
+  initLayerToggle(id, layerNames) {
+    document.getElementById(id).addEventListener('change', (e) =>
+      layerNames.forEach((layerName) =>
+        this.map.setLayoutProperty(layerName, 'visibility',
+          (e.target.checked) ? 'visible' : 'none')));
   }
 
   initMapEvents() {

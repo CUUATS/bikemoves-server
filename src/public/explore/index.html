@@ -173,13 +173,26 @@
         </div>
         <h1>BikeMoves Data</h1>
         <div id="map-controls">
-          <label for="map-view">Map View</label>
+          <label for="map-view" id="map-view-label">Map View</label>
           <select class="" name="map-view" id="select-map-view">
             <option value="users">Users</option>
             <option value="trips">Trips</option>
             <option value="speed">Average Speed</option>
             <option value="preference">Preference</option>
           </select>
+          <h2>Legend</h2>
+          <div id="map-legend">
+            <label for="bike-rack" class="legend-item" id="legend-item-bike-rack">
+              <input type="checkbox" name="bike-rack" id="bike-rack" checked="checked">
+              <span class="legend-symbol"></span>
+              <span class="label">Bicycle Parking</span>
+            </label>
+            <label for="bike-path" class="legend-item" id="legend-item-bike-path">
+              <input type="checkbox" name="bike-path" id="bike-path" checked="checked">
+              <span class="legend-symbol"></span>
+              <span class="label">Bicycle Facility</span>
+            </label>
+          </div>
           <div id="chart-edge-color" class="chart-wrapper"></div>
           <div id="data-availability">
             Street segments ridden by only one user are excluded to

@@ -18,6 +18,7 @@ var Explore = function () {
     this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
     this.edgeLayer = 'explore-edge';
     this.pathLayer = 'bikemoves-bike-path';
+    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
     this.rackLayer = 'bikemoves-bike-rack';
     this.scrolling = false;
     this.initCharts();
@@ -424,8 +425,22 @@ var Explore = function () {
         source: 'bikemoves',
         'source-layer': 'bike_path',
         paint: {
-          'line-color': '#000000',
+          'line-color': '#ffffff',
           'line-dasharray': [2, 2],
+          'line-width': {
+            stops: [[12, 0.5], [15, 2.5]]
+          }
+        }
+      }, 'road-label-small');
+
+      this.map.addLayer({
+        id: this.pathShadowLayer,
+        type: 'line',
+        source: 'bikemoves',
+        'source-layer': 'bike_path',
+        paint: {
+          'line-color': '#000000',
+          'line-dasharray': [0, 2, 2],
           'line-width': {
             stops: [[12, 0.5], [15, 2.5]]
           }
@@ -442,7 +457,7 @@ var Explore = function () {
             base: 1,
             stops: [[13, 2], [20, 6]]
           },
-          'circle-color': '#999999',
+          'circle-color': '#ffffff',
           'circle-stroke-color': '#000000',
           'circle-stroke-width': {
             stops: [[12, 0.25], [15, 1.5]]
@@ -450,19 +465,33 @@ var Explore = function () {
         }
       }, 'road-label-small');
 
+      this.initLayerToggle('legend-item-bike-rack', [this.rackLayer]);
+      this.initLayerToggle('legend-item-bike-path', [this.pathLayer, this.pathShadowLayer]);
+
       this.drawLegend();
+    }
+  }, {
+    key: 'initLayerToggle',
+    value: function initLayerToggle(id, layerNames) {
+      var _this7 = this;
+
+      document.getElementById(id).addEventListener('change', function (e) {
+        return layerNames.forEach(function (layerName) {
+          return _this7.map.setLayoutProperty(layerName, 'visibility', e.target.checked ? 'visible' : 'none');
+        });
+      });
     }
   }, {
     key: 'initMapEvents',
     value: function initMapEvents() {
-      var _this7 = this;
+      var _this8 = this;
 
       this.map.on('mouseenter', this.edgeLayer, function () {
-        return _this7.map.getCanvas().style.cursor = 'pointer';
+        return _this8.map.getCanvas().style.cursor = 'pointer';
       });
 
       this.map.on('mouseleave', this.edgeLayer, function () {
-        return _this7.map.getCanvas().style.cursor = '';
+        return _this8.map.getCanvas().style.cursor = '';
       });
 
       this.map.on('click', this.edgeLayer, function (e) {
@@ -471,9 +500,9 @@ var Explore = function () {
 
         var midpoint = turf.along(feature.geometry, turf.lineDistance(feature.geometry) * 0.5);
 
-        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this7.formatFeatureProperties(feature.properties)).addTo(_this7.map);
+        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this8.formatFeatureProperties(feature.properties)).addTo(_this8.map);
 
-        _this7.map.easeTo({
+        _this8.map.easeTo({
           center: midpoint.geometry.coordinates
         });
       });

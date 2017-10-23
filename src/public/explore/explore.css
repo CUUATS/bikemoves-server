@@ -406,9 +406,9 @@ h2 {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-#data #map-controls label {
+#data #map-controls #map-view-label {
   display: block;
-  font-size: 0.9em;
+  font-size: 15px;
   margin-bottom: 0.25em;
   text-transform: uppercase;
 }
@@ -439,6 +439,45 @@ h2 {
 }
 #data .style-select .ss-dropdown .ss-option.highlighted {
   background-color: #333333;
+}
+#data #map-controls h2 {
+  font-size: 15px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: normal;
+  margin-top: 15px;
+}
+#data #map-controls h2 {
+  font-size: 15px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: normal;
+  margin-top: 15px;
+}
+#data .legend-item {
+  display: block;
+  font-size: 13px;
+}
+#data .legend-symbol {
+  display: inline-block;
+  margin-right: 5px;
+  width: 16px;
+}
+#data #legend-item-bike-rack .legend-symbol::after {
+  border: 1px solid black;
+  content: '';
+  display: inline-block;
+  background-color: white;
+  border-radius: 3px;
+  height: 6px;
+  margin: 0 4px;
+  width: 6px;
+}
+#data #legend-item-bike-path .legend-symbol::after {
+  border-bottom: 1px dashed white;
+  content: '';
+  display: inline-block;
+  height: 0;
+  margin-bottom: 5px;
+  width: 16px;
 }
 #data .chart-wrapper h2 {
   font-size: 0.9em;

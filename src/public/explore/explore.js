@@ -18,6 +18,7 @@ var Explore = function () {
     this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
     this.edgeLayer = 'explore-edge';
     this.pathLayer = 'bikemoves-bike-path';
+    this.rackLayer = 'bikemoves-bike-rack';
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -401,6 +402,24 @@ var Explore = function () {
           'line-dasharray': [2, 2],
           'line-width': {
             stops: [[12, 0.5], [15, 2.5]]
+          }
+        }
+      }, 'road-label-small');
+
+      this.map.addLayer({
+        id: this.rackLayer,
+        type: 'circle',
+        source: 'bikemoves',
+        'source-layer': 'bike_rack',
+        paint: {
+          'circle-radius': {
+            base: 1,
+            stops: [[13, 2], [20, 6]]
+          },
+          'circle-color': '#999999',
+          'circle-stroke-color': '#000000',
+          'circle-stroke-width': {
+            stops: [[12, 0.25], [15, 1.5]]
           }
         }
       }, 'road-label-small');

@@ -16,6 +16,8 @@ var Explore = function () {
     this.data = {};
     this.continuousColors = ['#bd0026', '#f03b20', '#fd8d3c', '#fecc5c', '#ffffb2'];
     this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
+    this.edgeLayer = 'explore-edge';
+    this.pathLayer = 'bikemoves-bike-path';
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -68,7 +70,9 @@ var Explore = function () {
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v9',
         center: [-88.227203, 40.109403],
-        zoom: 13
+        zoom: 13,
+        minZoom: 12,
+        maxZoom: 17
       });
 
       var mapLoad = new Promise(function (resolve, reject) {
@@ -357,6 +361,11 @@ var Explore = function () {
   }, {
     key: 'addMapLayers',
     value: function addMapLayers() {
+      this.map.addSource('bikemoves', {
+        type: 'vector',
+        url: 'https://tileserver.bikemoves.me/tiles/bikemoves.json'
+      });
+
       this.map.addSource('explore', {
         type: 'vector',
         tilejson: '2.2.0',
@@ -365,11 +374,13 @@ var Explore = function () {
         version: '1.0.0',
         attribution: '<a href="https://ccrpc.org/">&copy; CCRPC</a>',
         scheme: 'xyz',
+        minzoom: 12,
+        maxzoom: 15,
         tiles: [this.absoluteURL('/explore/{z}/{x}/{y}.mvt')]
       });
 
       this.map.addLayer({
-        id: 'bikemoves-edge',
+        id: this.edgeLayer,
         type: 'line',
         source: 'explore',
         'source-layer': 'edge',
@@ -380,6 +391,20 @@ var Explore = function () {
         }
       }, 'road-label-small');
 
+      this.map.addLayer({
+        id: this.pathLayer,
+        type: 'line',
+        source: 'bikemoves',
+        'source-layer': 'bike_path',
+        paint: {
+          'line-color': '#000000',
+          'line-dasharray': [2, 2],
+          'line-width': {
+            stops: [[12, 0.5], [15, 2.5]]
+          }
+        }
+      }, 'road-label-small');
+
       this.drawLegend();
     }
   }, {
@@ -387,15 +412,15 @@ var Explore = function () {
     value: function initMapEvents() {
       var _this6 = this;
 
-      this.map.on('mouseenter', 'bikemoves-edge', function () {
+      this.map.on('mouseenter', this.edgeLayer, function () {
         return _this6.map.getCanvas().style.cursor = 'pointer';
       });
 
-      this.map.on('mouseleave', 'bikemoves-edge', function () {
+      this.map.on('mouseleave', this.edgeLayer, function () {
         return _this6.map.getCanvas().style.cursor = '';
       });
 
-      this.map.on('click', 'bikemoves-edge', function (e) {
+      this.map.on('click', this.edgeLayer, function (e) {
         var feature = e.features[0];
         if (!feature) return;
 
@@ -428,8 +453,8 @@ var Explore = function () {
     value: function updateMapView() {
       var props = this.getMapViewPaintProperties();
       for (var propName in props) {
-        this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
-      }this.map.setFilter('bikemoves-edge', this.getMapLayerFilter());
+        this.map.setPaintProperty(this.edgeLayer, propName, props[propName]);
+      }this.map.setFilter(this.edgeLayer, this.getMapLayerFilter());
       this.drawLegend();
     }
   }, {

@@ -20,6 +20,8 @@ class Explore {
       '#abd9e9',
       '#2c7bb6'
     ];
+    this.edgeLayer = 'explore-edge';
+    this.pathLayer = 'bikemoves-bike-path';
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -60,7 +62,9 @@ class Explore {
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v9',
         center: [-88.227203, 40.109403],
-        zoom: 13
+        zoom: 13,
+        minZoom: 12,
+        maxZoom: 17
     });
 
     let mapLoad = new Promise((resolve, reject) => {
@@ -332,6 +336,11 @@ class Explore {
   }
 
   addMapLayers() {
+    this.map.addSource('bikemoves', {
+      type: 'vector',
+      url: 'https://tileserver.bikemoves.me/tiles/bikemoves.json'
+    });
+
     this.map.addSource('explore', {
       type: 'vector',
       tilejson: '2.2.0',
@@ -340,13 +349,15 @@ class Explore {
       version: '1.0.0',
       attribution: '<a href="https://ccrpc.org/">&copy; CCRPC</a>',
       scheme: 'xyz',
+      minzoom: 12,
+      maxzoom: 15,
       tiles: [
          this.absoluteURL('/explore/{z}/{x}/{y}.mvt')
       ]
     });
 
     this.map.addLayer({
-      id: 'bikemoves-edge',
+      id: this.edgeLayer,
       type: 'line',
       source: 'explore',
       'source-layer': 'edge',
@@ -357,17 +368,34 @@ class Explore {
       }
     }, 'road-label-small');
 
+    this.map.addLayer({
+      id: this.pathLayer,
+      type: 'line',
+      source: 'bikemoves',
+      'source-layer': 'bike_path',
+      paint: {
+        'line-color': '#000000',
+        'line-dasharray': [2, 2],
+        'line-width': {
+          stops: [
+            [12, 0.5],
+            [15, 2.5]
+          ]
+        }
+      }
+    }, 'road-label-small');
+
     this.drawLegend();
   }
 
   initMapEvents() {
-    this.map.on('mouseenter', 'bikemoves-edge', () =>
+    this.map.on('mouseenter', this.edgeLayer, () =>
       this.map.getCanvas().style.cursor = 'pointer');
 
-    this.map.on('mouseleave', 'bikemoves-edge', () =>
+    this.map.on('mouseleave', this.edgeLayer, () =>
       this.map.getCanvas().style.cursor = '');
 
-    this.map.on('click', 'bikemoves-edge', (e) => {
+    this.map.on('click', this.edgeLayer, (e) => {
       let feature = e.features[0];
       if (!feature) return;
 
@@ -413,8 +441,8 @@ class Explore {
   updateMapView() {
     let props = this.getMapViewPaintProperties();
     for (let propName in props)
-      this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
-    this.map.setFilter('bikemoves-edge', this.getMapLayerFilter());
+      this.map.setPaintProperty(this.edgeLayer, propName, props[propName]);
+    this.map.setFilter(this.edgeLayer, this.getMapLayerFilter());
     this.drawLegend();
   }
 

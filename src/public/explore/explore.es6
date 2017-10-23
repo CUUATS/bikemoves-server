@@ -77,7 +77,7 @@ class Explore {
       this.initMapEvents();
     });
 
-    this.initMapViewSelect();
+    this.initMapControls();
   }
 
   initCharts() {
@@ -147,6 +147,11 @@ class Explore {
     }
 
     return chart;
+  }
+
+  redrawChart(id) {
+    let chart = this.charts[id];
+    if (chart) chart.update();
   }
 
   drawStatChart(chartName) {
@@ -266,6 +271,21 @@ class Explore {
       req.open('GET', url, true);
       req.send();
     });
+  }
+
+  initMapControls() {
+    let toggle = document.getElementById('toggle-map-controls');
+    toggle.addEventListener('click', (e) => this.toggleMapConrols(e.target));
+    if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
+    this.initMapViewSelect();
+  }
+
+  toggleMapConrols(button) {
+    let active = button.className !== 'active';
+    button.className = (active) ? 'active' : 'inactive';
+    document.getElementById('map-controls').style.display =
+      (active) ? 'block' : 'none';
+    if (active) this.redrawChart('edge-color');
   }
 
   initMapViewSelect() {

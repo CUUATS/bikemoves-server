@@ -162,9 +162,16 @@
       </div>
     </article>
     <article id="data">
+      <div id="map"></div>
       <div class="inner">
+        <div id="map-controls-toggle">
+          <button type="button" name="toggle-map-controls"
+            id="toggle-map-controls">
+            <i class="fa fa-sliders" aria-label="Map Options"></i>
+            <span class="label">Map Options</span>
+          </button>
+        </div>
         <h1>BikeMoves Data</h1>
-        <div id="map"></div>
         <div id="map-controls">
           <label for="map-view">Map View</label>
           <select class="" name="map-view" id="select-map-view">
@@ -174,7 +181,6 @@
             <option value="preference">Preference</option>
           </select>
           <div id="chart-edge-color" class="chart-wrapper"></div>
-          <div id="chart-edge-width" class="chart-wrapper"></div>
           <div id="data-availability">
             Street segments ridden by only one user are excluded to
             protect privacy.

@@ -85,7 +85,7 @@ var Explore = function () {
         _this2.initMapEvents();
       });
 
-      this.initMapViewSelect();
+      this.initMapControls();
     }
   }, {
     key: 'initCharts',
@@ -155,6 +155,12 @@ var Explore = function () {
       }
 
       return chart;
+    }
+  }, {
+    key: 'redrawChart',
+    value: function redrawChart(id) {
+      var chart = this.charts[id];
+      if (chart) chart.update();
     }
   }, {
     key: 'drawStatChart',
@@ -289,9 +295,29 @@ var Explore = function () {
       });
     }
   }, {
+    key: 'initMapControls',
+    value: function initMapControls() {
+      var _this5 = this;
+
+      var toggle = document.getElementById('toggle-map-controls');
+      toggle.addEventListener('click', function (e) {
+        return _this5.toggleMapConrols(e.target);
+      });
+      if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
+      this.initMapViewSelect();
+    }
+  }, {
+    key: 'toggleMapConrols',
+    value: function toggleMapConrols(button) {
+      var active = button.className !== 'active';
+      button.className = active ? 'active' : 'inactive';
+      document.getElementById('map-controls').style.display = active ? 'block' : 'none';
+      if (active) this.redrawChart('edge-color');
+    }
+  }, {
     key: 'initMapViewSelect',
     value: function initMapViewSelect() {
-      var _this5 = this;
+      var _this6 = this;
 
       // Apply styleSelect.
       styleSelect('#select-map-view');
@@ -299,9 +325,9 @@ var Explore = function () {
       var select = document.getElementById('select-map-view');
       select.addEventListener('change', function (e) {
         var viewName = select.options[select.selectedIndex].value;
-        if (_this5.state.mapView === viewName) return;
-        _this5.state.mapView = viewName;
-        _this5.updateMapView();
+        if (_this6.state.mapView === viewName) return;
+        _this6.state.mapView = viewName;
+        _this6.updateMapView();
       });
     }
   }, {
@@ -429,14 +455,14 @@ var Explore = function () {
   }, {
     key: 'initMapEvents',
     value: function initMapEvents() {
-      var _this6 = this;
+      var _this7 = this;
 
       this.map.on('mouseenter', this.edgeLayer, function () {
-        return _this6.map.getCanvas().style.cursor = 'pointer';
+        return _this7.map.getCanvas().style.cursor = 'pointer';
       });
 
       this.map.on('mouseleave', this.edgeLayer, function () {
-        return _this6.map.getCanvas().style.cursor = '';
+        return _this7.map.getCanvas().style.cursor = '';
       });
 
       this.map.on('click', this.edgeLayer, function (e) {
@@ -445,9 +471,9 @@ var Explore = function () {
 
         var midpoint = turf.along(feature.geometry, turf.lineDistance(feature.geometry) * 0.5);
 
-        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this6.formatFeatureProperties(feature.properties)).addTo(_this6.map);
+        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this7.formatFeatureProperties(feature.properties)).addTo(_this7.map);
 
-        _this6.map.easeTo({
+        _this7.map.easeTo({
           center: midpoint.geometry.coordinates
         });
       });

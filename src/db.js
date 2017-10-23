@@ -12,7 +12,8 @@ const sequelize = new Sequelize(
     dialect: 'postgres',
     host: process.env.POSTGRES_HOST,
     port: parseInt(process.env.POSTGRES_PORT),
-    logging: false
+    logging: false,
+    operatorsAliases: false
   }
 );
 
@@ -659,6 +660,7 @@ exports.AGE_CHOICES = AGE_CHOICES;
 exports.GENDER_CHOICES = GENDER_CHOICES;
 exports.CYCLING_EXPERIENCE_CHOICES = CYCLING_EXPERIENCE_CHOICES;
 exports.sequelize = sequelize;
+exports.Op = Sequelize.Op;
 exports.User = User;
 exports.Trip = Trip;
 exports.Point = Point;

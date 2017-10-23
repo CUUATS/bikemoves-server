@@ -16,11 +16,11 @@ class Alternatives {
     return db.Trip.findAll({
       where: {
         matchStatus: 'Matched',
-        $or: [
+        [db.Op.or]: [
           {
-            $not: {
+            [db.Op.not]: {
               alternatives: {
-                $contains: [this.routeType]
+                [db.Op.contains]: [this.routeType]
               }
             }
           },

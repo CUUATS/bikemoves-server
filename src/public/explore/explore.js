@@ -14,7 +14,7 @@ var Explore = function () {
     };
     this.charts = {};
     this.data = {};
-    this.continuousColors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#ffffcc'];
+    this.continuousColors = ['#bd0026', '#f03b20', '#fd8d3c', '#fecc5c', '#ffffb2'];
     this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
     this.scrolling = false;
     this.initCharts();

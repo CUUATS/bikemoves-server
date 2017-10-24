@@ -193,11 +193,30 @@
               <span class="label">Bicycle Facility</span>
             </label>
           </div>
-          <div id="chart-edge-color" class="chart-wrapper"></div>
-          <div id="data-availability">
-            Street segments ridden by only one user are excluded to
+          <h2>Details</h2>
+          <p class="view-info info-users">
+            This view shows the number of unique users that have traveled on
+            each segment. Segments ridden by only one user are excluded to
             protect privacy.
-          </div>
+          </p>
+          <p class="view-info info-trips">
+            This view shows the number of trips that have traveled on
+            on a given segment. Segments ridden by only one user are excluded
+            to protect privacy.
+          </p>
+          <p class="view-info info-speed">
+            This view shows the average riding speed for segments that have
+            been ridden by at least two unique users. The speed includes
+            delays, such as waiting for a traffic signal to change.
+          </p>
+          <p class="view-info info-preference">
+            This view shows differences between the routes chosen by users and
+            the fastest routes. The preference score indicates how often users
+            have gone out of their way to use (positive score) or
+            avoid (negative score) a segment. Only segments with a moderate
+            or strong positive or negative preference are shown.
+          </p>
+          <div id="chart-edge-color" class="chart-wrapper"></div>
         </div>
       </div>
     </article>

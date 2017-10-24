@@ -270,7 +270,7 @@ h2 {
   margin: 15px 0;
   position: relative;
 }
-.chart-wrapper h2 {
+.chart-wrapper .title {
   text-align: center;
 }
 .chart-wrapper .label-x,
@@ -400,6 +400,8 @@ h2 {
 #data #map-controls {
   background-color: rgba(25, 25, 25, 0.75);
   display: none;
+  max-height: calc(100% - 120px);
+  overflow-y: auto;
   padding: 20px;
   position: relative;
   z-index: 90;
@@ -440,13 +442,7 @@ h2 {
 #data .style-select .ss-dropdown .ss-option.highlighted {
   background-color: #333333;
 }
-#data #map-controls h2 {
-  font-size: 15px;
-  font-family: 'Open Sans', sans-serif;
-  font-weight: normal;
-  margin-top: 15px;
-}
-#data #map-controls h2 {
+#data h2 {
   font-size: 15px;
   font-family: 'Open Sans', sans-serif;
   font-weight: normal;
@@ -479,7 +475,7 @@ h2 {
   margin-bottom: 5px;
   width: 16px;
 }
-#data .chart-wrapper h2 {
+#data .chart-wrapper .title {
   font-size: 0.9em;
 }
 #data .ct-label {
@@ -491,6 +487,7 @@ h2 {
 #data .label-x,
 #data .label-y {
   color: #dddddd;
+  font-size: 12px;
 }
 #data #chart-edge-width::after {
   clear: both;
@@ -498,10 +495,12 @@ h2 {
   display: block;
   height: 0;
 }
-#data-availability {
-  color: #cccccc;
-  font-size: 0.9em;
-  font-style: italic;
+#data .view-info {
+  display: none;
+  font-size: 14px;
+}
+#data .mapboxgl-popup h2 {
+  margin-top: 5px;
 }
 .mapboxgl-popup {
   color: black;

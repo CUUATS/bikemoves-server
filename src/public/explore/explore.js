@@ -132,6 +132,9 @@ var Explore = function () {
   }, {
     key: 'drawChart',
     value: function drawChart(options, chartOptions) {
+      options = Object.assign({
+        headingLevel: 2
+      }, options);
       var chart = this.charts[options.id];
 
       if (chart) {
@@ -145,7 +148,7 @@ var Explore = function () {
         if (options.yLabel) container.querySelector('.label-y .label').innerHTML = options.yLabel;
       } else {
         var _container = document.querySelector('#chart-' + options.id);
-        _container.innerHTML = '<h2 class="title">' + options.title + '</h2>' + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + ('<div class="label-y"><span class="label">' + options.yLabel + '</span></div>');
+        _container.innerHTML = '<h' + options.headingLevel + ' class="title">' + (options.title + '</h' + options.headingLevel + '>') + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + '<div class="label-y"><span class="label">' + (options.yLabel + '</span></div>');
 
         chart = new Chartist.Bar(_container.querySelector('.chart'), {
           labels: options.labels,
@@ -555,6 +558,7 @@ var Explore = function () {
         id: chartId,
         title: title,
         cssClass: 'ct-octave',
+        headingLevel: 3,
         xLabel: xLabel,
         yLabel: yLabel,
         labels: labels,
@@ -584,6 +588,13 @@ var Explore = function () {
     key: 'drawLegend',
     value: function drawLegend() {
       var viewName = this.state.mapView;
+
+      document.querySelectorAll('.view-info').forEach(function (el) {
+        return el.style.display = 'none';
+      });
+      document.querySelectorAll('.view-info.info-' + viewName).forEach(function (el) {
+        return el.style.display = 'block';
+      });
 
       if (viewName === 'users') {
         this.drawLegendChart('edge-color', 'users', 'Users', 'Users', 'Miles', this.continuousColors);

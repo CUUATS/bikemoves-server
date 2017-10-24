@@ -118,6 +118,9 @@ class Explore {
   }
 
   drawChart(options, chartOptions) {
+    options = Object.assign({
+      headingLevel: 2
+    }, options);
     let chart = this.charts[options.id];
 
     if (chart) {
@@ -134,10 +137,12 @@ class Explore {
         options.yLabel;
     } else {
       let container = document.querySelector(`#chart-${options.id}`);
-      container.innerHTML = `<h2 class="title">${options.title}</h2>` +
+      container.innerHTML = `<h${options.headingLevel} class="title">` +
+        `${options.title}</h${options.headingLevel}>` +
         `<div class="chart ${options.cssClass}"></div>` +
         `<div class="label-x">${options.xLabel}</div>` +
-        `<div class="label-y"><span class="label">${options.yLabel}</span></div>`;
+        `<div class="label-y"><span class="label">` +
+        `${options.yLabel}</span></div>`;
 
       chart = new Chartist.Bar(container.querySelector('.chart'), {
         labels: options.labels,
@@ -535,6 +540,7 @@ class Explore {
       id: chartId,
       title: title,
       cssClass: 'ct-octave',
+      headingLevel: 3,
       xLabel: xLabel,
       yLabel: yLabel,
       labels: labels,
@@ -563,6 +569,11 @@ class Explore {
 
   drawLegend() {
     let viewName = this.state.mapView;
+
+    document.querySelectorAll('.view-info')
+      .forEach((el) => el.style.display = 'none');
+    document.querySelectorAll('.view-info.info-' + viewName)
+      .forEach((el) => el.style.display = 'block');
 
     if (viewName === 'users') {
       this.drawLegendChart('edge-color', 'users', 'Users', 'Users',

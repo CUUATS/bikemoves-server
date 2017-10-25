@@ -458,7 +458,8 @@ function initViews() {
     INNER JOIN (
       SELECT trip_id,
         sum(CASE WHEN route_type = 'Actual' THEN distance ELSE 0 END) /
-        sum(CASE WHEN route_type = 'Fastest' THEN distance ELSE 0 END) AS ratio
+        greatest(sum(CASE WHEN route_type = 'Fastest'
+          THEN distance ELSE 0 END), 1) AS ratio
       FROM route_leg
       GROUP BY trip_id
     ) AS dist_comp

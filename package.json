@@ -5,6 +5,7 @@
   "dependencies": {
     "@turf/turf": "^4.7.3",
     "apicache": "^1.0.0",
+    "babel-polyfill": "^6.26.0",
     "body-parser": "^1.17.2",
     "clusterize.js": "^0.17.6",
     "express": "^4.15.4",

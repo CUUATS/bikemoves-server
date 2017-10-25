@@ -29,6 +29,8 @@ function fitDist(column, n, options) {
 }
 
 utils.serveLib(app.server,
+  'node_modules/babel-polyfill/dist/polyfill.min.js', 'polyfill.js');
+utils.serveLib(app.server,
   'node_modules/styleselect/css/styleselect.css', 'styleselect.css');
 utils.serveLib(app.server,
   'node_modules/styleselect/js/styleselect.js', 'styleselect.js');

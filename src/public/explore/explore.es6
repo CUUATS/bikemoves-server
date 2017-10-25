@@ -281,7 +281,7 @@ class Explore {
 
   initMapControls() {
     let toggle = document.getElementById('toggle-map-controls');
-    toggle.addEventListener('click', (e) => this.toggleMapConrols(e.target));
+    toggle.addEventListener('click', (e) => this.toggleMapConrols(toggle));
     if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
     this.initMapViewSelect();
   }

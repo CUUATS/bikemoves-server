@@ -305,7 +305,7 @@ var Explore = function () {
 
       var toggle = document.getElementById('toggle-map-controls');
       toggle.addEventListener('click', function (e) {
-        return _this5.toggleMapConrols(e.target);
+        return _this5.toggleMapConrols(toggle);
       });
       if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
       this.initMapViewSelect();

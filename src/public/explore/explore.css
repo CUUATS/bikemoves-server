@@ -302,6 +302,11 @@ h2 {
 .chart-wrapper .ct-bar {
   stroke-width: 8%;
 }
+.aria-table {
+  left: -10000px;
+  position: absolute;
+  top: -10000px;
+}
 #demographics #chart-age .ct-series-a .ct-bar {
   stroke: #c7e9b4;
 }

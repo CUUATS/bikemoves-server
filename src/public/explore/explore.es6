@@ -117,6 +117,30 @@ class Explore {
       this.drawStatChart.bind(this));
   }
 
+  chartTableHTML(options) {
+    let html = `<table class="aria-table">`;
+    if (options.title) html += `<caption>${options.title}</caption>`;
+    html += `<thead><tr><th>${options.xLabel}</th>` +
+      `<th>${options.yLabel}</th></tr></thead><tbody>`;
+
+    let series, labels;
+    if (options.series.length === 1) {
+      series = options.series[0];
+      labels = (new Array(series.length)).fill(0).map((v, i) => i + 1);
+    } else {
+      series = options.series;
+      labels = options.labels;
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+      html += `<tr><td>${labels[i]}</td>` +
+        `<td>${Math.round(series[i])}</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    return html;
+  }
+
   drawChart(options, chartOptions) {
     options = Object.assign({
       headingLevel: 2
@@ -135,14 +159,16 @@ class Explore {
         options.xLabel;
       if (options.yLabel) container.querySelector(`.label-y .label`).innerHTML =
         options.yLabel;
+      container.querySelector('.aria-table').innerHTML =
+        this.chartTableHTML(options);
     } else {
       let container = document.querySelector(`#chart-${options.id}`);
       container.innerHTML = `<h${options.headingLevel} class="title">` +
         `${options.title}</h${options.headingLevel}>` +
-        `<div class="chart ${options.cssClass}"></div>` +
+        `<div class="chart ${options.cssClass}" aria-hidden="true"></div>` +
         `<div class="label-x">${options.xLabel}</div>` +
         `<div class="label-y"><span class="label">` +
-        `${options.yLabel}</span></div>`;
+        `${options.yLabel}</span></div>` + this.chartTableHTML(options);
 
       chart = new Chartist.Bar(container.querySelector('.chart'), {
         labels: options.labels,

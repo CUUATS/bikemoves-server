@@ -130,6 +130,32 @@ var Explore = function () {
       ['age', 'gender', 'cycling-experience'].forEach(this.drawStatChart.bind(this));
     }
   }, {
+    key: 'chartTableHTML',
+    value: function chartTableHTML(options) {
+      var html = '<table class="aria-table">';
+      if (options.title) html += '<caption>' + options.title + '</caption>';
+      html += '<thead><tr><th>' + options.xLabel + '</th>' + ('<th>' + options.yLabel + '</th></tr></thead><tbody>');
+
+      var series = void 0,
+          labels = void 0;
+      if (options.series.length === 1) {
+        series = options.series[0];
+        labels = new Array(series.length).fill(0).map(function (v, i) {
+          return i + 1;
+        });
+      } else {
+        series = options.series;
+        labels = options.labels;
+      }
+
+      for (var i = 0; i < labels.length; i++) {
+        html += '<tr><td>' + labels[i] + '</td>' + ('<td>' + Math.round(series[i]) + '</td></tr>');
+      }
+
+      html += '</tbody></table>';
+      return html;
+    }
+  }, {
     key: 'drawChart',
     value: function drawChart(options, chartOptions) {
       options = Object.assign({
@@ -146,9 +172,10 @@ var Explore = function () {
         if (options.title) container.querySelector('.title').innerHTML = options.title;
         if (options.xLabel) container.querySelector('.label-x').innerHTML = options.xLabel;
         if (options.yLabel) container.querySelector('.label-y .label').innerHTML = options.yLabel;
+        container.querySelector('.aria-table').innerHTML = this.chartTableHTML(options);
       } else {
         var _container = document.querySelector('#chart-' + options.id);
-        _container.innerHTML = '<h' + options.headingLevel + ' class="title">' + (options.title + '</h' + options.headingLevel + '>') + ('<div class="chart ' + options.cssClass + '"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + '<div class="label-y"><span class="label">' + (options.yLabel + '</span></div>');
+        _container.innerHTML = '<h' + options.headingLevel + ' class="title">' + (options.title + '</h' + options.headingLevel + '>') + ('<div class="chart ' + options.cssClass + '" aria-hidden="true"></div>') + ('<div class="label-x">' + options.xLabel + '</div>') + '<div class="label-y"><span class="label">' + (options.yLabel + '</span></div>') + this.chartTableHTML(options);
 
         chart = new Chartist.Bar(_container.querySelector('.chart'), {
           labels: options.labels,

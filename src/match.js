@@ -33,11 +33,12 @@ class Matches {
       leg.speed > 13.4);
   }
 
-  updateTrip(trip, status) {
+  updateTrip(trip, status, distance) {
     if (!this.status[status]) this.status[status] = 0;
     this.status[status] += 1;
 
     trip.matchStatus = status;
+    trip.matchDistance = distance || 0;
     console.log(`${trip.id}: ${status}`);
     return trip.save();
   }
@@ -71,7 +72,7 @@ class Matches {
             radiuses: points.map((point) => point.properties.accuracy + 6),
             timestamps: points.map((point) =>
               Math.round((new Date(point.properties.time)).getTime()/1000)),
-            routeType: 'Actual',
+            routeType: 'Match',
             tripId: trip.id,
             pointIds: points.map((point) => point.properties.id)
           }).then((res) => {
@@ -79,7 +80,8 @@ class Matches {
             return Promise.all([
               db.RouteLeg.bulkCreate(res.legs),
               db.RouteTracepoint.bulkCreate(res.tracepoints),
-              this.updateTrip(trip, 'Matched')
+              this.updateTrip(trip, 'OK',
+                res.legs.reduce((sum, leg) => sum + leg.distance, 0))
             ]);
           }).catch((err) => this.updateTrip(trip, err.toString()));
         });

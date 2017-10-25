@@ -15,19 +15,8 @@ class Alternatives {
   getTrips() {
     return db.Trip.findAll({
       where: {
-        matchStatus: 'Matched',
-        [db.Op.or]: [
-          {
-            [db.Op.not]: {
-              alternatives: {
-                [db.Op.contains]: [this.routeType]
-              }
-            }
-          },
-          {
-            alternatives: null
-          }
-        ]
+        matchStatus: 'OK',
+        fastestStatus: null
       },
       order: [
         ['id', 'ASC']
@@ -48,10 +37,10 @@ class Alternatives {
     });
   }
 
-  updateTrip(trip, status) {
+  updateTrip(trip, status, distance) {
     this.status[status] = (this.status[status] || 0) + 1;
-    trip.alternatives = trip.alternatives || [];
-    trip.alternatives.push(this.routeType);
+    trip.fastestStatus = status;
+    trip.fastestDistance = distance || 0;
     console.log(`${trip.id}: ${status}`);
     return trip.save();
   }
@@ -82,7 +71,8 @@ class Alternatives {
           .then((res) => {
             return Promise.all([
               db.RouteLeg.bulkCreate(res.legs),
-              this.updateTrip(trip, 'Found')
+              this.updateTrip(trip, 'OK',
+                res.legs.reduce((sum, leg) => sum + leg.distance, 0))
             ]);
           })
           .catch((err) => console.log(`${trip.id}: ${err.toString()}`));

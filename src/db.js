@@ -136,8 +136,17 @@ const Trip = sequelize.define('trip', {
     type: Sequelize.STRING,
     field: 'match_status'
   },
-  alternatives: {
-    type: Sequelize.ARRAY(Sequelize.STRING)
+  matchDistance: {
+    type: Sequelize.DOUBLE,
+    field: 'match_distance'
+  },
+  fastestStatus: {
+    type: Sequelize.STRING,
+    field: 'fastest_status'
+  },
+  fastestDistance: {
+    type: Sequelize.DOUBLE,
+    field: 'fastest_distance'
   },
   region: {
     type: Sequelize.STRING
@@ -424,9 +433,15 @@ function initViews() {
   let views_sql = [
     `CREATE OR REPLACE VIEW edge_trip AS
     SELECT rle.edge_id,
-        leg.route_type,
         trip.id AS trip_id,
-        avg(speed) AS mean_speed
+        leg.route_type = 'Match' AS is_match,
+        avg(speed) AS mean_speed,
+        CASE WHEN trip.match_distance > 0
+          AND trip.fastest_distance > 0
+          AND trip.match_distance / trip.fastest_distance >= 0.8
+          AND trip.match_distance / trip.fastest_distance <= 1.5
+          THEN CASE WHEN leg.route_type = 'Match' THEN 1 ELSE -1 END
+          ELSE 0 END AS preference
       FROM route_leg_edge AS rle
       INNER JOIN route_leg AS leg
         ON rle.route_leg_id = leg.id
@@ -436,37 +451,7 @@ function initViews() {
         ON leg.trip_id = trip.id
       GROUP BY rle.edge_id,
         leg.route_type,
-        trip.id;`,
-
-    `CREATE OR REPLACE VIEW edge_diff AS
-    SELECT coalesce(et_actual.edge_id, et_fastest.edge_id) AS edge_id,
-      coalesce(et_actual.trip_id, et_fastest.trip_id) AS trip_id,
-      CASE WHEN et_actual.trip_id IS DISTINCT FROM NULL
-        THEN 1 ELSE -1 END AS net
-    FROM (
-      SELECT *
-      FROM edge_trip
-      WHERE route_type = 'Actual'
-    ) AS et_actual
-    FULL OUTER JOIN (
-      SELECT *
-      FROM edge_trip
-      WHERE route_type = 'Fastest'
-    ) AS et_fastest
-      ON et_actual.trip_id = et_fastest.trip_id
-        AND et_actual.edge_id = et_fastest.edge_id
-    INNER JOIN (
-      SELECT trip_id,
-        sum(CASE WHEN route_type = 'Actual' THEN distance ELSE 0 END) /
-        greatest(sum(CASE WHEN route_type = 'Fastest'
-          THEN distance ELSE 0 END), 1) AS ratio
-      FROM route_leg
-      GROUP BY trip_id
-    ) AS dist_comp
-      ON dist_comp.trip_id = coalesce(et_actual.trip_id, et_fastest.trip_id)
-        AND (dist_comp.ratio >= 0.8 OR dist_comp.ratio <= 1.5)
-    WHERE (et_actual.trip_id IS NOT DISTINCT FROM NULL
-      OR et_fastest.trip_ID IS NOT DISTINCT FROM NULL);`
+        trip.id;`
   ];
 
   return Promise.all(views_sql.map(
@@ -580,23 +565,20 @@ function getEdgeSQL(options) {
       edge.geom
       FROM (
         SELECT edge_trip.edge_id,
-          count(DISTINCT CASE WHEN edge_trip.route_type = 'Actual'
+          count(DISTINCT CASE WHEN edge_trip.is_match
             THEN trip.user_id ELSE NULL END)::integer AS users,
-          count(DISTINCT CASE WHEN edge_trip.route_type = 'Actual'
+          count(DISTINCT CASE WHEN edge_trip.is_match
             THEN trip.id ELSE NULL END)::integer AS trips,
-          coalesce(avg(CASE WHEN edge_trip.route_type = 'Actual'
+          coalesce(avg(CASE WHEN edge_trip.is_match
             THEN edge_trip.mean_speed ELSE NULL END), 0) * 2.23694
             AS mean_speed,
-          coalesce(sum(edge_diff.net), 0) AS preference
+          coalesce(sum(edge_trip.preference), 0) AS preference
         FROM edge
         INNER JOIN edge_trip
           ON edge_trip.edge_id = edge.id
         INNER JOIN trip
           ON edge_trip.trip_id = trip.id
             AND trip.region = '${options.region}'
-        LEFT JOIN edge_diff
-         ON edge_trip.edge_id = edge_diff.edge_id
-            AND edge_trip.trip_id = edge_diff.trip_id
         GROUP BY edge_trip.edge_id
         ) AS edge_info
       INNER JOIN edge

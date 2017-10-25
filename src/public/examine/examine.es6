@@ -75,7 +75,7 @@ class Examine {
       id: 'bikemoves-legs',
       type: 'line',
       source: 'legs',
-      filter: ['==', 'routeType', 'Actual'],
+      filter: ['==', 'routeType', 'Match'],
       paint: {
         'line-color': {
           type: 'interval',

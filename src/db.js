@@ -505,6 +505,17 @@ function insertIntoRouteLegEdge() {
   return sequelize.query(sql, {type: sequelize.QueryTypes.RAW});
 }
 
+function postMatchAnalyze() {
+  let sql = [
+    'ANALYZE route_leg;',
+    'ANALYZE route_leg_edge;',
+    'ANALYZE route_tracepoint;'
+  ];
+
+  return Promise.all(sql.map(
+    (sql) => sequelize.query(sql, {type: sequelize.QueryTypes.RAW})));
+}
+
 function getDemographics(trip_column, choices, options) {
   options = getQueryOptions(options);
 
@@ -653,6 +664,7 @@ exports.RouteTracepoint = RouteTracepoint;
 exports.Edge = Edge;
 exports.prepare = prepare;
 exports.insertIntoRouteLegEdge = insertIntoRouteLegEdge;
+exports.postMatchAnalyze = postMatchAnalyze;
 exports.getDemographics = getDemographics;
 exports.getTripCount = getTripCount;
 exports.getEdgeStatistics = getEdgeStatistics;

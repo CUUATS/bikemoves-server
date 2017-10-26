@@ -159,4 +159,8 @@ db.prepare()
     console.log('Updating edge relationships...');
     return db.insertIntoRouteLegEdge();
   })
+  .then(() => {
+    console.log('Updating database statistics...');
+    return db.postMatchAnalyze();
+  })
   .then(() => process.exit());

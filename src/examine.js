@@ -21,7 +21,7 @@ app.get('/config.js', (req, res) => {
 app.get('/api/trips', (req, res) => {
   db.Trip.findAll({
     where: {
-      matchStatus: 'Matched'
+      matchStatus: 'OK'
     },
     order: [
       ['startTime', 'ASC']

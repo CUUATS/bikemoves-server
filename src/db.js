@@ -529,7 +529,7 @@ function getDemographics(trip_column, choices, options) {
       WITH ORDINALITY choices(description, code)
     INNER JOIN trip
       ON coalesce(trip.${trip_column}, 0) = choices.code - 1
-        AND trip.match_status = 'Matched'
+        AND trip.match_status = 'OK'
         AND trip.region = '${options.region}'
     INNER JOIN route_leg
       ON route_leg.trip_id = trip.id
@@ -554,7 +554,7 @@ function getTripCount(options) {
       SELECT user_id,
         count(*) trip_count
       FROM trip
-      WHERE match_status = 'Matched'
+      WHERE match_status = 'OK'
         AND region = '${options.region}'
       GROUP BY user_id
     ) AS counts

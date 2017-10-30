@@ -1,144 +1,7 @@
-class Explore {
+class ExploreCharts {
+
   constructor() {
-    this.state = {
-      chartView: 'users',
-      mapView: 'users'
-    };
     this.charts = {};
-    this.data = {};
-    this.continuousColors = [
-      '#bd0026',
-      '#f03b20',
-      '#fd8d3c',
-      '#fecc5c',
-      '#ffffb2'
-    ];
-    this.divergingColors = [
-      '#d7191c',
-      '#fdae61',
-      '#ffffbf',
-      '#abd9e9',
-      '#2c7bb6'
-    ];
-    this.edgeLayer = 'explore-edge';
-    this.pathLayer = 'bikemoves-bike-path';
-    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
-    this.rackLayer = 'bikemoves-bike-rack';
-    this.scrolling = false;
-    this.initCharts();
-    this.initMap();
-    this.initScroll();
-  }
-
-  initScroll() {
-    let scrollTimer;
-    window.addEventListener('scroll', (e) => {
-      if (scrollTimer) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(this.onScroll.bind(this), 200);
-    });
-    this.onScroll();
-  }
-
-  onScroll() {
-    this.setActiveNavItem(this.getCurrentArticleIdx());
-  }
-
-  getCurrentArticleIdx() {
-    let absOffset = [].slice.call(document.querySelectorAll('article'))
-      .map((el) => Math.abs(el.getBoundingClientRect().top));
-
-    return absOffset.indexOf(Math.min.apply(null, absOffset));
-  }
-
-  setActiveNavItem(idx) {
-    document.querySelectorAll('header a').forEach((el, i) => {
-      el.className = (idx === i) ? 'active' : 'inactive';
-    });
-  }
-
-  initMap() {
-    let getStats = this.getJSON(this.absoluteURL('/statistics.json'))
-        .then((statistics) => this.data.statistics = statistics);
-
-    this.map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/dark-v9',
-        center: [-88.227203, 40.109403],
-        zoom: 13,
-        minZoom: 12,
-        maxZoom: 17
-    });
-
-    let mapLoad = new Promise((resolve, reject) => {
-      this.map.on('load', resolve);
-    });
-
-    Promise.all([getStats, mapLoad]).then(() => {
-      this.addMapLayers();
-      this.initMapEvents();
-    });
-
-    this.initMapControls();
-  }
-
-  initCharts() {
-    this.getJSON(this.absoluteURL('/demographics.json'))
-      .then((data) => {
-        this.data.demographics = data;
-        this.initChartViews();
-      });
-  }
-
-  initChartViews() {
-    let data = this.data.demographics,
-      viewButtons = document.querySelectorAll('#stats li');
-    viewButtons.forEach((button) => {
-      let link = button.querySelector('a'),
-        value = button.querySelector('.value'),
-        statName = button.className;
-
-      value.innerHTML = this.formatNumber(this.getStatTotal(data, statName), 0);
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.state.chartView = statName;
-        this.showStatCharts();
-      });
-    });
-    this.showStatCharts();
-    this.drawStatHistogram('trip-count', 'trips', 'users');
-  }
-
-  showStatCharts() {
-    let statName = this.state.chartView;
-    document.querySelectorAll('#stats li a').forEach((link) => {
-      link.className = (link.parentNode.className === statName) ? 'active' : '';
-    });
-    ['age', 'gender', 'cycling-experience'].forEach(
-      this.drawStatChart.bind(this));
-  }
-
-  chartTableHTML(options) {
-    let html = `<table class="aria-table">`;
-    if (options.title) html += `<caption>${options.title}</caption>`;
-    html += `<thead><tr><th>${options.xLabel}</th>` +
-      `<th>${options.yLabel}</th></tr></thead><tbody>`;
-
-    let series, labels;
-    if (options.series.length === 1) {
-      series = options.series[0];
-      labels = (new Array(series.length)).fill(0).map((v, i) => i + 1);
-    } else {
-      series = options.series;
-      labels = options.labels;
-    }
-
-    for (let i = 0; i < labels.length; i++) {
-      html += `<tr><td>${labels[i]}</td>` +
-        `<td>${Math.round(series[i])}</td></tr>`;
-    }
-
-    html += '</tbody></table>';
-    return html;
   }
 
   drawChart(options, chartOptions) {
@@ -186,6 +49,69 @@ class Explore {
     if (chart) chart.update();
   }
 
+  chartTableHTML(options) {
+    let html = `<table class="aria-table">`;
+    if (options.title) html += `<caption>${options.title}</caption>`;
+    html += `<thead><tr><th>${options.xLabel}</th>` +
+      `<th>${options.yLabel}</th></tr></thead><tbody>`;
+
+    let series, labels;
+    if (options.series.length === 1) {
+      series = options.series[0];
+      labels = (new Array(series.length)).fill(0).map((v, i) => i + 1);
+    } else {
+      series = options.series;
+      labels = options.labels;
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+      html += `<tr><td>${labels[i]}</td>` +
+        `<td>${Math.round(series[i])}</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    return html;
+  }
+}
+
+class ExploreDemographics {
+  constructor(charts) {
+    this.charts = new ExploreCharts();
+    this.state = {
+      chartView: 'users'
+    };
+    this.data = bikemoves.data;
+    this.init();
+  }
+
+  init() {
+    let data = this.data.demographics,
+      viewButtons = document.querySelectorAll('#stats li');
+    viewButtons.forEach((button) => {
+      let link = button.querySelector('a'),
+        value = button.querySelector('.value'),
+        statName = button.className;
+
+      value.innerHTML = this.formatNumber(this.getStatTotal(data, statName), 0);
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.state.chartView = statName;
+        this.showStatCharts();
+      });
+    });
+    this.showStatCharts();
+    this.drawStatHistogram('trip-count', 'trips', 'users');
+  }
+
+  showStatCharts() {
+    let statName = this.state.chartView;
+    document.querySelectorAll('#stats li a').forEach((link) => {
+      link.className = (link.parentNode.className === statName) ? 'active' : '';
+    });
+    ['age', 'gender', 'cycling-experience'].forEach(
+      this.drawStatChart.bind(this));
+  }
+
   drawStatChart(chartName) {
     let table = this.data.demographics[chartName],
       statName = this.state.chartView,
@@ -202,7 +128,7 @@ class Explore {
         distance: 'Total Miles'
       }[statName];
 
-    let chart = this.drawChart({
+    let chart = this.charts.drawChart({
       id: chartName,
       title: xLabel,
       cssClass: 'ct-octave',
@@ -248,7 +174,7 @@ class Explore {
       values.push((idx === -1) ? 0 : y[idx]);
     }
 
-    let chart = this.drawChart({
+    let chart = this.charts.drawChart({
       id: chartName,
       title: 'Trips per User',
       cssClass: 'ct-octave',
@@ -283,26 +209,58 @@ class Explore {
   formatNumber(value, digits) {
     return (+value.toFixed(digits)).toLocaleString();
   }
+}
+
+class ExploreData {
+  constructor() {
+    this.charts = new ExploreCharts();
+    this.state = {
+      mapView: 'users'
+    };
+    this.data = bikemoves.data;
+    this.continuousColors = [
+      '#bd0026',
+      '#f03b20',
+      '#fd8d3c',
+      '#fecc5c',
+      '#ffffb2'
+    ];
+    this.divergingColors = [
+      '#d7191c',
+      '#fdae61',
+      '#ffffbf',
+      '#abd9e9',
+      '#2c7bb6'
+    ];
+    this.edgeLayer = 'explore-edge';
+    this.pathLayer = 'bikemoves-bike-path';
+    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
+    this.rackLayer = 'bikemoves-bike-rack';
+    this.init();
+  }
+
+  init() {
+    mapboxgl.accessToken = this.data.mapboxToken;
+    this.map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v9',
+        center: [-88.227203, 40.109403],
+        zoom: 13,
+        minZoom: 12,
+        maxZoom: 17
+    });
+
+    this.map.on('load', () => {
+      this.addMapLayers();
+      this.initMapEvents();
+    });
+
+    this.initMapControls();
+  }
 
   absoluteURL(url) {
     return location.protocol + '//' + location.hostname + (
       location.port ? ':' + location.port : '') + url;
-  }
-
-  getJSON(url) {
-    return new Promise((resolve, reject) => {
-      let req = new XMLHttpRequest();
-      req.onload = () => {
-        if (req.status >= 200 && req.status < 300) {
-          resolve(JSON.parse(req.response));
-        } else {
-          reject(req.statusText);
-        }
-      };
-      req.onerror = () => reject(req.statusText);
-      req.open('GET', url, true);
-      req.send();
-    });
   }
 
   initMapControls() {
@@ -317,7 +275,7 @@ class Explore {
     button.className = (active) ? 'active' : 'inactive';
     document.getElementById('map-controls').style.display =
       (active) ? 'block' : 'none';
-    if (active) this.redrawChart('edge-color');
+    if (active) this.charts.redrawChart('edge-color');
   }
 
   initMapViewSelect() {
@@ -562,7 +520,7 @@ class Explore {
       series = stats.stops.map((stop) => stop.count)
         .filter((v, i) => exclude.indexOf(i) === -1);
 
-    let chart = this.drawChart({
+    let chart = this.charts.drawChart({
       id: chartId,
       title: title,
       cssClass: 'ct-octave',
@@ -617,4 +575,5 @@ class Explore {
   }
 }
 
-let explore = new Explore();
+(document.querySelector('article').id === 'demographics') ?
+  new ExploreDemographics() : new ExploreData();

@@ -4,158 +4,14 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Explore = function () {
-  function Explore() {
-    _classCallCheck(this, Explore);
+var ExploreCharts = function () {
+  function ExploreCharts() {
+    _classCallCheck(this, ExploreCharts);
 
-    this.state = {
-      chartView: 'users',
-      mapView: 'users'
-    };
     this.charts = {};
-    this.data = {};
-    this.continuousColors = ['#bd0026', '#f03b20', '#fd8d3c', '#fecc5c', '#ffffb2'];
-    this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
-    this.edgeLayer = 'explore-edge';
-    this.pathLayer = 'bikemoves-bike-path';
-    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
-    this.rackLayer = 'bikemoves-bike-rack';
-    this.scrolling = false;
-    this.initCharts();
-    this.initMap();
-    this.initScroll();
   }
 
-  _createClass(Explore, [{
-    key: 'initScroll',
-    value: function initScroll() {
-      var _this = this;
-
-      var scrollTimer = void 0;
-      window.addEventListener('scroll', function (e) {
-        if (scrollTimer) clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(_this.onScroll.bind(_this), 200);
-      });
-      this.onScroll();
-    }
-  }, {
-    key: 'onScroll',
-    value: function onScroll() {
-      this.setActiveNavItem(this.getCurrentArticleIdx());
-    }
-  }, {
-    key: 'getCurrentArticleIdx',
-    value: function getCurrentArticleIdx() {
-      var absOffset = [].slice.call(document.querySelectorAll('article')).map(function (el) {
-        return Math.abs(el.getBoundingClientRect().top);
-      });
-
-      return absOffset.indexOf(Math.min.apply(null, absOffset));
-    }
-  }, {
-    key: 'setActiveNavItem',
-    value: function setActiveNavItem(idx) {
-      document.querySelectorAll('header a').forEach(function (el, i) {
-        el.className = idx === i ? 'active' : 'inactive';
-      });
-    }
-  }, {
-    key: 'initMap',
-    value: function initMap() {
-      var _this2 = this;
-
-      var getStats = this.getJSON(this.absoluteURL('/statistics.json')).then(function (statistics) {
-        return _this2.data.statistics = statistics;
-      });
-
-      this.map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/dark-v9',
-        center: [-88.227203, 40.109403],
-        zoom: 13,
-        minZoom: 12,
-        maxZoom: 17
-      });
-
-      var mapLoad = new Promise(function (resolve, reject) {
-        _this2.map.on('load', resolve);
-      });
-
-      Promise.all([getStats, mapLoad]).then(function () {
-        _this2.addMapLayers();
-        _this2.initMapEvents();
-      });
-
-      this.initMapControls();
-    }
-  }, {
-    key: 'initCharts',
-    value: function initCharts() {
-      var _this3 = this;
-
-      this.getJSON(this.absoluteURL('/demographics.json')).then(function (data) {
-        _this3.data.demographics = data;
-        _this3.initChartViews();
-      });
-    }
-  }, {
-    key: 'initChartViews',
-    value: function initChartViews() {
-      var _this4 = this;
-
-      var data = this.data.demographics,
-          viewButtons = document.querySelectorAll('#stats li');
-      viewButtons.forEach(function (button) {
-        var link = button.querySelector('a'),
-            value = button.querySelector('.value'),
-            statName = button.className;
-
-        value.innerHTML = _this4.formatNumber(_this4.getStatTotal(data, statName), 0);
-        link.addEventListener('click', function (e) {
-          e.preventDefault();
-          _this4.state.chartView = statName;
-          _this4.showStatCharts();
-        });
-      });
-      this.showStatCharts();
-      this.drawStatHistogram('trip-count', 'trips', 'users');
-    }
-  }, {
-    key: 'showStatCharts',
-    value: function showStatCharts() {
-      var statName = this.state.chartView;
-      document.querySelectorAll('#stats li a').forEach(function (link) {
-        link.className = link.parentNode.className === statName ? 'active' : '';
-      });
-      ['age', 'gender', 'cycling-experience'].forEach(this.drawStatChart.bind(this));
-    }
-  }, {
-    key: 'chartTableHTML',
-    value: function chartTableHTML(options) {
-      var html = '<table class="aria-table">';
-      if (options.title) html += '<caption>' + options.title + '</caption>';
-      html += '<thead><tr><th>' + options.xLabel + '</th>' + ('<th>' + options.yLabel + '</th></tr></thead><tbody>');
-
-      var series = void 0,
-          labels = void 0;
-      if (options.series.length === 1) {
-        series = options.series[0];
-        labels = new Array(series.length).fill(0).map(function (v, i) {
-          return i + 1;
-        });
-      } else {
-        series = options.series;
-        labels = options.labels;
-      }
-
-      for (var i = 0; i < labels.length; i++) {
-        html += '<tr><td>' + labels[i] + '</td>' + ('<td>' + Math.round(series[i]) + '</td></tr>');
-      }
-
-      html += '</tbody></table>';
-      return html;
-    }
-  }, {
+  _createClass(ExploreCharts, [{
     key: 'drawChart',
     value: function drawChart(options, chartOptions) {
       options = Object.assign({
@@ -194,6 +50,80 @@ var Explore = function () {
       if (chart) chart.update();
     }
   }, {
+    key: 'chartTableHTML',
+    value: function chartTableHTML(options) {
+      var html = '<table class="aria-table">';
+      if (options.title) html += '<caption>' + options.title + '</caption>';
+      html += '<thead><tr><th>' + options.xLabel + '</th>' + ('<th>' + options.yLabel + '</th></tr></thead><tbody>');
+
+      var series = void 0,
+          labels = void 0;
+      if (options.series.length === 1) {
+        series = options.series[0];
+        labels = new Array(series.length).fill(0).map(function (v, i) {
+          return i + 1;
+        });
+      } else {
+        series = options.series;
+        labels = options.labels;
+      }
+
+      for (var i = 0; i < labels.length; i++) {
+        html += '<tr><td>' + labels[i] + '</td>' + ('<td>' + Math.round(series[i]) + '</td></tr>');
+      }
+
+      html += '</tbody></table>';
+      return html;
+    }
+  }]);
+
+  return ExploreCharts;
+}();
+
+var ExploreDemographics = function () {
+  function ExploreDemographics(charts) {
+    _classCallCheck(this, ExploreDemographics);
+
+    this.charts = new ExploreCharts();
+    this.state = {
+      chartView: 'users'
+    };
+    this.data = bikemoves.data;
+    this.init();
+  }
+
+  _createClass(ExploreDemographics, [{
+    key: 'init',
+    value: function init() {
+      var _this = this;
+
+      var data = this.data.demographics,
+          viewButtons = document.querySelectorAll('#stats li');
+      viewButtons.forEach(function (button) {
+        var link = button.querySelector('a'),
+            value = button.querySelector('.value'),
+            statName = button.className;
+
+        value.innerHTML = _this.formatNumber(_this.getStatTotal(data, statName), 0);
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          _this.state.chartView = statName;
+          _this.showStatCharts();
+        });
+      });
+      this.showStatCharts();
+      this.drawStatHistogram('trip-count', 'trips', 'users');
+    }
+  }, {
+    key: 'showStatCharts',
+    value: function showStatCharts() {
+      var statName = this.state.chartView;
+      document.querySelectorAll('#stats li a').forEach(function (link) {
+        link.className = link.parentNode.className === statName ? 'active' : '';
+      });
+      ['age', 'gender', 'cycling-experience'].forEach(this.drawStatChart.bind(this));
+    }
+  }, {
     key: 'drawStatChart',
     value: function drawStatChart(chartName) {
       var table = this.data.demographics[chartName],
@@ -215,7 +145,7 @@ var Explore = function () {
         distance: 'Total Miles'
       }[statName];
 
-      var chart = this.drawChart({
+      var chart = this.charts.drawChart({
         id: chartName,
         title: xLabel,
         cssClass: 'ct-octave',
@@ -264,7 +194,7 @@ var Explore = function () {
         values.push(idx === -1 ? 0 : y[idx]);
       }
 
-      var chart = this.drawChart({
+      var chart = this.charts.drawChart({
         id: chartName,
         title: 'Trips per User',
         cssClass: 'ct-octave',
@@ -301,38 +231,64 @@ var Explore = function () {
     value: function formatNumber(value, digits) {
       return (+value.toFixed(digits)).toLocaleString();
     }
+  }]);
+
+  return ExploreDemographics;
+}();
+
+var ExploreData = function () {
+  function ExploreData() {
+    _classCallCheck(this, ExploreData);
+
+    this.charts = new ExploreCharts();
+    this.state = {
+      mapView: 'users'
+    };
+    this.data = bikemoves.data;
+    this.continuousColors = ['#bd0026', '#f03b20', '#fd8d3c', '#fecc5c', '#ffffb2'];
+    this.divergingColors = ['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6'];
+    this.edgeLayer = 'explore-edge';
+    this.pathLayer = 'bikemoves-bike-path';
+    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
+    this.rackLayer = 'bikemoves-bike-rack';
+    this.init();
+  }
+
+  _createClass(ExploreData, [{
+    key: 'init',
+    value: function init() {
+      var _this2 = this;
+
+      mapboxgl.accessToken = this.data.mapboxToken;
+      this.map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v9',
+        center: [-88.227203, 40.109403],
+        zoom: 13,
+        minZoom: 12,
+        maxZoom: 17
+      });
+
+      this.map.on('load', function () {
+        _this2.addMapLayers();
+        _this2.initMapEvents();
+      });
+
+      this.initMapControls();
+    }
   }, {
     key: 'absoluteURL',
     value: function absoluteURL(url) {
       return location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '') + url;
     }
   }, {
-    key: 'getJSON',
-    value: function getJSON(url) {
-      return new Promise(function (resolve, reject) {
-        var req = new XMLHttpRequest();
-        req.onload = function () {
-          if (req.status >= 200 && req.status < 300) {
-            resolve(JSON.parse(req.response));
-          } else {
-            reject(req.statusText);
-          }
-        };
-        req.onerror = function () {
-          return reject(req.statusText);
-        };
-        req.open('GET', url, true);
-        req.send();
-      });
-    }
-  }, {
     key: 'initMapControls',
     value: function initMapControls() {
-      var _this5 = this;
+      var _this3 = this;
 
       var toggle = document.getElementById('toggle-map-controls');
       toggle.addEventListener('click', function (e) {
-        return _this5.toggleMapConrols(toggle);
+        return _this3.toggleMapConrols(toggle);
       });
       if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
       this.initMapViewSelect();
@@ -343,12 +299,12 @@ var Explore = function () {
       var active = button.className !== 'active';
       button.className = active ? 'active' : 'inactive';
       document.getElementById('map-controls').style.display = active ? 'block' : 'none';
-      if (active) this.redrawChart('edge-color');
+      if (active) this.charts.redrawChart('edge-color');
     }
   }, {
     key: 'initMapViewSelect',
     value: function initMapViewSelect() {
-      var _this6 = this;
+      var _this4 = this;
 
       // Apply styleSelect.
       styleSelect('#select-map-view');
@@ -356,9 +312,9 @@ var Explore = function () {
       var select = document.getElementById('select-map-view');
       select.addEventListener('change', function (e) {
         var viewName = select.options[select.selectedIndex].value;
-        if (_this6.state.mapView === viewName) return;
-        _this6.state.mapView = viewName;
-        _this6.updateMapView();
+        if (_this4.state.mapView === viewName) return;
+        _this4.state.mapView = viewName;
+        _this4.updateMapView();
       });
     }
   }, {
@@ -503,25 +459,25 @@ var Explore = function () {
   }, {
     key: 'initLayerToggle',
     value: function initLayerToggle(id, layerNames) {
-      var _this7 = this;
+      var _this5 = this;
 
       document.getElementById(id).addEventListener('change', function (e) {
         return layerNames.forEach(function (layerName) {
-          return _this7.map.setLayoutProperty(layerName, 'visibility', e.target.checked ? 'visible' : 'none');
+          return _this5.map.setLayoutProperty(layerName, 'visibility', e.target.checked ? 'visible' : 'none');
         });
       });
     }
   }, {
     key: 'initMapEvents',
     value: function initMapEvents() {
-      var _this8 = this;
+      var _this6 = this;
 
       this.map.on('mouseenter', this.edgeLayer, function () {
-        return _this8.map.getCanvas().style.cursor = 'pointer';
+        return _this6.map.getCanvas().style.cursor = 'pointer';
       });
 
       this.map.on('mouseleave', this.edgeLayer, function () {
-        return _this8.map.getCanvas().style.cursor = '';
+        return _this6.map.getCanvas().style.cursor = '';
       });
 
       this.map.on('click', this.edgeLayer, function (e) {
@@ -530,9 +486,9 @@ var Explore = function () {
 
         var midpoint = turf.along(feature.geometry, turf.lineDistance(feature.geometry) * 0.5);
 
-        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this8.formatFeatureProperties(feature.properties)).addTo(_this8.map);
+        new mapboxgl.Popup().setLngLat(midpoint.geometry.coordinates).setHTML(_this6.formatFeatureProperties(feature.properties)).addTo(_this6.map);
 
-        _this8.map.easeTo({
+        _this6.map.easeTo({
           center: midpoint.geometry.coordinates
         });
       });
@@ -581,7 +537,7 @@ var Explore = function () {
         return exclude.indexOf(i) === -1;
       });
 
-      var chart = this.drawChart({
+      var chart = this.charts.drawChart({
         id: chartId,
         title: title,
         cssClass: 'ct-octave',
@@ -635,7 +591,7 @@ var Explore = function () {
     }
   }]);
 
-  return Explore;
+  return ExploreData;
 }();
 
-var explore = new Explore();
+document.querySelector('article').id === 'demographics' ? new ExploreDemographics() : new ExploreData();

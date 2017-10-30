@@ -1,0 +1,13 @@
+extends layout.pug
+
+block content
+  h1 User Demographics
+  ul#stats
+    each stat in stats
+      li(class=stat.id)
+        a(href='#' + stat.id)
+          span.value &mdash;
+          span.label= stat.title
+  div#charts
+    each chart in charts
+      div.chart-wrapper(id='chart-' + chart)

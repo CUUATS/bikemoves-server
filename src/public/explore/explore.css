@@ -534,6 +534,7 @@ h2 {
   }
   #primary-nav .label {
     display: inline;
+    margin-left: 0.25em;
   }
   #home h1 {
     font-size: 5em;

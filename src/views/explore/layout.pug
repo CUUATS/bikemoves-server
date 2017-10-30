@@ -1,0 +1,23 @@
+doctype html
+html(lang='en')
+  head
+    title BikeMoves Explore - #{title}
+    each url in styles
+      link(href=url rel='stylesheet')
+    header#header
+      div.inner
+        a#logo(href='/') #[span.bikemoves BikeMoves] #[span.explore Explore]
+        nav
+          ul#primary-nav
+            each item in menuItems
+              li
+                a(href=item.url class=(id === item.id) ? 'active' : '')
+                  i(class='fa fa-' + item.icon aria-label=item.title)
+                  span.label= item.title
+
+    article(id=id)
+      block body
+        div.inner
+          block content
+    each url in scripts
+      script(src=url type='text/javascript')

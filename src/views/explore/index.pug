@@ -1,0 +1,12 @@
+extends layout.pug
+
+block content
+  h1 Bike Planning. <br /> On the Move.
+  p.description BikeMoves Illinois uses data from cyclists in our community to improve bike planning for everyone.
+  ul#home-menu
+    each item in menuItems
+      li
+        a(href=item.url)
+          i(class='fa fa-' + item.icon aria-hidden='true')
+          strong= item.title
+          span.text= item.description

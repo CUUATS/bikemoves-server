@@ -15,6 +15,7 @@
     "pg": "^7.2.0",
     "promise-queue": "^2.2.3",
     "protobufjs": "^6.8.0",
+    "pug": "^2.0.0-rc.4",
     "sendmail": "^1.2.0",
     "sequelize": "^4.7.5",
     "stats-lite": "^2.1.0",

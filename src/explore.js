@@ -21,16 +21,21 @@ const EDGE_OPTIONS = {
 };
 const EDGE_TILE_SQL = db.getEdgeTileSQL(EDGE_OPTIONS);
 
-function fitDist(column, n, zeroBased) {
+function fitDist(column, n, options) {
   return db.getEdgeStatistics(column, EDGE_OPTIONS).then((rows) => {
-    let dist = new Distribution(rows, n, zeroBased);
-    return dist.fit();
+    let dist = new Distribution(rows);
+    return dist.fit(n, options);
   });
 }
 
 utils.serveLib(app.server,
-  'styleselect/css/styleselect.css', 'styleselect.css');
-utils.serveLib(app.server, 'styleselect/js/styleselect.js', 'styleselect.js');
+  'node_modules/babel-polyfill/dist/polyfill.min.js', 'polyfill.js');
+utils.serveLib(app.server,
+  'node_modules/styleselect/css/styleselect.css', 'styleselect.css');
+utils.serveLib(app.server,
+  'node_modules/styleselect/js/styleselect.js', 'styleselect.js');
+utils.serveLib(app.server,
+  'src/public/lib/turf-browser.js', 'turf.js');
 
 app.server.use(express.static('src/public/explore'));
 
@@ -57,14 +62,20 @@ app.server.get('/demographics.json', cache('24 hours'), (req, res) => {
 
 app.server.get('/statistics.json', cache('24 hours'), (req, res) => {
   Promise.all([
-    fitDist('mean_speed', 5, false),
-    fitDist('trips', 5, false),
-    fitDist('users', 5, false)
-  ]).then(([speed, trips, users]) => {
+    fitDist('mean_speed', 5),
+    fitDist('trips', 5),
+    fitDist('users', 5),
+    fitDist('preference', 5, {
+      center: 0,
+      equal: false,
+      profile: [0.05, 0.1, 0.9, 0.95]
+    })
+  ]).then(([speed, trips, users, preference]) => {
     res.json({
       speed: speed,
       trips: trips,
-      users: users
+      users: users,
+      preference: preference
     });
   });
 });

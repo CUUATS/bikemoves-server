@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <title>BikeMoves Explore</title>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Open+Sans" rel="stylesheet">
-    <link href='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.css' rel='stylesheet' />
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:700%7COpen+Sans" rel="stylesheet">
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.css' rel='stylesheet' />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
     <link rel="stylesheet" href="/lib/styleselect.css">
     <link rel="stylesheet" href="explore.css">
@@ -121,7 +121,7 @@
           </p>
           <ul class="download-buttons">
             <li class="android">
-              <a href="https://play.google.com/store/apps/details?id=gov.illinois.idot.bikemovesillinois&amp;utm_source=global_co&amp;utm_medium=prtnr&amp;utm_content=Mar2515&amp;utm_campaign=PartBadge&amp;pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="190" height="73.5"></a>
+              <a href="https://play.google.com/store/apps/details?id=gov.illinois.idot.bikemovesillinois&amp;utm_source=global_co&amp;utm_medium=prtnr&amp;utm_content=Mar2515&amp;utm_campaign=PartBadge&amp;pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="190" height="74"></a>
             </li>
             <li class="ios">
               <a href="https://itunes.apple.com/us/app/bikemoves-illinois/id1116248078"><img src="/img/app-store.png" alt="Download on the App Store" height="50" width="170"></a>
@@ -162,28 +162,70 @@
       </div>
     </article>
     <article id="data">
+      <div id="map"></div>
       <div class="inner">
+        <div id="map-controls-toggle">
+          <button type="button" name="toggle-map-controls"
+            id="toggle-map-controls">
+            <i class="fa fa-sliders" aria-label="Map Options"></i>
+            <span class="label">Map Options</span>
+          </button>
+        </div>
         <h1>BikeMoves Data</h1>
-        <div id="map"></div>
         <div id="map-controls">
-          <label for="map-view">Map View</label>
+          <label for="map-view" id="map-view-label">Map View</label>
           <select class="" name="map-view" id="select-map-view">
-            <option value="users-speed">Users and Average Speed</option>
-            <option value="trips-speed">Trips and Average Speed</option>
+            <option value="users">Users</option>
+            <option value="trips">Trips</option>
+            <option value="speed">Average Speed</option>
+            <option value="preference">Preference</option>
           </select>
-          <div id="chart-edge-color" class="chart-wrapper"></div>
-          <div id="chart-edge-width" class="chart-wrapper"></div>
-          <div id="data-availability">
-            Street segments ridden by only one user are excluded to
-            protect privacy.
+          <h2>Legend</h2>
+          <div id="map-legend">
+            <label for="bike-rack" class="legend-item" id="legend-item-bike-rack">
+              <input type="checkbox" name="bike-rack" id="bike-rack" checked="checked">
+              <span class="legend-symbol"></span>
+              <span class="label">Bicycle Parking</span>
+            </label>
+            <label for="bike-path" class="legend-item" id="legend-item-bike-path">
+              <input type="checkbox" name="bike-path" id="bike-path" checked="checked">
+              <span class="legend-symbol"></span>
+              <span class="label">Bicycle Facility</span>
+            </label>
           </div>
+          <h2>Details</h2>
+          <p class="view-info info-users">
+            This view shows the number of unique users that have traveled on
+            each segment. Segments ridden by only one user are excluded to
+            protect privacy.
+          </p>
+          <p class="view-info info-trips">
+            This view shows the number of trips that have traveled on
+            on a given segment. Segments ridden by only one user are excluded
+            to protect privacy.
+          </p>
+          <p class="view-info info-speed">
+            This view shows the average riding speed for segments that have
+            been ridden by at least two unique users. The speed includes
+            delays, such as waiting for a traffic signal to change.
+          </p>
+          <p class="view-info info-preference">
+            This view shows differences between the routes chosen by users and
+            the fastest routes. The preference score indicates how often users
+            have gone out of their way to use (positive score) or
+            avoid (negative score) a segment. Only segments with a moderate
+            or strong positive or negative preference are shown.
+          </p>
+          <div id="chart-edge-color" class="chart-wrapper"></div>
         </div>
       </div>
     </article>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v0.39.1/mapbox-gl.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.js'></script>
     <script src="https://use.fontawesome.com/e09acc63a3.js"></script>
     <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
     <script type="text/javascript" src="/lib/styleselect.js"></script>
+    <script type="text/javascript" src="/lib/turf.js"></script>
+    <script type="text/javascript" src="/lib/polyfill.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="explore.js"></script>
   </body>

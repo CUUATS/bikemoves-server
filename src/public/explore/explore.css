@@ -270,7 +270,7 @@ h2 {
   margin: 15px 0;
   position: relative;
 }
-.chart-wrapper h2 {
+.chart-wrapper .title {
   text-align: center;
 }
 .chart-wrapper .label-x,
@@ -302,26 +302,31 @@ h2 {
 .chart-wrapper .ct-bar {
   stroke-width: 8%;
 }
-.chart-wrapper .ct-series-a .ct-bar {
-  stroke: #cccccc;
+.aria-table {
+  left: -10000px;
+  position: absolute;
+  top: -10000px;
 }
-#demographics #chart-age .ct-series-b .ct-bar {
+#demographics #chart-age .ct-series-a .ct-bar {
   stroke: #c7e9b4;
 }
-#demographics #chart-age .ct-series-c .ct-bar {
+#demographics #chart-age .ct-series-b .ct-bar {
   stroke: #7fcdbb;
 }
-#demographics #chart-age .ct-series-d .ct-bar {
+#demographics #chart-age .ct-series-c .ct-bar {
   stroke: #41b6c4;
 }
-#demographics #chart-age .ct-series-e .ct-bar {
+#demographics #chart-age .ct-series-d .ct-bar {
   stroke: #1d91c0;
 }
-#demographics #chart-age .ct-series-f .ct-bar {
+#demographics #chart-age .ct-series-e .ct-bar {
   stroke: #225ea8;
 }
-#demographics #chart-age .ct-series-g .ct-bar {
+#demographics #chart-age .ct-series-f .ct-bar {
   stroke: #253494;
+}
+#demographics #chart-age .ct-series-g .ct-bar {
+  stroke: #081d58;
 }
 #demographics #chart-age .ct-series-h .ct-bar {
   stroke: #081d58;
@@ -329,44 +334,88 @@ h2 {
 #demographics #chart-age .ct-series-i .ct-bar {
   stroke: #081d58;
 }
-#demographics #chart-age .ct-series-j .ct-bar {
-  stroke: #081d58;
-}
-#demographics #chart-gender .ct-series-b .ct-bar {
+#demographics #chart-gender .ct-series-a .ct-bar {
   stroke: #abdda4;
 }
-#demographics #chart-gender .ct-series-c .ct-bar {
+#demographics #chart-gender .ct-series-b .ct-bar {
   stroke: #b2abd2;
 }
-#demographics #chart-gender .ct-series-d .ct-bar {
+#demographics #chart-gender .ct-series-c .ct-bar {
   stroke: #fdae61;
 }
-#demographics #chart-cycling-experience .ct-series-b .ct-bar {
+#demographics #chart-cycling-experience .ct-series-a .ct-bar {
   stroke: #fecc5c;
 }
-#demographics #chart-cycling-experience .ct-series-c .ct-bar {
+#demographics #chart-cycling-experience .ct-series-b .ct-bar {
   stroke: #fd8d3c;
 }
-#demographics #chart-cycling-experience .ct-series-d .ct-bar {
+#demographics #chart-cycling-experience .ct-series-c .ct-bar {
   stroke: #e31a1c;
 }
 #demographics #chart-trip-count .ct-series-a .ct-bar {
   stroke: #67a9cf;
+}
+#demographics #chart-age .ct-series .ct-bar-not-specified,
+#demographics #chart-gender .ct-series .ct-bar-not-specified,
+#demographics #chart-cycling-experience .ct-series .ct-bar-not-specified {
+  stroke: #cccccc;
 }
 #data {
   background-color: #222222;
   color: white;
   z-index: 20;
 }
+#data,
+#data .inner {
+  height: 100%;
+}
 #data #map {
   background-color: #333333;
-  box-sizing: border-box;
-  height: calc(100vh - 250px);
+  height: calc(100% - 180px);
+  left: 10px;
+  position: absolute;
+  top: 140px;
+  width: calc(100% - 20px);
+}
+#data h1 {
   margin-bottom: 15px;
 }
-#data #map-controls label {
+#data #map-controls-toggle {
+  float: right;
+}
+#data #map-controls-toggle button {
+  background-color: #666666;
+  border: 1px solid #999999;
+  border-radius: 2px;
+  box-shadow: 0 0 5px rgba(100, 100, 100, 0.5);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0.25em 1em;
+  color: #ffffff;
+}
+#data #map-controls-toggle button:hover {
+  background-color: #225ea8;
+  border-color: #99bae3;
+}
+#data #map-controls-toggle button.active {
+  background-color: #225ea8;
+  border-color: #99bae3;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
+#data #map-controls {
+  background-color: rgba(25, 25, 25, 0.85);
+  display: none;
+  max-height: calc(100% - 120px);
+  overflow-y: auto;
+  padding: 20px;
+  position: relative;
+  z-index: 90;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+#data #map-controls #map-view-label {
   display: block;
-  font-size: 0.9em;
+  font-size: 15px;
   margin-bottom: 0.25em;
   text-transform: uppercase;
 }
@@ -398,7 +447,40 @@ h2 {
 #data .style-select .ss-dropdown .ss-option.highlighted {
   background-color: #333333;
 }
-#data .chart-wrapper h2 {
+#data h2 {
+  font-size: 15px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: normal;
+  margin-top: 15px;
+}
+#data .legend-item {
+  display: block;
+  font-size: 13px;
+}
+#data .legend-symbol {
+  display: inline-block;
+  margin-right: 5px;
+  width: 16px;
+}
+#data #legend-item-bike-rack .legend-symbol::after {
+  border: 1px solid black;
+  content: '';
+  display: inline-block;
+  background-color: white;
+  border-radius: 3px;
+  height: 6px;
+  margin: 0 4px;
+  width: 6px;
+}
+#data #legend-item-bike-path .legend-symbol::after {
+  border-bottom: 1px dashed white;
+  content: '';
+  display: inline-block;
+  height: 0;
+  margin-bottom: 5px;
+  width: 16px;
+}
+#data .chart-wrapper .title {
   font-size: 0.9em;
 }
 #data .ct-label {
@@ -410,6 +492,7 @@ h2 {
 #data .label-x,
 #data .label-y {
   color: #dddddd;
+  font-size: 12px;
 }
 #data #chart-edge-width::after {
   clear: both;
@@ -417,10 +500,27 @@ h2 {
   display: block;
   height: 0;
 }
-#data-availability {
-  color: #cccccc;
-  font-size: 0.9em;
-  font-style: italic;
+#data .view-info {
+  display: none;
+  font-size: 14px;
+}
+#data .mapboxgl-popup h2 {
+  margin-top: 5px;
+}
+.mapboxgl-popup {
+  color: black;
+}
+.mapboxgl-popup table {
+  border: 1px solid #dddddd;
+  border-collapse: collapse;
+}
+.mapboxgl-popup th,
+.mapboxgl-popup td {
+  padding: 2px 10px;
+  text-align: left;
+}
+.mapboxgl-popup tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
 }
 @media screen and (min-width: 768px) {
   h1 {
@@ -483,18 +583,11 @@ h2 {
   #demographics #charts .chart-wrapper {
     width: 47%;
   }
-  #data,
-  #data .inner {
-    height: 100%;
+  #data h1 {
+    margin-bottom: 25px;
   }
   #data .chart-wrapper h2 {
     font-size: 1.1em;
-  }
-  #data #map {
-    float: left;
-    height: calc(100% - 48px);
-    margin-bottom: 0;
-    width: 68%;
   }
   #map-controls {
     float: right;

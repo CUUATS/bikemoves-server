@@ -7,9 +7,11 @@ const express = require('express'),
 
 app.use(express.static('src/public/examine'));
 
-utils.serveLib(app, 'moment/min/moment.min.js', 'moment.js');
-utils.serveLib(app, 'clusterize.js/clusterize.min.js', 'clusterize.js');
-utils.serveLib(app, 'clusterize.js/clusterize.css', 'clusterize.css');
+utils.serveLib(app, 'node_modules/moment/min/moment.min.js', 'moment.js');
+utils.serveLib(app,
+  'node_modules/clusterize.js/clusterize.min.js', 'clusterize.js');
+utils.serveLib(app,
+  'node_modules/clusterize.js/clusterize.css', 'clusterize.css');
 
 app.get('/config.js', (req, res) => {
   res.header('Content-Type', 'text/javascript');

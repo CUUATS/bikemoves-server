@@ -2,18 +2,28 @@ class Explore {
   constructor() {
     this.state = {
       chartView: 'users',
-      mapView: 'users-speed'
+      mapView: 'users'
     };
     this.charts = {};
     this.data = {};
-    this.edgeColors = [
-      '#253494',
-      '#2c7fb8',
-      '#41b6c4',
-      '#a1dab4',
-      '#ffffcc'
+    this.continuousColors = [
+      '#bd0026',
+      '#f03b20',
+      '#fd8d3c',
+      '#fecc5c',
+      '#ffffb2'
     ];
-    this.edgeWidths = [3, 6, 9, 12, 15];
+    this.divergingColors = [
+      '#d7191c',
+      '#fdae61',
+      '#ffffbf',
+      '#abd9e9',
+      '#2c7bb6'
+    ];
+    this.edgeLayer = 'explore-edge';
+    this.pathLayer = 'bikemoves-bike-path';
+    this.pathShadowLayer = 'bikemoves-bike-path-shadow';
+    this.rackLayer = 'bikemoves-bike-rack';
     this.scrolling = false;
     this.initCharts();
     this.initMap();
@@ -54,16 +64,21 @@ class Explore {
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v9',
         center: [-88.227203, 40.109403],
-        zoom: 13
+        zoom: 13,
+        minZoom: 12,
+        maxZoom: 17
     });
 
     let mapLoad = new Promise((resolve, reject) => {
       this.map.on('load', resolve);
     });
 
-    Promise.all([getStats, mapLoad]).then(this.addLayers.bind(this));
+    Promise.all([getStats, mapLoad]).then(() => {
+      this.addMapLayers();
+      this.initMapEvents();
+    });
 
-    this.initMapViewSelect();
+    this.initMapControls();
   }
 
   initCharts() {
@@ -102,7 +117,34 @@ class Explore {
       this.drawStatChart.bind(this));
   }
 
+  chartTableHTML(options) {
+    let html = `<table class="aria-table">`;
+    if (options.title) html += `<caption>${options.title}</caption>`;
+    html += `<thead><tr><th>${options.xLabel}</th>` +
+      `<th>${options.yLabel}</th></tr></thead><tbody>`;
+
+    let series, labels;
+    if (options.series.length === 1) {
+      series = options.series[0];
+      labels = (new Array(series.length)).fill(0).map((v, i) => i + 1);
+    } else {
+      series = options.series;
+      labels = options.labels;
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+      html += `<tr><td>${labels[i]}</td>` +
+        `<td>${Math.round(series[i])}</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    return html;
+  }
+
   drawChart(options, chartOptions) {
+    options = Object.assign({
+      headingLevel: 2
+    }, options);
     let chart = this.charts[options.id];
 
     if (chart) {
@@ -117,12 +159,16 @@ class Explore {
         options.xLabel;
       if (options.yLabel) container.querySelector(`.label-y .label`).innerHTML =
         options.yLabel;
+      container.querySelector('.aria-table').innerHTML =
+        this.chartTableHTML(options);
     } else {
       let container = document.querySelector(`#chart-${options.id}`);
-      container.innerHTML = `<h2 class="title">${options.title}</h2>` +
-        `<div class="chart ${options.cssClass}"></div>` +
+      container.innerHTML = `<h${options.headingLevel} class="title">` +
+        `${options.title}</h${options.headingLevel}>` +
+        `<div class="chart ${options.cssClass}" aria-hidden="true"></div>` +
         `<div class="label-x">${options.xLabel}</div>` +
-        `<div class="label-y"><span class="label">${options.yLabel}</span></div>`;
+        `<div class="label-y"><span class="label">` +
+        `${options.yLabel}</span></div>` + this.chartTableHTML(options);
 
       chart = new Chartist.Bar(container.querySelector('.chart'), {
         labels: options.labels,
@@ -133,6 +179,11 @@ class Explore {
     }
 
     return chart;
+  }
+
+  redrawChart(id) {
+    let chart = this.charts[id];
+    if (chart) chart.update();
   }
 
   drawStatChart(chartName) {
@@ -151,7 +202,7 @@ class Explore {
         distance: 'Total Miles'
       }[statName];
 
-    this.drawChart({
+    let chart = this.drawChart({
       id: chartName,
       title: xLabel,
       cssClass: 'ct-octave',
@@ -167,6 +218,16 @@ class Explore {
         left: 25
       },
       distributeSeries: true
+    });
+
+    chart.off('draw');
+
+    chart.on('draw', (data) => {
+      if (data.type !== 'bar') return;
+      let node = data.element._node;
+      node.setAttribute('class',
+        node.getAttribute('class') +
+        ' ct-bar-' + labels[data.seriesIndex].toLowerCase().replace(/ /g, '-'));
     });
   }
 
@@ -244,9 +305,24 @@ class Explore {
     });
   }
 
+  initMapControls() {
+    let toggle = document.getElementById('toggle-map-controls');
+    toggle.addEventListener('click', (e) => this.toggleMapConrols(toggle));
+    if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
+    this.initMapViewSelect();
+  }
+
+  toggleMapConrols(button) {
+    let active = button.className !== 'active';
+    button.className = (active) ? 'active' : 'inactive';
+    document.getElementById('map-controls').style.display =
+      (active) ? 'block' : 'none';
+    if (active) this.redrawChart('edge-color');
+  }
+
   initMapViewSelect() {
     // Apply styleSelect.
-    window.returnExports('#select-map-view');
+    styleSelect('#select-map-view');
 
     let select = document.getElementById('select-map-view');
     select.addEventListener('change', (e) => {
@@ -263,36 +339,61 @@ class Explore {
   }
 
   getMapViewPaintProperties() {
-    let viewName = this.state.mapView;
-
-    if (viewName === 'users-speed') return {
-      'line-color': {
-        type: 'interval',
-        property: 'mean_speed',
-        stops: this.getStops('speed', this.edgeColors)
+    let viewName = this.state.mapView,
+      defaults = {
+        'line-width': {
+          stops: [
+            [12, 2],
+            [15, 10]
+          ]
+        },
+        'line-color': '#dddddd'
       },
-      'line-width': {
-        type: 'interval',
-        property: 'users',
-        stops: this.getStops('users', this.edgeWidths)
-      }
+      props = {};
+
+    if (viewName === 'users') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'users',
+          stops: this.getStops('users', this.continuousColors)
+        }
+      };
+    } else if (viewName === 'trips') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'trips',
+          stops: this.getStops('trips', this.continuousColors)
+        }
+      };
+    } else if (viewName === 'speed') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'mean_speed',
+          stops: this.getStops('speed', this.continuousColors)
+        }
+      };
+    } else if (viewName === 'preference') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'preference',
+          stops: this.getStops('preference', this.divergingColors)
+        }
+      };
     };
 
-    if (viewName === 'trips-speed') return {
-      'line-color': {
-        type: 'interval',
-        property: 'mean_speed',
-        stops: this.getStops('speed', this.edgeColors)
-      },
-      'line-width': {
-        type: 'interval',
-        property: 'trips',
-        stops: this.getStops('trips', this.edgeWidths)
-      }
-    };
+    return Object.assign(defaults, props);
   }
 
-  addLayers() {
+  addMapLayers() {
+    this.map.addSource('bikemoves', {
+      type: 'vector',
+      url: 'https://tileserver.bikemoves.me/tiles/bikemoves.json'
+    });
+
     this.map.addSource('explore', {
       type: 'vector',
       tilejson: '2.2.0',
@@ -301,44 +402,171 @@ class Explore {
       version: '1.0.0',
       attribution: '<a href="https://ccrpc.org/">&copy; CCRPC</a>',
       scheme: 'xyz',
+      minzoom: 12,
+      maxzoom: 15,
       tiles: [
          this.absoluteURL('/explore/{z}/{x}/{y}.mvt')
       ]
     });
 
     this.map.addLayer({
-      id: 'bikemoves-edge',
+      id: this.edgeLayer,
       type: 'line',
       source: 'explore',
       'source-layer': 'edge',
+      filter: this.getMapLayerFilter(),
       paint: this.getMapViewPaintProperties(),
       layout: {
         'line-cap': 'round'
       }
     }, 'road-label-small');
 
+    this.map.addLayer({
+      id: this.pathLayer,
+      type: 'line',
+      source: 'bikemoves',
+      'source-layer': 'bike_path',
+      paint: {
+        'line-color': '#ffffff',
+        'line-dasharray': [2, 2],
+        'line-width': {
+          stops: [
+            [12, 0.5],
+            [15, 2.5]
+          ]
+        }
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: this.pathShadowLayer,
+      type: 'line',
+      source: 'bikemoves',
+      'source-layer': 'bike_path',
+      paint: {
+        'line-color': '#000000',
+        'line-dasharray': [0, 2, 2],
+        'line-width': {
+          stops: [
+            [12, 0.5],
+            [15, 2.5]
+          ]
+        }
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: this.rackLayer,
+      type: 'circle',
+      source: 'bikemoves',
+      'source-layer': 'bike_rack',
+      paint: {
+        'circle-radius': {
+          base: 1,
+          stops: [
+            [13, 2],
+            [20, 6]
+          ]
+        },
+        'circle-color': '#ffffff',
+        'circle-stroke-color': '#000000',
+        'circle-stroke-width': {
+          stops: [
+            [12, 0.25],
+            [15, 1.5]
+          ]
+        }
+      }
+    }, 'road-label-small');
+
+    this.initLayerToggle('legend-item-bike-rack', [this.rackLayer]);
+    this.initLayerToggle('legend-item-bike-path',
+      [this.pathLayer, this.pathShadowLayer]);
+
     this.drawLegend();
+  }
+
+  initLayerToggle(id, layerNames) {
+    document.getElementById(id).addEventListener('change', (e) =>
+      layerNames.forEach((layerName) =>
+        this.map.setLayoutProperty(layerName, 'visibility',
+          (e.target.checked) ? 'visible' : 'none')));
+  }
+
+  initMapEvents() {
+    this.map.on('mouseenter', this.edgeLayer, () =>
+      this.map.getCanvas().style.cursor = 'pointer');
+
+    this.map.on('mouseleave', this.edgeLayer, () =>
+      this.map.getCanvas().style.cursor = '');
+
+    this.map.on('click', this.edgeLayer, (e) => {
+      let feature = e.features[0];
+      if (!feature) return;
+
+      let midpoint = turf.along(feature.geometry,
+        turf.lineDistance(feature.geometry) * 0.5);
+
+      new mapboxgl.Popup()
+        .setLngLat(midpoint.geometry.coordinates)
+        .setHTML(this.formatFeatureProperties(feature.properties))
+        .addTo(this.map);
+
+      this.map.easeTo({
+        center: midpoint.geometry.coordinates
+      });
+    });
+  }
+
+  formatFeatureProperties(props) {
+    return `<h2>Segment Details</h2>
+      <table>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Users</td><td>${props.users}</td></tr>
+          <tr><td>Trips</td><td>${props.trips}</td></tr>
+          <tr><td>Average Speed</td><td>${props.mean_speed.toFixed(1)} MPH</td></tr>
+          <tr><td>Preference</td><td>${props.preference}</td></tr>
+        </tbody>
+      </table>`;
+  }
+
+  getMapLayerFilter() {
+    if (this.state.mapView === 'preference') {
+      let exclude = this.data.statistics['preference'].stops[2];
+
+      return ['any',
+        ['>=', 'preference', exclude.upper],
+        ['<', 'preference', exclude.lower]
+      ];
+    }
+    return ['>', 'users', 0];
   }
 
   updateMapView() {
     let props = this.getMapViewPaintProperties();
     for (let propName in props)
-      this.map.setPaintProperty('bikemoves-edge', propName, props[propName]);
+      this.map.setPaintProperty(this.edgeLayer, propName, props[propName]);
+    this.map.setFilter(this.edgeLayer, this.getMapLayerFilter());
     this.drawLegend();
   }
 
-  drawLegendChart(chartId, propName, title, xLabel, yLabel, values) {
+  drawLegendChart(chartId, propName, title, xLabel, yLabel, values, exclude) {
+    exclude = exclude || [];
+    values = values.filter((v, i) => exclude.indexOf(i) === -1);
     let stats = this.data.statistics[propName],
       labels = stats.stops.map((stop) => {
         if (stop.upper === stop.lower + 1) return stop.lower.toString();
         return `${stop.lower} to ${stop.upper - 1}`;
-      }),
-      series = stats.stops.map((stop) => stop.count);
+      }).filter((v, i) => exclude.indexOf(i) === -1),
+      series = stats.stops.map((stop) => stop.count)
+        .filter((v, i) => exclude.indexOf(i) === -1);
 
     let chart = this.drawChart({
       id: chartId,
       title: title,
       cssClass: 'ct-octave',
+      headingLevel: 3,
       xLabel: xLabel,
       yLabel: yLabel,
       labels: labels,
@@ -352,6 +580,8 @@ class Explore {
       }
     });
 
+    chart.off('draw');
+
     chart.on('draw', (data) => {
       if (data.type !== 'bar') return;
       let value = values[data.index],
@@ -359,17 +589,30 @@ class Explore {
 
       data.element._node.style[cssProp] = value;
     });
+
+    chart.update();
   }
 
   drawLegend() {
-    this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH',
-      'Miles', this.edgeColors);
-    if (this.state.mapView === 'users-speed') {
-      this.drawLegendChart('edge-width', 'users', 'Users', 'Users',
-        'Miles', this.edgeWidths);
-    } else {
-      this.drawLegendChart('edge-width', 'trips', 'Trips', 'Trips',
-        'Miles', this.edgeWidths);
+    let viewName = this.state.mapView;
+
+    document.querySelectorAll('.view-info')
+      .forEach((el) => el.style.display = 'none');
+    document.querySelectorAll('.view-info.info-' + viewName)
+      .forEach((el) => el.style.display = 'block');
+
+    if (viewName === 'users') {
+      this.drawLegendChart('edge-color', 'users', 'Users', 'Users',
+        'Miles', this.continuousColors);
+    } else if (viewName === 'trips') {
+      this.drawLegendChart('edge-color', 'trips', 'Trips', 'Trips',
+        'Miles', this.continuousColors);
+    } else if (viewName === 'speed') {
+      this.drawLegendChart('edge-color', 'speed', 'Average Speed', 'MPH',
+        'Miles', this.continuousColors);
+    } else if (viewName === 'preference') {
+      this.drawLegendChart('edge-color', 'preference', 'Preference',
+        'Net Trips', 'Miles', this.divergingColors, [2]);
     }
   }
 }

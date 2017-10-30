@@ -288,17 +288,18 @@ var ExploreData = function () {
 
       var toggle = document.getElementById('toggle-map-controls');
       toggle.addEventListener('click', function (e) {
-        return _this3.toggleMapConrols(toggle);
+        e.preventDefault();
+        _this3.toggleMapConrols();
       });
-      if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
+      if (document.body.clientWidth >= 768) this.toggleMapConrols();
       this.initMapViewSelect();
     }
   }, {
     key: 'toggleMapConrols',
-    value: function toggleMapConrols(button) {
-      var active = button.className !== 'active';
-      button.className = active ? 'active' : 'inactive';
-      document.getElementById('map-controls').style.display = active ? 'block' : 'none';
+    value: function toggleMapConrols() {
+      var container = document.getElementById('map-controls-container'),
+          active = container.className !== 'active';
+      container.className = active ? 'active' : '';
       if (active) this.charts.redrawChart('edge-color');
     }
   }, {

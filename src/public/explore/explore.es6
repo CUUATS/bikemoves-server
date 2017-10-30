@@ -265,16 +265,18 @@ class ExploreData {
 
   initMapControls() {
     let toggle = document.getElementById('toggle-map-controls');
-    toggle.addEventListener('click', (e) => this.toggleMapConrols(toggle));
-    if (document.body.clientWidth >= 768) this.toggleMapConrols(toggle);
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.toggleMapConrols();
+    });
+    if (document.body.clientWidth >= 768) this.toggleMapConrols();
     this.initMapViewSelect();
   }
 
-  toggleMapConrols(button) {
-    let active = button.className !== 'active';
-    button.className = (active) ? 'active' : 'inactive';
-    document.getElementById('map-controls').style.display =
-      (active) ? 'block' : 'none';
+  toggleMapConrols() {
+    let container = document.getElementById('map-controls-container'),
+      active = container.className !== 'active';
+    container.className = (active) ? 'active' : '';
     if (active) this.charts.redrawChart('edge-color');
   }
 

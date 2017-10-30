@@ -3,24 +3,25 @@ extends layout.pug
 block body
   div#map
   div.inner
-    div#map-controls-toggle
-      button#toggle-map-controls(type='button' name='toggle-map-controls')
-        i.fa.fa-sliders(aria-label='Map Options')
-        span.label Map Options
     h1 BikeMoves Data
-    div#map-controls
-      label(for='map-view' id='map-view-label') Map View
-      select#select-map-view(name='map-view')
+    div#map-controls-container
+      h2
+        a#toggle-map-controls(href='#') Map Options
+          i.fa.fa-caret-down(aria-hidden='true')
+          i.fa.fa-caret-right(aria-hidden='true')
+      div#map-controls
+        label(for='map-view' id='map-view-label') Map View
+        select#select-map-view(name='map-view')
+          each view in views
+            option(value=view.id)= view.title
+        h3 Legend
+        div#map-legend
+          each layer in layers
+            label.legend-item(for=layer.id id='legend-item-' + layer.id)
+              input(type='checkbox' name=layer.id checked='checked')
+              span.legend-symbol
+              span.label= layer.title
+        h3 Details
         each view in views
-          option(value=view.id)= view.title
-      h2 Legend
-      div#map-legend
-        each layer in layers
-          label.legend-item(for=layer.id id='legend-item-' + layer.id)
-            input(type='checkbox' name=layer.id checked='checked')
-            span.legend-symbol
-            span.label= layer.title
-      h2 Details
-      each view in views
-        p(class='view-info info-' + view.id)= view.description
-      div#chart-edge-color.chart-wrapper
+          p(class='view-info info-' + view.id)= view.description
+        div#chart-edge-color.chart-wrapper

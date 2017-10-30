@@ -371,53 +371,73 @@ h2 {
 }
 #data #map {
   background-color: #333333;
-  height: calc(100% - 180px);
-  left: 10px;
+  height: calc(100% - 60px);
+  left: 0;
   position: absolute;
-  top: 140px;
-  width: calc(100% - 20px);
+  top: 60px;
+  width: 100%;
 }
 #data h1 {
-  margin-bottom: 15px;
+  left: -1000px;
+  position: absolute;
+  top: -1000px;
 }
-#data #map-controls-toggle {
-  float: right;
+#data h2 {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+  font-weight: normal;
+  margin: 0;
+  text-transform: uppercase;
 }
-#data #map-controls-toggle button {
-  background-color: #666666;
-  border: 1px solid #999999;
-  border-radius: 2px;
-  box-shadow: 0 0 5px rgba(100, 100, 100, 0.5);
-  cursor: pointer;
+#data h3,
+#data #map-controls #map-view-label {
+  display: block;
   font-size: 14px;
-  padding: 0.25em 1em;
-  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  margin-top: 15px;
 }
-#data #map-controls-toggle button:hover {
-  background-color: #225ea8;
-  border-color: #99bae3;
-}
-#data #map-controls-toggle button.active {
-  background-color: #225ea8;
-  border-color: #99bae3;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-}
-#data #map-controls {
+#data #map-controls-container {
   background-color: rgba(25, 25, 25, 0.85);
-  display: none;
-  max-height: calc(100% - 120px);
+  float: right;
+  max-height: calc(100% - 60px);
   overflow-y: auto;
-  padding: 20px;
+  padding: 0;
   position: relative;
   z-index: 90;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-#data #map-controls #map-view-label {
+#data #map-controls-container.active {
+  padding: 20px;
+}
+#data #toggle-map-controls {
+  color: white;
   display: block;
-  font-size: 15px;
-  margin-bottom: 0.25em;
-  text-transform: uppercase;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+#data .active #toggle-map-controls {
+  border-bottom: 1px solid white;
+  padding: 0;
+}
+#data #toggle-map-controls .fa-caret-down {
+  display: none;
+  float: right;
+}
+#data .active #toggle-map-controls .fa-caret-down {
+  display: inline;
+}
+#data #toggle-map-controls .fa-caret-right {
+  margin-left: 1em;
+}
+#data .active #toggle-map-controls .fa-caret-right {
+  display: none;
+}
+#data #map-controls {
+  display: none;
+}
+#data .active #map-controls {
+  display: block;
 }
 #data .style-select {
   width: auto;
@@ -446,12 +466,6 @@ h2 {
 }
 #data .style-select .ss-dropdown .ss-option.highlighted {
   background-color: #333333;
-}
-#data h2 {
-  font-size: 15px;
-  font-family: 'Open Sans', sans-serif;
-  font-weight: normal;
-  margin-top: 15px;
 }
 #data .legend-item {
   display: block;
@@ -590,7 +604,7 @@ h2 {
   #data .chart-wrapper h2 {
     font-size: 1.1em;
   }
-  #map-controls {
+  #map-controls-container.active {
     float: right;
     width: 30%;
   }

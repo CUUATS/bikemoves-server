@@ -416,6 +416,31 @@ const Edge = sequelize.define('edge', {
   underscored: true
 });
 
+const WebUser = sequelize.define('web_user', {
+  username: {
+    type: Sequelize.STRING
+  },
+  password: {
+    type: Sequelize.STRING
+  },
+  role: {
+    type: Sequelize.STRING
+  },
+  region: {
+    type: Sequelize.STRING
+  }
+}, {
+  freezeTableName: true,
+  indexes: [
+    {
+      fields: ['username'],
+      unique: true
+    }
+  ],
+  underscored: true
+});
+
+
 // Set up foreign keys
 Trip.belongsTo(User);
 Trip.hasMany(Point);
@@ -662,6 +687,7 @@ exports.Incident = Incident;
 exports.RouteLeg = RouteLeg;
 exports.RouteTracepoint = RouteTracepoint;
 exports.Edge = Edge;
+exports.WebUser = WebUser;
 exports.prepare = prepare;
 exports.insertIntoRouteLegEdge = insertIntoRouteLegEdge;
 exports.postMatchAnalyze = postMatchAnalyze;

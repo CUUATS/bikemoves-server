@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@turf/turf": "^4.7.3",
+    "argon2": "^0.16.2",
     "apicache": "^1.0.0",
     "babel-polyfill": "^6.26.0",
     "body-parser": "^1.17.2",
@@ -16,6 +17,7 @@
     "promise-queue": "^2.2.3",
     "protobufjs": "^6.8.0",
     "pug": "^2.0.0-rc.4",
+    "read": "^1.0.7",
     "sendmail": "^1.2.0",
     "sequelize": "^4.7.5",
     "stats-lite": "^2.1.0",
@@ -30,7 +32,8 @@
     "explore": "node ./src/explore.js",
     "import": "./scripts/import_data.sh",
     "match": "node ./src/match.js",
-    "start": "node ./src/api.js"
+    "start": "node ./src/api.js",
+    "user": "node ./src/web_user.js"
   },
   "devDependencies": {
     "babel-preset-env": "^1.6.0"

@@ -1,0 +1,12 @@
+extends layout.pug
+
+block content
+  h1 Log In
+  for message in errorMessages
+    div.error= message
+  form(action='/login' method='post')
+    label(for='username') Username
+    input(type='text', name='username')
+    label(for='password') Password
+    input(type='password', name='password')
+    input(type='submit' value='Log In')

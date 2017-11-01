@@ -6,6 +6,12 @@ html(lang='en')
       link(href=url rel='stylesheet')
     header#header
       div.inner
+        if user
+          div#user
+            span.username
+              i.fa.fa-user(aria-hidden='true')
+              span.value= user.username
+            a.logout(href='/logout') Log out
         a#logo(href='/') #[span.bikemoves BikeMoves] #[span.explore Explore]
         nav
           ul#primary-nav

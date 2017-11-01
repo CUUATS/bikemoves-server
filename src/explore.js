@@ -1,10 +1,19 @@
-const apicache = require('apicache'),
-  express = require('express'),
-  db = require('./db.js'),
-  geo = require('./geo.js'),
-  utils = require('./utils.js'),
-  Distribution = require('./distribution.js'),
-  Tilesplash = require('tilesplash');
+const apicache = require('apicache');
+const argon2 = require('argon2');
+const assert = require('assert');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const express = require('express');
+const flash = require('connect-flash');
+const passport = require('passport');
+const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
+const Strategy = require('passport-local').Strategy;
+const db = require('./db.js');
+const geo = require('./geo.js');
+const utils = require('./utils.js');
+const Distribution = require('./distribution.js');
+const Tilesplash = require('tilesplash');
 
 const app = new Tilesplash({
   user: process.env.POSTGRES_USER,
@@ -172,11 +181,25 @@ function getScripts(view) {
   return scripts;
 }
 
-function addResources(req, res, next) {
+function templateVars(req, res, next) {
   let view = req.path.replace('/', '');
   res.locals.styles = getStyles(view);
   res.locals.scripts = getScripts(view);
+  res.locals.user = (req.user) ? {
+    username: req.user.username,
+    role: req.user.role
+  } : null;
+  res.locals.menuItems = MENU_ITEMS;
   next();
+}
+
+function getWebUser(username) {
+  return db.WebUser.find({
+    where: {
+      username: username,
+      region: process.env.BIKEMOVES_REGION
+    }
+  });
 }
 
 utils.serveLib(app.server,
@@ -189,6 +212,53 @@ utils.serveLib(app.server,
   'src/public/lib/turf-browser.js', 'turf.js');
 
 app.server.use(express.static('src/public/explore'));
+
+passport.use(new Strategy((username, password, cb) => {
+  getWebUser(username)
+  .then((user) => {
+    if (!user || !user.password) return cb(null, false);
+    return argon2.verify(user.password, password)
+      .then((match) => (match) ? cb(null, user) : cb(null, false));
+  })
+  .catch((err) => cb(err));
+}));
+
+passport.serializeUser((user, cb) => cb(null, user.username));
+passport.deserializeUser(function(username, cb) {
+  // TODO: Cache user information to avoid hitting the database
+  // with every request.
+  getWebUser(username)
+  .then((user) => (user) ? cb(null, user) : cb(null, false))
+  .catch((err) => cb(err));
+});
+
+assert((process.env.BIKEMOVES_EXPLORE_SECRET || '').length >= 20,
+  'BIKEMOVES_EXPLORE_SECRET must be at least 20 characters');
+
+const inProduction = process.env.BIKEMOVES_DEBUG !== 'true';
+if (inProduction) app.server.set('trust proxy', 1);
+
+app.server.use(cookieParser(process.env.BIKEMOVES_EXPLORE_SECRET));
+app.server.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.server.use(session({
+  cookie: {
+    httpOnly: true,
+    maxAge: 86400000, // 24 hours
+    path: '/',
+    secure: inProduction
+  },
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.BIKEMOVES_EXPLORE_SECRET,
+  store: new MemoryStore({
+    checkPeriod: 86400000 // 24 hours
+  })
+}));
+app.server.use(flash());
+app.server.use(passport.initialize());
+app.server.use(passport.session());
 
 app.layer('explore', (tile, render) => {
   render({
@@ -215,13 +285,31 @@ app.server.get('/data.js', cache('24 hours'), (req, res) => {
 
 app.server.set('view engine', 'pug');
 app.server.set('views', './src/views/explore');
-app.server.use(addResources);
+app.server.use(templateVars);
+
+app.server.get('/login',(req, res) => {
+  res.render('login', {
+    title: 'Log In',
+    id: 'login',
+    errorMessages: req.flash('error')
+  });
+});
+
+app.server.post('/login', passport.authenticate('local', {
+    failureFlash: 'Invalid username or password.',
+    failureRedirect: '/login',
+    successRedirect: '/'
+}));
+
+app.server.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
+});
 
 app.server.get('/', (req, res) => {
   res.render('index', {
     title: 'Home',
     id: 'home',
-    menuItems: MENU_ITEMS
   });
 });
 
@@ -229,7 +317,6 @@ app.server.get('/download', (req, res) => {
   res.render('download', {
     title: 'Download',
     id: 'download',
-    menuItems: MENU_ITEMS
   });
 });
 
@@ -237,7 +324,6 @@ app.server.get('/demographics', (req, res) => {
   res.render('demographics', {
     title: 'Demographics',
     id: 'demographics',
-    menuItems: MENU_ITEMS,
     stats: [
       {id: 'users', title: 'Users'},
       {id: 'trips', title: 'Trips'},
@@ -251,7 +337,6 @@ app.server.get('/data', (req, res) => {
   res.render('data', {
     title: 'data',
     id: 'data',
-    menuItems: MENU_ITEMS,
     views: MAP_VIEWS,
     layers: MAP_LAYERS
   });

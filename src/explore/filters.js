@@ -39,34 +39,37 @@ class FilterParser {
       value: parts[3].replace(/ /g, '')
     };
 
-    let varType = VARIABLES[filter.variable];
-    if (OPERATORS.indexOf(filter.operator) === -1) return null;
-    if (varType === undefined) return null;
+    filter.type = VARIABLES[filter.variable];
 
-    if (Array.isArray(varType)) {
+    if (OPERATORS.indexOf(filter.operator) === -1) return null;
+    if (filter.type === undefined) return null;
+
+    if (Array.isArray(filter.type)) {
       if (filter.operator !== '=') return null;
-      filter.value = varType.indexOf(filter.value);
-      if (filter.value === -1) return null;
-    } else if (varType === 'int' || varType === 'float') {
-      filter.value = (varType === 'int') ?
+      let idx = filter.type.indexOf(filter.value);
+      if (idx === -1) return null;
+      filter.index = idx;
+    } else if (filter.type === 'int' || filter.type === 'float') {
+      filter.value = (filter.type === 'int') ?
         parseInt(filter.value) : parseFloat(filter.value);
       if (isNaN(filter.value)) return null;
-    } else if (varType === 'duration' || varType === 'time') {
+    } else if (filter.type === 'duration' || filter.type === 'time') {
       let parts = filter.value.match(/^(\d{1,2}):(\d{2})$/);
-      let hour = parseInt(parts[1]);
-      let minute = parseInt(parts[2]);
-      if (isNaN(hour) || isNaN(minute)) return null;
-      if (hour < 0 || hour > 23) return null;
-      if (minute < 0 || minute > 59) return null;
-    } else if (varType === 'date') {
+      filter.hour = parseInt(parts[1]);
+      filter.minute = parseInt(parts[2]);
+      if (isNaN(filter.hour) || isNaN(filter.minute)) return null;
+      if (filter.hour < 0 || filter.hour > 23) return null;
+      if (filter.minute < 0 || filter.minute > 59) return null;
+    } else if (filter.type === 'date') {
       let parts = filter.value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-      let year = parseInt(parts[1]);
-      let month = parseInt(parts[2]);
-      let day = parseInt(parts[3]);
-      if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-      if (year < 2000 || year > 3000) return null;
-      if (month < 1 || month > 12) return null;
-      if (day < 1 || day > 31) return null;
+      filter.year = parseInt(parts[1]);
+      filter.month = parseInt(parts[2]);
+      filter.day = parseInt(parts[3]);
+      if (isNaN(filter.year) || isNaN(filter.month) || isNaN(filter.day))
+        return null;
+      if (filter.year < 2000 || filter.year > 3000) return null;
+      if (filter.month < 1 || filter.month > 12) return null;
+      if (filter.day < 1 || filter.day > 31) return null;
     }
 
     return filter;

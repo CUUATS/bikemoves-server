@@ -44,6 +44,19 @@ const CYCLING_EXPERIENCE_CHOICES = [
   'Advanced'
 ];
 
+const FILTER_COLUMN_MAP = {
+  'distance': '(trip.match_distance / 1609.34)',
+  'duration': '(trip.end_time - trip.start_time)',
+  'end': 'trip.end_time::time',
+  'experience': 'trip.cycling_experience',
+  'gender': 'trip.gender',
+  'start': 'trip.start_time::time',
+  'user': 'trip.user_id',
+  'origin': 'trip.origin',
+  'destination': 'trip.destination',
+  'date': 'trip.start_time::date'
+};
+
 const User = sequelize.define('user', {
   deviceUuid: {
     type: Sequelize.STRING,
@@ -485,6 +498,7 @@ function initViews() {
 
 function getQueryOptions(options) {
   return Object.assign({
+    filters: [],
     minUsers: 0,
     region: process.env.BIKEMOVES_REGION
   }, options || {});
@@ -589,8 +603,40 @@ function getTripCount(options) {
   return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
 }
 
+function getTripFilterSQL(filters) {
+  let conditions = [],
+    arrayFilters = {};
+
+  filters.forEach((filter) => {
+    let col = FILTER_COLUMN_MAP[filter.variable];
+    let value = filter.value.toString();
+
+    if (Array.isArray(filter.type)) {
+      arrayFilters[col] = arrayFilters[col] || [];
+      arrayFilters[col].push(filter.index);
+      return;
+    } else if (filter.type === 'duration') {
+      value = `make_interval(0, 0, 0, 0, ${filter.hour}, ${filter.minute})`;
+    } else if (filter.type === 'time') {
+      value = `'${value}'::time`;
+    } else if (filter.type === 'date') {
+      value = `'${value}'::date`;
+    }
+
+    conditions.push(`${col} ${filter.operator} ${value}`);
+  });
+
+  for (const col in arrayFilters)
+    conditions.push(`${col} IN (${arrayFilters[col].join(', ')})`);
+
+  return conditions.join(' AND ');
+}
+
 function getEdgeSQL(options) {
   options = getQueryOptions(options);
+
+  let tripFilter = (options.filters.length) ?
+    `AND ${getTripFilterSQL(options.filters)}` : '';
 
   let sql = `
     SELECT edge_info.users,
@@ -615,6 +661,7 @@ function getEdgeSQL(options) {
         INNER JOIN trip
           ON edge_trip.trip_id = trip.id
             AND trip.region = '${options.region}'
+            ${tripFilter}
         GROUP BY edge_trip.edge_id
         ) AS edge_info
       INNER JOIN edge

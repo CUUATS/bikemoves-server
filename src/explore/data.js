@@ -1,6 +1,7 @@
 const auth = require('./auth.js');
 const db = require('../db.js');
 const Distribution = require('./distribution.js');
+const FilterParser = require('./filters.js');
 
 function fitDist(column, n, edgeOptions, distOptions) {
   return db.getEdgeStatistics(column, edgeOptions).then((rows) => {
@@ -52,7 +53,9 @@ function getEdgeOptions(req) {
       minUsers: 2
     };
 
-  return {};
+  return {
+    filters: (new FilterParser(req.query.filters || '')).objects()
+  };
 }
 
 module.exports.getStatistics = getStatistics;

@@ -70,6 +70,7 @@ class FilterParser {
       if (filter.year < 2000 || filter.year > 3000) return null;
       if (filter.month < 1 || filter.month > 12) return null;
       if (filter.day < 1 || filter.day > 31) return null;
+      if (isNaN(new Date(filter.value))) return null;
     }
 
     return filter;

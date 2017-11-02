@@ -122,7 +122,7 @@ h2 {
   text-transform: uppercase;
 }
 #home {
-  background-image: url(img/background-home.jpg);
+  background-image: url(assets/background-home.jpg);
   background-size: cover;
   background-position: center;
   z-index: 50;
@@ -422,12 +422,11 @@ h2 {
   margin: 0;
   text-transform: uppercase;
 }
-#data h3,
-#data #map-controls #map-view-label {
+#data .field-label {
   display: block;
   font-size: 14px;
   font-family: 'Montserrat', sans-serif;
-  margin-top: 15px;
+  margin: 15px 0 2px;
 }
 #data #map-controls-container {
   background-color: rgba(25, 25, 25, 0.85);
@@ -568,6 +567,85 @@ h2 {
 }
 .mapboxgl-popup tbody tr:nth-child(odd) {
   background-color: #f2f2f2;
+}
+.clearfix::before,
+.clearfix::after {
+  clear: both;
+  content: '';
+  display: block;
+  line-height: 0;
+}
+#filters {
+  background-color: #444444;
+  padding: 10px 10px 5px 10px;
+  position: relative;
+}
+.taggle_list {
+  float: left;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.taggle_input {
+  background: none;
+  border: none;
+  color: white;
+  float: left;
+  font-size: 14px;
+  font-weight: 300;
+  max-width: 100%;
+  outline: none;
+  padding: 8px 8px 8px 0;
+  width: 100%;
+}
+.taggle_list li {
+  display: inline-block;
+  float: left;
+  font-weight: 500;
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+.taggle_list .taggle {
+  background-color: #222222;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+  padding: 5px 20px 5px 10px;
+  position: relative;
+}
+.taggle_list .taggle_hot {
+  background: black;
+}
+.taggle_list .taggle .close {
+  background: none;
+  border: 0 none transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 0.5;
+  padding: 0 0 4px 0;
+  position: absolute;
+  text-decoration: none;
+  top: 10px;
+  right: 3px;
+}
+.taggle_list .taggle .close:hover {
+  color: #d70206;
+}
+.taggle_placeholder {
+  color: #cccccc;
+  left: 8px;
+  position: absolute;
+  top: 12px;
+}
+.taggle_sizer {
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  top: -500px;
+  z-index: -1;
+  visibility: hidden;
 }
 #login .inner {
   background-color: white;

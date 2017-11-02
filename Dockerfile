@@ -11,7 +11,10 @@ COPY package.json /usr/src/app/
 RUN npm install topojson
 RUN npm install https://github.com/CUUATS/tilesplash.git
 RUN npm install && npm cache clean
-COPY . /usr/src/app
+COPY ./src /usr/src/app/src
+COPY ./scripts /usr/src/app/scripts
+COPY webpack.config.js webpack.config.js
+RUN npm run build
 
 VOLUME /osrm
 EXPOSE 8888

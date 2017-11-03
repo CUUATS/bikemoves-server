@@ -23,8 +23,13 @@ auth.init(app);
 
 tilesplash.layer('explore', (req, res, tile, next) => {
   tile.edgeOptions = data.getEdgeOptions(req);
+  tile.cacheKey = (auth.checkPermission(req, auth.PERM_VIEW_TRIP_DETAILS)) ?
+    req.query.filters : '';
   next();
-}, (tile, render) => {
+}, function (tile, render) {
+  this.cache((tile) =>
+    tilesplash.defaultCacheKeyGenerator(tile) + ':' + tile.cacheKey,
+    1000 * 60 * 60 * 4); // Cache for four hours
   render({
     edge: db.getEdgeTileSQL(tile.edgeOptions)
   });

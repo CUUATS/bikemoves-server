@@ -4,6 +4,22 @@ block body
   div#map
   div.inner
     h1 BikeMoves Data
+    if permissions['view trip details']
+      div#filter-help
+        a.toggle-filter-help(href='#' aria-label='Close filters help') x
+        h2 Using Filters
+        p
+          | Filters can be used to limit the results displayed in the data
+          | view. Each filter consists of a #[strong variable], an
+          | #[strong operator], and a #[strong value]. Valid operators are
+          | #[em <], #[em <=], #[em =], #[em >=], and #[em >].
+          | Variables and values appear in the tables below.
+        h3 User Filters
+        - let filters = userFilters;
+        include filters.pug
+        h3 Trip Filters
+        - filters = tripFilters;
+        include filters.pug
     div#map-controls-container
       h2
         a#toggle-map-controls(href='#') Map Options
@@ -31,19 +47,3 @@ block body
         h3 Details
         each view in views
           p(class='view-info info-' + view.id)= view.description
-    if permissions['view trip details']
-      div#filter-help
-        a.toggle-filter-help(href='#' aria-label='Close filters help') x
-        h2 Using Filters
-        p
-          | Filters can be used to limit the results displayed in the data
-          | view. Each filter consists of a #[strong variable], an
-          | #[strong operator], and a #[strong value]. Valid operators are
-          | #[em <], #[em <=], #[em =], #[em >=], and #[em >].
-          | Variables and values appear in the tables below.
-        h3 User Filters
-        - let filters = userFilters;
-        include filters.pug
-        h3 Trip Filters
-        - filters = tripFilters;
-        include filters.pug

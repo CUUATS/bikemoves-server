@@ -401,7 +401,6 @@ h2 {
 #data,
 #data .inner {
   height: 100%;
-  position: relative;
 }
 #data #map {
   background-color: #333333;
@@ -669,7 +668,7 @@ h2 {
   font-size: 14px;
   left: 0;
   padding: 20px;
-  position: absolute;
+  position: relative;
   top: 0;
   width: 100%;
   z-index: 200;
@@ -852,6 +851,7 @@ h2 {
     width: 35%;
   }
   #data #filter-help {
+    float: left;
     width: 65%;
   }
 }

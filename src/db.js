@@ -30,6 +30,8 @@ const AGE_CHOICES = [
   '75 and older'
 ];
 
+const AGE_LOWER = [-Infinity, 0, 15, 20, 25, 35, 45, 55, 65, 75];
+
 const GENDER_CHOICES = [
   'Not Specified',
   'Male',
@@ -45,6 +47,7 @@ const CYCLING_EXPERIENCE_CHOICES = [
 ];
 
 const FILTER_COLUMN_MAP = {
+  'age': 'trip.age',
   'distance': '(trip.match_distance / 1609.34)',
   'duration': '(trip.end_time - trip.start_time)',
   'end': 'trip.end_time::time',
@@ -603,6 +606,12 @@ function getTripCount(options) {
   return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
 }
 
+function getAgeIdx(filter) {
+  for (let i = 0; i < AGE_LOWER.length; i++)
+    if (filter.value < AGE_LOWER[i]) return i - 1;
+  return AGE_LOWER.length - 1;
+}
+
 function getTripFilterSQL(filters) {
   let conditions = [],
     arrayFilters = {};
@@ -615,6 +624,8 @@ function getTripFilterSQL(filters) {
       arrayFilters[col] = arrayFilters[col] || [];
       arrayFilters[col].push(filter.index);
       return;
+    } else if (filter.variable === 'age') {
+      value = getAgeIdx(filter);
     } else if (filter.type === 'duration') {
       value = `make_interval(0, 0, 0, 0, ${filter.hour}, ${filter.minute})`;
     } else if (filter.type === 'time') {

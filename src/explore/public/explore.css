@@ -401,6 +401,7 @@ h2 {
 #data,
 #data .inner {
   height: 100%;
+  position: relative;
 }
 #data #map {
   background-color: #333333;
@@ -427,6 +428,19 @@ h2 {
   font-size: 14px;
   font-family: 'Montserrat', sans-serif;
   margin: 15px 0 2px;
+}
+#data .field-label a {
+  color: white;
+  float: right;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: normal;
+  font-size: 12px;
+  margin: 0 0 0 10px;
+  text-decoration: none;
+}
+#data .field-label a:active,
+#data .field-label a:hover {
+  text-decoration: underline;
 }
 #data #map-controls-container {
   background-color: rgba(25, 25, 25, 0.85);
@@ -647,6 +661,76 @@ h2 {
   z-index: -1;
   visibility: hidden;
 }
+#data #filter-help {
+  background-color: rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+  color: black;
+  display: none;
+  font-size: 14px;
+  left: 0;
+  padding: 20px;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 200;
+}
+#data #filter-help.active {
+  display: block;
+}
+#data #filter-help .toggle-filter-help {
+  color: black;
+  float: right;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 15px;
+  margin: -5px -10px 0 0;
+  padding: 5px 10px;
+  text-decoration: none;
+}
+#data #filter-help .toggle-filter-help:hover {
+  color: #bd0026;
+}
+#data #filter-help h3 {
+  font-size: 1em;
+}
+#data .filter-table {
+  border-collapse: collapse;
+}
+#data .filter-table th,
+#data .filter-table td {
+  border: 1px solid #cccccc;
+  padding: 5px;
+}
+#data .filter-table th {
+  background-color: #cccccc;
+  font-family: 'Montserrat', sans-serif;
+}
+#data .filter-table td {
+  background-color: white;
+  font-size: 12px;
+}
+#data .filter-table td.variables {
+  width: 20%;
+}
+#data .filter-table td.values {
+  width: 40%;
+}
+#data #filter-help em {
+  background-color: white;
+  border: 1px solid #666666;
+  border-radius: 4px;
+  display: inline-block;
+  font-family: monospace;
+  font-style: normal;
+  margin: 0 5px 5px 0;
+  padding: 2px 5px;
+}
+#data #filter-help .variables em {
+  font-weight: bold;
+}
+#data #filter-help .examples em {
+  background-color: #eeeeee;
+}
 #login .inner {
   background-color: white;
   border: 1px solid #dddddd;
@@ -763,7 +847,11 @@ h2 {
     font-size: 1.1em;
   }
   #map-controls-container.active {
+    box-sizing: border-box;
     float: right;
-    width: 30%;
+    width: 35%;
+  }
+  #data #filter-help {
+    width: 65%;
   }
 }

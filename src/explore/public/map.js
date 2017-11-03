@@ -321,6 +321,20 @@ class Map {
       onTagAdd: (e, tag) => this.filtersChanged(),
       onTagRemove: (e, tag) => this.filtersChanged()
     });
+
+    document.getElementById('clear-filters')
+      .addEventListener('click', (e) => {
+        e.preventDefault();
+        if (this.filters) this.filters.removeAll();
+      });
+
+    let filterHelp = document.getElementById('filter-help');
+    document.querySelectorAll('.toggle-filter-help').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        filterHelp.className = (filterHelp.className === '') ? 'active' : '';
+      });
+    });
   }
 
   formatFeatureProperties(props) {

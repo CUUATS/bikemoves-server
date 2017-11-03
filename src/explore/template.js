@@ -67,6 +67,90 @@ const MAP_LAYERS = [
     title: 'Bicycle Facility'
   }
 ];
+const USER_FILTERS = [
+  {
+    variables: ['age'],
+    values: ['years'],
+    examples: [
+      'age>=35',
+      'age<45'
+    ]
+  },
+  {
+    variables: ['experience'],
+    values: ['beginner', 'intermediate', 'advanced', 'unspecified'],
+    examples: [
+      'experience=beginner',
+      'experience=advanced'
+    ]
+  },
+  {
+    variables: ['gender'],
+    values: ['male', 'female', 'other', 'unspecified'],
+    examples: [
+      'gender=female',
+      'gender=male'
+    ]
+  },
+  {
+    variables: ['user'],
+    values: ['id'],
+    examples: [
+      'user=1',
+      'user=23'
+    ]
+  },
+];
+const TRIP_FILTERS = [
+  {
+    variables: ['date'],
+    values: ['yyyy-mm-dd'],
+    examples: [
+      'date>=2017-01-01',
+      'date<=2017-08-31'
+    ]
+  },
+  {
+    variables: ['distance'],
+    values: ['miles'],
+    examples: [
+      'distance>2.5',
+      'distance<=1.0'
+    ]
+  },
+  {
+    variables: ['duration'],
+    values: ['hh:mm'],
+    examples: [
+      'duration>=01:00',
+      'duration<=00:30'
+    ]
+  },
+  {
+    variables: ['origin', 'destination'],
+    values: [
+      'home',
+      'work',
+      'k12',
+      'university',
+      'shopping',
+      'other',
+      'unspecified'
+    ],
+    examples: [
+      'origin=home',
+      'destination=work'
+    ]
+  },
+  {
+    variables: ['start', 'end'],
+    values: ['hh:mm'],
+    examples: [
+      'start>=08:00',
+      'end<=15:45'
+    ]
+  }
+];
 
 function getStyles(req) {
   return [
@@ -111,3 +195,5 @@ module.exports.serveStatic = serveStatic;
 module.exports.middleware = middleware;
 module.exports.MAP_LAYERS = MAP_LAYERS;
 module.exports.MAP_VIEWS = MAP_VIEWS;
+module.exports.USER_FILTERS = USER_FILTERS;
+module.exports.TRIP_FILTERS = TRIP_FILTERS;

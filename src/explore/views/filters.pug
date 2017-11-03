@@ -1,0 +1,20 @@
+table.filter-table
+  thead
+    tr
+      th Variables
+      th Values
+      th Examples
+  tbody
+    for filter in filters
+      tr
+        td.variables
+          for variable in filter.variables
+            em= variable
+        td.values
+          for value in filter.values
+            em= value
+        td.examples
+          for example in filter.examples
+            em= example
+          
+      

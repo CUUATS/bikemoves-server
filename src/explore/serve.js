@@ -104,10 +104,12 @@ app.get('/demographics', (req, res) => {
 
 app.get('/data', (req, res) => {
   res.render('data', {
-    title: 'data',
+    title: 'Data',
     id: 'data',
     views: template.MAP_VIEWS,
-    layers: template.MAP_LAYERS
+    layers: template.MAP_LAYERS,
+    userFilters: template.USER_FILTERS,
+    tripFilters: template.TRIP_FILTERS
   });
 });
 

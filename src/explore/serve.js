@@ -17,6 +17,7 @@ const tilesplash = new Tilesplash({
 });
 const app = tilesplash.server;
 const cache = apicache.middleware;
+const noFilters = (req, res) => !req.query.filters;
 
 template.serveStatic(app);
 auth.init(app);
@@ -45,13 +46,13 @@ app.get('/config.js', cache('24 hours'), (req, res) => {
   res.send(`var bikemoves = ${JSON.stringify(bikemoves)};`)
 });
 
-app.get('/api/v1/demographics', (req, res) => {
+app.get('/api/v1/demographics', cache('4 hours'), (req, res) => {
   data.getDemographics().then((demographics) => res.json({
     demographics: demographics
   }));
 });
 
-app.get('/api/v1/statistics', (req, res) => {
+app.get('/api/v1/statistics', cache('4 hours', noFilters), (req, res) => {
   data.getStatistics(req).then((statistics) => res.json({
     statistics: statistics
   }));

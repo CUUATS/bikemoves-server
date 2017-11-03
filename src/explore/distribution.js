@@ -6,8 +6,8 @@ class Distribution {
   constructor(data) {
     this.totalCount = data.map((item) => item.count)
       .reduce((sum, count) => sum + count, 0);
-    this.min = data[0].value;
-    this.max = data[data.length - 1].value;
+    this.min = (data.length) ? data[0].value : null;
+    this.max = (data.length) ? data[data.length - 1].value: null;
 
     let agg = 0;
     this.data = data.map((item) => {
@@ -35,7 +35,7 @@ class Distribution {
         upper: stop,
         count: count
       };
-    });
+    }).filter((info) => info.count > 0);
 
     return {
       min: this.min,
@@ -86,6 +86,12 @@ class Distribution {
   }
 
   fit(n, options) {
+    if (this.data.length === 0) return {
+      min: null,
+      max: null,
+      stops: []
+    };
+
     options = Object.assign({
       equal: true,
       center: null,

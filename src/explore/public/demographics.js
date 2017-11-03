@@ -1,24 +1,28 @@
 const Charts = require('./charts.js');
+const utils = require('./utils.js');
 
 class Demographics {
-  constructor(data) {
+  constructor() {
     this.charts = new Charts();
     this.state = {
       chartView: 'users'
     };
-    this.data = data;
-    this.init();
+    this.demographics = [];
+    utils.getJSON('/api/v1/demographics').then((res) => {
+      this.demographics = res.demographics;
+      this.init();
+    });
   }
 
   init() {
-    let data = this.data.demographics,
-      viewButtons = document.querySelectorAll('#stats li');
+    let viewButtons = document.querySelectorAll('#stats li');
     viewButtons.forEach((button) => {
       let link = button.querySelector('a'),
         value = button.querySelector('.value'),
         statName = button.className;
 
-      value.innerHTML = this.formatNumber(this.getStatTotal(data, statName), 0);
+      value.innerHTML = this.formatNumber(
+        this.getStatTotal(this.demographics, statName), 0);
       link.addEventListener('click', (e) => {
         e.preventDefault();
         this.state.chartView = statName;
@@ -39,7 +43,7 @@ class Demographics {
   }
 
   drawStatChart(chartName) {
-    let table = this.data.demographics[chartName],
+    let table = this.demographics[chartName],
       statName = this.state.chartView,
       labels = table.map((row) => row.description),
       series = table.map((row) => row[statName]),
@@ -84,7 +88,7 @@ class Demographics {
   }
 
   drawStatHistogram(chartName, xName, yName) {
-    let table = this.data.demographics[chartName],
+    let table = this.demographics[chartName],
       x = table.map((row) => row[xName]),
       y = table.map((row) => row[yName]),
       xMin = Math.min.apply(null, x),

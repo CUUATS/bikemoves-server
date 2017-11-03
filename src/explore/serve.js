@@ -30,21 +30,26 @@ tilesplash.layer('explore', (req, res, tile, next) => {
   });
 });
 
-app.get('/data.js', cache('24 hours'), (req, res) => {
-  return Promise.all([
-    data.getDemographics(),
-    data.getStatistics(req)
-  ]).then(([demographics, statistics]) => {
-    let bikemoves = {
-      data: {
-        mapboxToken: process.env.MAPBOX_TOKEN,
-        demographics: demographics,
-        statistics: statistics
-      }
-    };
-    res.type('text/javascript');
-    res.send(`var bikemoves = ${JSON.stringify(bikemoves)};`)
-  })
+app.get('/config.js', cache('24 hours'), (req, res) => {
+  let bikemoves = {
+    config: {
+      mapboxToken: process.env.MAPBOX_TOKEN
+    }
+  };
+  res.type('text/javascript');
+  res.send(`var bikemoves = ${JSON.stringify(bikemoves)};`)
+});
+
+app.get('/api/v1/demographics', (req, res) => {
+  data.getDemographics().then((demographics) => res.json({
+    demographics: demographics
+  }));
+});
+
+app.get('/api/v1/statistics', (req, res) => {
+  data.getStatistics(req).then((statistics) => res.json({
+    statistics: statistics
+  }));
 });
 
 app.set('view engine', 'pug');

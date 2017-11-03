@@ -7,6 +7,7 @@ const styleSelect = require('styleselect');
 const Taggle = require('taggle');
 const Charts = require('./charts.js');
 const FilterParser = require('../filters.js');
+const utils = require('./utils.js');
 
 const CONTINUOUS_COLORS = [
   '#bd0026',
@@ -30,18 +31,18 @@ const PATH_SHADOW_LAYER = 'bikemoves-bike-path-shadow';
 const RACK_LAYER = 'bikemoves-bike-rack';
 
 class Map {
-  constructor(data) {
+  constructor() {
     this.charts = new Charts();
     this.state = {
       mapView: 'users'
     };
-    this.data = data;
+    this.statistics = [];
     this.mapLoaded = false;
     this.init();
   }
 
   init() {
-    mapboxgl.accessToken = this.data.mapboxToken;
+    mapboxgl.accessToken = bikemoves.config.mapboxToken;
     this.map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v9',
@@ -51,7 +52,11 @@ class Map {
         maxZoom: 17
     });
 
-    this.map.on('load', () => {
+    let updateStats = this.updateStatistics();
+    let mapLoad = new Promise(
+      (resolve, reject) => this.map.on('load', resolve));
+
+    Promise.all([updateStats, mapLoad]).then(() => {
       this.addMapLayers();
       this.initMapEvents();
       this.mapLoaded = true;
@@ -59,11 +64,6 @@ class Map {
 
     this.initMapControls();
     this.initFilters();
-  }
-
-  absoluteURL(url) {
-    return location.protocol + '//' + location.hostname + (
-      location.port ? ':' + location.port : '') + url;
   }
 
   initMapControls() {
@@ -97,7 +97,7 @@ class Map {
   }
 
   getStops(propName, values) {
-    return this.data.statistics[propName].stops
+    return this.statistics[propName].stops
       .map((stop, i) => [stop.lower, values[i]]);
   }
 
@@ -285,16 +285,28 @@ class Map {
     });
   }
 
-  getTilesURL() {
+  updateStatistics() {
+    return utils.getJSON('/api/v1/statistics' + this.getFiltersQueryString())
+      .then((res) => this.statistics = res.statistics);
+  }
+
+  getFiltersQueryString() {
     let filters = (!this.filters) ? [] : this.filters.getTags().values;
     let parser = new FilterParser(filters);
-    return this.absoluteURL('/explore/{z}/{x}/{y}.mvt' + parser.querystring());
+    return parser.querystring();
+  }
+
+  getTilesURL() {
+    return utils.absoluteURL(
+      '/explore/{z}/{x}/{y}.mvt' + this.getFiltersQueryString());
   }
 
   filtersChanged() {
+    let updateStats = this.updateStatistics();
     if (this.mapLoaded) {
       this.map.removeSource('explore');
       this.addTileSource();
+      updateStats.then(() => this.updateMapView());
     }
   }
 
@@ -326,7 +338,8 @@ class Map {
 
   getMapLayerFilter() {
     if (this.state.mapView === 'preference') {
-      let exclude = this.data.statistics['preference'].stops[2];
+      let exclude = this.statistics['preference'].stops[2];
+      if (exclude === undefined) return ['>', 'users', 0];
 
       return ['any',
         ['>=', 'preference', exclude.upper],
@@ -338,8 +351,12 @@ class Map {
 
   updateMapView() {
     let props = this.getMapViewPaintProperties();
-    for (let propName in props)
-      this.map.setPaintProperty(EDGE_LAYER, propName, props[propName]);
+    for (let propName in props) {
+      let value = props[propName];
+      if (value.stops && value.stops.length === 0) continue;
+      this.map.setPaintProperty(EDGE_LAYER, propName, value);
+    }
+
     this.map.setFilter(EDGE_LAYER, this.getMapLayerFilter());
     this.drawLegend();
   }
@@ -347,7 +364,7 @@ class Map {
   drawLegendChart(chartId, propName, title, xLabel, yLabel, values, exclude) {
     exclude = exclude || [];
     values = values.filter((v, i) => exclude.indexOf(i) === -1);
-    let stats = this.data.statistics[propName],
+    let stats = this.statistics[propName],
       labels = stats.stops.map((stop) => {
         if (stop.upper === stop.lower + 1) return stop.lower.toString();
         return `${stop.lower} to ${stop.upper - 1}`;

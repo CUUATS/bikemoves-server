@@ -12,4 +12,4 @@ const Demographics = require('./demographics.js');
 const Map = require('./map.js');
 
 (document.querySelector('article').id === 'demographics') ?
-  new Demographics(bikemoves.data) : new Map(bikemoves.data);
+  new Demographics() : new Map();

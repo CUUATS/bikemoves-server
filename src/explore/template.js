@@ -82,7 +82,7 @@ function getScripts(req) {
   ];
 
   if (view === 'demographics' || view === 'data') {
-    scripts.push('/data.js');
+    scripts.push('/config.js');
     scripts.push('/explore.js');
   }
 

@@ -55,8 +55,8 @@ const FILTER_COLUMN_MAP = {
   'gender': 'trip.gender',
   'start': 'trip.start_time::time',
   'user': 'trip.user_id',
-  'origin': 'trip.origin',
-  'destination': 'trip.destination',
+  'origin': 'trip.origin_type',
+  'destination': 'trip.destination_type',
   'date': 'trip.start_time::date'
 };
 

@@ -24,7 +24,7 @@ block body
               input(type='checkbox' name=layer.id checked='checked')
               span.legend-symbol
               span.label= layer.title
+        div#chart-edge-color.chart-wrapper
         h3 Details
         each view in views
           p(class='view-info info-' + view.id)= view.description
-        div#chart-edge-color.chart-wrapper

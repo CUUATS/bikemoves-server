@@ -6,7 +6,7 @@ block content
     div.error= message
   form(action='/login' method='post')
     label(for='username') Username
-    input(type='text', name='username')
+    input(type='text', name='username' autofocus)
     label(for='password') Password
     input(type='password', name='password')
     input(type='submit' value='Log In')

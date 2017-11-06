@@ -65,7 +65,8 @@ class Map {
   constructor() {
     this.charts = new Charts();
     this.state = {
-      mapView: 'users'
+      mapView: 'users',
+      trip: null
     };
     this.statistics = [];
     this.trips = {};
@@ -401,9 +402,13 @@ class Map {
       .then((res) => this.statistics = res.statistics);
   }
 
-  getFiltersQueryString() {
+  parseFilters() {
     let filters = (!this.filters) ? [] : this.filters.getTags().values;
-    let parser = new FilterParser(filters);
+    return new FilterParser(filters);
+  }
+
+  getFiltersQueryString() {
+    let parser = this.parseFilters();
     return parser.querystring();
   }
 
@@ -419,6 +424,9 @@ class Map {
       this.addTileSource();
       updateStats.then(() => this.updateMapView());
     }
+
+    let parser = this.parseFilters();
+    this.setActiveTrip(parser.tripId());
   }
 
   initFilters() {
@@ -585,6 +593,11 @@ class Map {
     });
   }
 
+  setActiveTrip(tripId) {
+    this.state.trip = (tripId === null) ? null : this.trips[tripId];
+    this.clusterize.update(this.getTableRows());
+  }
+
   initTripsTable() {
     let content = document.getElementById('trips-content');
     if (!content) return;
@@ -602,8 +615,11 @@ class Map {
       if (e.target.nodeName != 'TD') return;
       let tripId = parseInt(e.target.parentNode.childNodes[0].textContent);
       if (!isNaN(tripId)) {
-        // TODO: Show the trip.
-        this.clusterize.update(this.getTableRows());
+        if (this.filters) {
+          this.filters.removeAll();
+          this.filters.add([`trip=${tripId}`]);
+        }
+        this.setActiveTrip(tripId);
       }
     });
 

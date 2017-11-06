@@ -19,7 +19,8 @@ const VARIABLES = {
   'user': 'int',
   'origin': OD_TYPES,
   'destination': OD_TYPES,
-  'date': 'date'
+  'date': 'date',
+  'trip': 'int'
 };
 
 class FilterParser {
@@ -87,6 +88,14 @@ class FilterParser {
 
     return (text.length) ?
       '?filters=' + encodeURIComponent(text.join(',')) : '';
+  }
+
+  tripId() {
+    for (let i = 0; i < this._filters.length; i++) {
+      let filter = this._filters[i];
+      if (filter.variable === 'trip') return filter.value;
+    }
+    return null;
   }
 }
 

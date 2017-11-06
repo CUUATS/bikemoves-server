@@ -1,9 +1,11 @@
 const apicache = require('apicache');
 const express = require('express');
 const passport = require('passport');
+const turf = require('@turf/turf');
 const auth = require('./auth.js');
 const data = require('./data.js');
 const db = require('../db.js');
+const geo = require('../geo.js');
 const template = require('./template.js');
 
 const Tilesplash = require('tilesplash');
@@ -107,7 +109,7 @@ app.get(`${tripRoute}/trip.geojson`, requireView, parseTripID, (req, res) => {
     });
 });
 
-app.get(`${tripRoute}/points.geojson`, requireView, parseTripID, (req, res) => {
+app.get(`${tripRoute}/point.geojson`, requireView, parseTripID, (req, res) => {
   db.Point.findAll({
     where: {
       trip_id: req.tripID
@@ -121,7 +123,7 @@ app.get(`${tripRoute}/points.geojson`, requireView, parseTripID, (req, res) => {
     });
 });
 
-app.get(`${tripRoute}/legs.geojson`, requireView, parseTripID, (req, res) => {
+app.get(`${tripRoute}/leg.geojson`, requireView, parseTripID, (req, res) => {
   db.RouteLeg.findAll({
     where: {
       trip_id: req.tripID
@@ -136,7 +138,7 @@ app.get(`${tripRoute}/legs.geojson`, requireView, parseTripID, (req, res) => {
     });
 });
 
-app.get(`${tripRoute}/tracepoints.geojson`,
+app.get(`${tripRoute}/tracepoint.geojson`,
     requireView, parseTripID, (req, res) => {
   db.RouteTracepoint.findAll({
     where: {
@@ -202,7 +204,7 @@ app.get('/data', (req, res) => {
   res.render('data', {
     title: 'Data',
     id: 'data',
-    views: template.MAP_VIEWS,
+    views: template.getMapViews(req),
     layers: template.MAP_LAYERS,
     userFilters: template.USER_FILTERS,
     tripFilters: template.TRIP_FILTERS

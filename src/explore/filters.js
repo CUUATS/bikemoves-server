@@ -78,11 +78,12 @@ class FilterParser {
   }
 
   objects() {
-    return this._filters;
+    return this._filters.filter((f) => f.variable !== trip);
   }
 
   querystring() {
     let text = this._filters
+      .filter((f) => f.variable !== 'trip')
       .map((f) => [f.variable, f.operator, f.value].join(''))
       .sort();
 

@@ -5,6 +5,7 @@ const styleSelect = require('styleselect');
 const Taggle = require('taggle');
 const turf = {
   along: require('@turf/along'),
+  bbox: require('@turf/bbox'),
   lineDistance: require('@turf/line-distance')
 };
 const Charts = require('./charts.js');
@@ -40,6 +41,11 @@ const DIVERGING_COLORS = [
   '#2c7bb6'
 ];
 
+const EMPTY_FEATURE_COLLECTION = {
+  type: 'FeatureCollection',
+  features: []
+};
+
 const TRIP_SOURCE = 'explore-trip';
 const POINT_SOURCE = 'explore-point';
 const LEG_SOURCE = 'explore-leg';
@@ -60,6 +66,13 @@ const POINT_LAYER = 'explore-point';
 const FASTEST_LAYER = 'explore-leg-fastest';
 const LEG_LAYER = 'explore-leg';
 const TRACEPOINT_LAYER = 'explore-tracepoint';
+const TRIP_LAYERS = [
+  TRIP_LAYER,
+  POINT_LAYER,
+  FASTEST_LAYER,
+  LEG_LAYER,
+  TRACEPOINT_LAYER
+];
 
 class Map {
   constructor() {
@@ -206,11 +219,30 @@ class Map {
     GEOJSON_SOURCES.forEach((name) => {
       this.map.addSource(name, {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: []
-        }
+        data: EMPTY_FEATURE_COLLECTION
       });
+    });
+  }
+
+  getGeoJSONData(src) {
+    if (!this.state.trip) return Promise.resolve(EMPTY_FEATURE_COLLECTION);
+    let url = TRIPS_ENDPOINT +
+      `/${this.state.trip.id}/` + `${src.replace('explore-', '')}.geojson`;
+    return utils.getJSON(url);
+  }
+
+  updateGeoJSONSources() {
+    GEOJSON_SOURCES.forEach((src) => {
+      this.getGeoJSONData(src).then((data) => {
+        this.map.getSource(src).setData(data);
+        if (src === TRIP_SOURCE && data.features.length &&
+            this.state.mapView === 'details') {
+          let bbox = turf.bbox(data);
+          this.map.fitBounds(bbox, {
+            padding: 20
+          });
+        }
+      })
     });
   }
 
@@ -418,15 +450,15 @@ class Map {
   }
 
   filtersChanged() {
+    let parser = this.parseFilters();
+    this.setActiveTrip(parser.tripId());
+
     let updateStats = this.updateStatistics();
     if (this.mapLoaded) {
       this.map.removeSource('explore');
       this.addTileSource();
       updateStats.then(() => this.updateMapView());
     }
-
-    let parser = this.parseFilters();
-    this.setActiveTrip(parser.tripId());
   }
 
   initFilters() {
@@ -450,11 +482,27 @@ class Map {
     this.initMapPaneToggle('filter-help', 'toggle-filter-help');
   }
 
-  toggleMapPane(id) {
+  getPaneActive(pane) {
+    return / active/.test(pane.className);
+  }
+
+  setPaneActive(pane, active) {
+    if (this.getPaneActive(pane) === active) return;
+    pane.className = (active) ?
+      pane.className + ' active' :
+      pane.className.replace(/ active/, '');
+
+    if (pane.id === 'trips-list' && active) this.updateTripsTable();
+  }
+
+  toggleMapPane(id, active) {
     document.querySelectorAll('.map-pane').forEach((pane) => {
-      let active = (pane.id === id && !/ active/.test(pane.className));
-      pane.className = (active) ? pane.className + ' active' :
-        pane.className.replace(/ active/, '');
+      if (pane.id !== id) {
+        this.setPaneActive(pane, false);
+      } else {
+        this.setPaneActive(pane,
+          (active === undefined) ? !this.getPaneActive(pane) : active);
+      }
     });
   }
 
@@ -493,6 +541,16 @@ class Map {
     return ['>', 'users', 0];
   }
 
+  setMapView(view) {
+    if (this.state.mapView === view) return;
+    let select = document.getElementById('select-map-view');
+    select.value = view;
+    document.querySelectorAll('div.ss-option').forEach((opt) => {
+      if (opt.dataset.value !== view) return;
+      opt.dispatchEvent(new MouseEvent('click'));
+    })
+  }
+
   updateMapView() {
     let props = this.getMapViewPaintProperties();
     for (let propName in props) {
@@ -503,6 +561,17 @@ class Map {
 
     this.map.setFilter(EDGE_LAYER, this.getMapLayerFilter());
     this.drawLegend();
+
+    let detailsView = this.state.mapView === 'details';
+    this.map.setLayoutProperty(EDGE_LAYER, 'visibility',
+      (detailsView) ? 'none' : 'visible');
+    TRIP_LAYERS.forEach((layer) => {
+      this.map.setLayoutProperty(layer, 'visibility',
+        (detailsView) ? 'visible' : 'none');
+    });
+
+    if (this.state.mapView === 'details' && !this.state.trip)
+      this.toggleMapPane('trips-list', true);
   }
 
   drawLegendChart(chartId, propName, title, xLabel, yLabel, values, exclude) {
@@ -594,7 +663,18 @@ class Map {
   }
 
   setActiveTrip(tripId) {
-    this.state.trip = (tripId === null) ? null : this.trips[tripId];
+    let currentId = (this.state.trip) ? this.state.trip.id : null;
+    if (currentId !== tripId) {
+      this.state.trip = (tripId === null) ? null : this.trips[tripId];
+      this.updateGeoJSONSources();
+      if (tripId !== null) this.toggleMapPane('trips-list', false);
+      if (tripId !== null && this.state.mapView !== 'details')
+        this.setMapView('details');
+    }
+  }
+
+  updateTripsTable() {
+    if (!this.clusterize) return;
     this.clusterize.update(this.getTableRows());
   }
 
@@ -619,7 +699,6 @@ class Map {
           this.filters.removeAll();
           this.filters.add([`trip=${tripId}`]);
         }
-        this.setActiveTrip(tripId);
       }
     });
 

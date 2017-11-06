@@ -191,9 +191,20 @@ function middleware(req, res, next) {
   next();
 }
 
+function getMapViews(req) {
+  let views = MAP_VIEWS.slice();
+  if (auth.checkPermission(req, auth.PERM_VIEW_TRIP_DETAILS))
+    views.push({
+      id: 'details',
+      title: 'Trip Details',
+      description: ''
+    });
+  return views;
+}
+
 module.exports.serveStatic = serveStatic;
 module.exports.middleware = middleware;
+module.exports.getMapViews = getMapViews;
 module.exports.MAP_LAYERS = MAP_LAYERS;
-module.exports.MAP_VIEWS = MAP_VIEWS;
 module.exports.USER_FILTERS = USER_FILTERS;
 module.exports.TRIP_FILTERS = TRIP_FILTERS;

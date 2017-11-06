@@ -715,6 +715,15 @@ function getEdgeTileSQL(options) {
     WHERE ST_Intersects(geom, !bbox_4326!)`;
 }
 
+function getFilteredTripIds(filters) {
+  let sql = `
+    SELECT id
+    FROM trip
+    WHERE match_status = 'OK'` +
+    (filters.length) ? ` AND ${getTripFilterSQL(filters)}` : '';
+  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
+}
+
 // Update models.
 function prepare(retries) {
   if (retries === undefined) retries = 5;
@@ -753,3 +762,4 @@ exports.getDemographics = getDemographics;
 exports.getTripCount = getTripCount;
 exports.getEdgeStatistics = getEdgeStatistics;
 exports.getEdgeTileSQL = getEdgeTileSQL;
+exports.getFilteredTripIds = getFilteredTripIds;

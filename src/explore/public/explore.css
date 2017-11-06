@@ -660,7 +660,7 @@ h2 {
   z-index: -1;
   visibility: hidden;
 }
-#data #filter-help {
+#data .map-pane {
   background-color: rgba(255, 255, 255, 0.9);
   box-sizing: border-box;
   color: black;
@@ -673,10 +673,10 @@ h2 {
   width: 100%;
   z-index: 200;
 }
-#data #filter-help.active {
+#data .map-pane.active {
   display: block;
 }
-#data #filter-help .toggle-filter-help {
+#data .map-pane .close-pane {
   color: black;
   float: right;
   font-size: 15px;
@@ -729,6 +729,78 @@ h2 {
 }
 #data #filter-help .examples em {
   background-color: #eeeeee;
+}
+#table-wrapper {
+  background-color: white;
+  height: 50%;
+  width: 100%;
+  overflow-y: scroll;
+}
+.trips-table {
+  border: 1px solid #eeeeee;
+  border-collapse: collapse;
+  width: 100%;
+}
+.trips-table th,
+.trips-table td {
+  font-size: 0.9em;
+  padding: 0.2em 0.25em;
+  text-align: right;
+  white-space: nowrap;
+}
+.trips-table th {
+  background-color: #e0e0e0;
+  font-family: 'Montserrat', sans-serif;
+}
+#trips-header-scroll {
+  overflow-y: scroll;
+}
+.trips-table tbody tr {
+  cursor: pointer;
+}
+.trips-table tbody tr:nth-child(even) {
+  background-color: white;
+}
+.trips-table tbody tr:nth-child(odd) {
+  background-color: #f0f0f0;
+}
+.trips-table tbody tr:hover {
+  background-color: #e1f8d4;
+}
+.trips-table tbody tr.selected,
+.trips-table tbody tr.selected:hover  {
+  background-color: #c7e9b4;
+}
+.trips-table th:first-child,
+.trips-table td:first-child {
+  width: 8%;
+}
+.trips-table th:nth-child(2),
+.trips-table td:nth-child(2) {
+  width: 10%;
+}
+.trips-table th:nth-child(3),
+.trips-table td:nth-child(3) {
+  width: 15%;
+}
+.trips-table th:nth-child(4),
+.trips-table td:nth-child(4) {
+  width: 10%;
+}
+.trips-table th:nth-child(5),
+.trips-table td:nth-child(5) {
+  width: 10%;
+}
+.trips-table th:nth-child(6),
+.trips-table td:nth-child(6) {
+  width: 20%;
+}
+.trips-table th:nth-child(7),
+.trips-table td:nth-child(7) {
+  width: 20%;
+}
+#trips-scroll {
+  max-height: calc(100vh - 230px);
 }
 #login .inner {
   background-color: white;
@@ -850,7 +922,7 @@ h2 {
     float: right;
     width: 35%;
   }
-  #data #filter-help {
+  #data .map-pane {
     float: left;
     width: 65%;
   }

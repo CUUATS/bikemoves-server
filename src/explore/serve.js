@@ -18,6 +18,8 @@ const tilesplash = new Tilesplash({
 const app = tilesplash.server;
 const cache = apicache.middleware;
 const noFilters = (req, res) => !req.query.filters;
+const requireView = auth.requirePermission(auth.PERM_VIEW_TRIP_DETAILS);
+const tripRoute = '/api/v1/trips/:id';
 
 template.serveStatic(app);
 auth.init(app);
@@ -56,6 +58,94 @@ app.get('/api/v1/statistics', cache('4 hours', noFilters), (req, res) => {
   data.getStatistics(req).then((statistics) => res.json({
     statistics: statistics
   }));
+});
+
+app.get('/api/v1/trips', requireView, (req, res) => {
+  db.Trip.findAll({
+    where: {
+      matchStatus: 'OK'
+    },
+    order: [
+      ['startTime', 'ASC']
+    ]
+  }).then((trips) => {
+    res.json({
+      trips: trips.map((trip) => {
+        return {
+          id: trip.id,
+          startTime: trip.startTime.getTime(),
+          endTime: trip.endTime.getTime(),
+          distance: (trip.matchStatus === 'OK') ?
+            trip.matchDistance * 0.000621371 : null,
+          origin: trip.origin,
+          destination: trip.destination,
+          userId: trip.user_id
+        };
+      })
+    });
+  });
+});
+
+app.get('/api/v1/trips/id', requireView, (req, res) => {
+  let filters = (new FilterParser(req.query.filters || '')).objects();
+  db.getFilteredTripIds(filters).then((ids) => res.json({
+    id: ids
+  }));
+});
+
+function parseTripID(req, res, next) {
+  req.tripID = parseInt(req.params.id);
+  if (isNaN(req.tripID)) return res.sendStatus(404);
+  next();
+}
+
+app.get(`${tripRoute}/trip.geojson`, requireView, parseTripID, (req, res) => {
+  db.Trip.findById(req.tripID)
+    .then((trip) => {
+      if (!trip) return res.sendStatus(404);
+      res.json(turf.featureCollection([geo.toFeature(trip)]));
+    });
+});
+
+app.get(`${tripRoute}/points.geojson`, requireView, parseTripID, (req, res) => {
+  db.Point.findAll({
+    where: {
+      trip_id: req.tripID
+    },
+    order: [
+      ['time', 'ASC']
+    ]
+  }).then((points) => {
+      if (!points.length) return res.sendStatus(404);
+      res.json(turf.featureCollection(geo.filterPoints(points)));
+    });
+});
+
+app.get(`${tripRoute}/legs.geojson`, requireView, parseTripID, (req, res) => {
+  db.RouteLeg.findAll({
+    where: {
+      trip_id: req.tripID
+    },
+    order: [
+      ['matching', 'ASC'],
+      ['leg', 'ASC']
+    ]
+  }).then((legs) => {
+      if (!legs.length) return res.sendStatus(404);
+      res.json(geo.toFeature(legs));
+    });
+});
+
+app.get(`${tripRoute}/tracepoints.geojson`,
+    requireView, parseTripID, (req, res) => {
+  db.RouteTracepoint.findAll({
+    where: {
+      trip_id: req.tripID
+    }
+  }).then((tracepoints) => {
+      if (!tracepoints.length) return res.sendStatus(404);
+      res.json(geo.toFeature(tracepoints));
+    });
 });
 
 app.set('view engine', 'pug');

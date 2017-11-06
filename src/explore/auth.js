@@ -19,6 +19,13 @@ function checkPermission(req, perm) {
   return ROLEMAP[req.user.role].indexOf(perm) !== -1;
 }
 
+function requirePermission(perm) {
+  return (req, res, next) => {
+    if (!checkPermission(req, perm)) return res.sendStatus(403);
+    next();
+  };
+}
+
 function getWebUser(username) {
   return db.WebUser.find({
     where: {
@@ -78,5 +85,6 @@ function init(app) {
 }
 
 module.exports.checkPermission = checkPermission;
+module.exports.requirePermission = requirePermission;
 module.exports.init = init;
 module.exports.PERM_VIEW_TRIP_DETAILS = PERM_VIEW_TRIP_DETAILS;

@@ -19,5 +19,19 @@ function getJSON(url) {
   });
 }
 
+function pad(n, w) {
+  let d = n.toString();
+  return (d.length >= w) ? d : new Array(w - d.length + 1).join('0') + d;
+}
+
+function formatDuration(duration) {
+  let hours = pad(duration.hours(), 2),
+    minutes = pad(duration.minutes(), 2),
+    seconds = pad(duration.seconds(), 2);
+
+  return [hours, minutes, seconds].join(':');
+}
+
 module.exports.absoluteURL = absoluteURL;
 module.exports.getJSON = getJSON;
+module.exports.formatDuration = formatDuration;

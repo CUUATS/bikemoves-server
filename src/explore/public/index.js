@@ -1,5 +1,6 @@
 require('../../../node_modules/styleselect/css/styleselect.css');
 require('../../../node_modules/chartist/dist/chartist.min.css');
+require('../../../node_modules/clusterize.js/clusterize.css');
 require('../../../node_modules/mapbox-gl/dist/mapbox-gl.css');
 require('./explore.css');
 

@@ -1,13 +1,28 @@
+const Clusterize = require('clusterize.js');
+const mapboxgl = require('mapbox-gl');
+const moment = require('moment');
+const styleSelect = require('styleselect');
+const Taggle = require('taggle');
 const turf = {
   along: require('@turf/along'),
   lineDistance: require('@turf/line-distance')
 };
-const mapboxgl = require('mapbox-gl');
-const styleSelect = require('styleselect');
-const Taggle = require('taggle');
 const Charts = require('./charts.js');
 const FilterParser = require('../filters.js');
 const utils = require('./utils.js');
+
+const STATISTICS_ENDPOINT = '/api/v1/statistics';
+const TRIPS_ENDPOINT = '/api/v1/trips';
+
+const OD_TYPES = [
+  'Not Specified',
+  'Home',
+  'Work',
+  'K-12 School',
+  'University',
+  'Shopping',
+  'Other'
+];
 
 const CONTINUOUS_COLORS = [
   '#bd0026',
@@ -25,10 +40,26 @@ const DIVERGING_COLORS = [
   '#2c7bb6'
 ];
 
-const EDGE_LAYER = 'explore-edge';
+const TRIP_SOURCE = 'explore-trip';
+const POINT_SOURCE = 'explore-point';
+const LEG_SOURCE = 'explore-leg';
+const TRACEPOINT_SOURCE = 'explore-tracepoint';
+const GEOJSON_SOURCES = [
+  TRIP_SOURCE,
+  POINT_SOURCE,
+  LEG_SOURCE,
+  TRACEPOINT_SOURCE
+];
+
 const PATH_LAYER = 'bikemoves-bike-path';
 const PATH_SHADOW_LAYER = 'bikemoves-bike-path-shadow';
 const RACK_LAYER = 'bikemoves-bike-rack';
+const EDGE_LAYER = 'explore-edge';
+const TRIP_LAYER = 'explore-trip';
+const POINT_LAYER = 'explore-point';
+const FASTEST_LAYER = 'explore-leg-fastest';
+const LEG_LAYER = 'explore-leg';
+const TRACEPOINT_LAYER = 'explore-tracepoint';
 
 class Map {
   constructor() {
@@ -37,6 +68,7 @@ class Map {
       mapView: 'users'
     };
     this.statistics = [];
+    this.trips = {};
     this.mapLoaded = false;
     this.init();
   }
@@ -64,6 +96,7 @@ class Map {
 
     this.initMapControls();
     this.initFilters();
+    this.initTripsTable();
   }
 
   initMapControls() {
@@ -168,6 +201,18 @@ class Map {
     });
   }
 
+  addGeoJSONSources() {
+    GEOJSON_SOURCES.forEach((name) => {
+      this.map.addSource(name, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: []
+        }
+      });
+    });
+  }
+
   addMapLayers() {
     this.map.addSource('bikemoves', {
       type: 'vector',
@@ -175,6 +220,7 @@ class Map {
     });
 
     this.addTileSource();
+    this.addGeoJSONSources();
 
     this.map.addLayer({
       id: EDGE_LAYER,
@@ -185,6 +231,71 @@ class Map {
       paint: this.getMapViewPaintProperties(),
       layout: {
         'line-cap': 'round'
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: TRIP_LAYER,
+      type: 'line',
+      source: TRIP_SOURCE,
+      paint: {
+        'line-color': '#999999',
+        'line-width': 3
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: POINT_LAYER,
+      type: 'circle',
+      source: POINT_SOURCE,
+      paint: {
+        'circle-color': '#999999',
+        'circle-radius': 5
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: FASTEST_LAYER,
+      type: 'line',
+      source: LEG_SOURCE,
+      filter: ['==', 'routeType', 'Fastest'],
+      paint: {
+        'line-color': '#96539b',
+        'line-dasharray': [1, 0.5],
+        'line-width': 4
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: LEG_LAYER,
+      type: 'line',
+      source: LEG_SOURCE,
+      filter: ['==', 'routeType', 'Match'],
+      paint: {
+        'line-color': {
+          type: 'interval',
+          property: 'speed',
+          stops: [
+            [1, '#2c7bb6'],
+            [2, '#abd9e9'],
+            [3, '#ffffbf'],
+            [4, '#fdae61'],
+            [5, '#d7191c']
+          ]
+        },
+        'line-width': 6
+      }
+    }, 'road-label-small');
+
+    this.map.addLayer({
+      id: TRACEPOINT_LAYER,
+      type: 'circle',
+      source: TRACEPOINT_SOURCE,
+      paint: {
+        'circle-color': '#FFFFFF',
+        'circle-radius': 5,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#000000'
       }
     }, 'road-label-small');
 
@@ -286,7 +397,7 @@ class Map {
   }
 
   updateStatistics() {
-    return utils.getJSON('/api/v1/statistics' + this.getFiltersQueryString())
+    return utils.getJSON(STATISTICS_ENDPOINT + this.getFiltersQueryString())
       .then((res) => this.statistics = res.statistics);
   }
 
@@ -328,11 +439,22 @@ class Map {
         if (this.filters) this.filters.removeAll();
       });
 
-    let filterHelp = document.getElementById('filter-help');
-    document.querySelectorAll('.toggle-filter-help').forEach((a) => {
+    this.initMapPaneToggle('filter-help', 'toggle-filter-help');
+  }
+
+  toggleMapPane(id) {
+    document.querySelectorAll('.map-pane').forEach((pane) => {
+      let active = (pane.id === id && !/ active/.test(pane.className));
+      pane.className = (active) ? pane.className + ' active' :
+        pane.className.replace(/ active/, '');
+    });
+  }
+
+  initMapPaneToggle(paneId, toggleClass) {
+    document.querySelectorAll('.' + toggleClass).forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        filterHelp.className = (filterHelp.className === '') ? 'active' : '';
+        this.toggleMapPane(paneId);
       });
     });
   }
@@ -438,6 +560,54 @@ class Map {
       this.drawLegendChart('edge-color', 'preference', 'Preference',
         'Net Trips', 'Miles', DIVERGING_COLORS, [2]);
     }
+  }
+
+  getTableRows() {
+    return Object.values(this.trips).map((trip) => {
+      let start = moment(trip.startTime),
+        end = moment(trip.endTime),
+        row = [
+          trip.id,
+          start.format('M/D/YYYY'),
+          start.format('h:mm:ss a'),
+          utils.formatDuration(moment.duration(end.diff(start))),
+          trip.distance.toFixed(2) + ' mi',
+          OD_TYPES[trip.origin],
+          OD_TYPES[trip.destination],
+          trip.userId
+        ];
+
+      let attrs = `id="trip-${trip.id}"`;
+      if (this.state.trip && this.state.trip.id === trip.id)
+        attrs += ' class="selected"';
+
+    return `<tr ${attrs}><td>${row.join('</td><td>')}</td></tr>`;
+    });
+  }
+
+  initTripsTable() {
+    let content = document.getElementById('trips-content');
+    if (!content) return;
+
+    utils.getJSON(TRIPS_ENDPOINT).then((res) => {
+      res.trips.forEach((trip) => this.trips[trip.id] = trip);
+      this.clusterize = new Clusterize({
+        rows: this.getTableRows(),
+        scrollId: 'trips-scroll',
+        contentId: 'trips-content'
+      });
+    });
+
+    content.addEventListener('click', (e) => {
+      if (e.target.nodeName != 'TD') return;
+      let tripId = parseInt(e.target.parentNode.childNodes[0].textContent);
+      if (!isNaN(tripId)) {
+        // TODO: Show the trip.
+        this.clusterize.update(this.getTableRows());
+      }
+    });
+
+    this.initMapPaneToggle('trips-list', 'toggle-trips-list');
   }
 }
 

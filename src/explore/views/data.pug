@@ -5,8 +5,8 @@ block body
   div.inner
     h1 BikeMoves Data
     if permissions['view trip details']
-      div#filter-help
-        a.toggle-filter-help(href='#' aria-label='Close filters help') x
+      div#filter-help.map-pane
+        a.close-pane.toggle-filter-help(href='#' aria-label='Close filters help') x
         h2 Using Filters
         p
           | Filters can be used to limit the results displayed in the data
@@ -20,13 +20,35 @@ block body
         h3 Trip Filters
         - filters = tripFilters;
         include filters.pug
+      div#trips-list.map-pane
+        a.close-pane.toggle-trips-list(href='#' aria-label='Close trips table') x
+        h2 Browse Trips
+        div#trips-table-wrapper
+          div#trips-header-scroll
+            table#trips-header.trips-table
+              thead
+                tr
+                  th ID
+                  th Date
+                  th Start Time
+                  th Duration
+                  th Distance
+                  th Origin
+                  th Destination
+                  th User
+          div#trips-scroll.clusterize-scroll
+            table#trips.trips-table
+              tbody#trips-content.clusterize-content
     div#map-controls-container
       h2
         a#toggle-map-controls(href='#') Map Options
           i.fa.fa-caret-down(aria-hidden='true')
           i.fa.fa-caret-right(aria-hidden='true')
       div#map-controls
-        label#map-view-label.field-label(for='map-view') Map View
+        label#map-view-label.field-label(for='map-view')
+          if permissions['view trip details']
+            a.toggle-trips-list(href='#' aria-label='Show/hide trips table') Trips Table
+          | Map View
         select#select-map-view(name='map-view')
           each view in views
             option(value=view.id)= view.title

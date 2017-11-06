@@ -624,6 +624,9 @@ class Map {
     document.querySelectorAll('.view-info.info-' + viewName)
       .forEach((el) => el.style.display = 'block');
 
+    document.getElementById('chart-edge-color').style.display =
+      (viewName === 'details') ? 'none' : 'block';
+
     if (viewName === 'users') {
       this.drawLegendChart('edge-color', 'users', 'Users', 'Users',
         'Miles', CONTINUOUS_COLORS);

@@ -35,7 +35,7 @@ const EVENTS = [
 ];
 
 const OD_TYPES = [
-  'Not Specified',
+  'Unspecified',
   'Home',
   'Work',
   'K-12 School',

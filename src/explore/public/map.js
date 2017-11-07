@@ -423,14 +423,12 @@ class Map {
           (e.target.checked) ? 'visible' : 'none')));
   }
 
-  initMapEvents() {
-    this.map.on('mouseenter', EDGE_LAYER, () =>
-      this.map.getCanvas().style.cursor = 'pointer');
+  initLayerPopup(layer, getContent) {
+    let style = this.map.getCanvas().style;
+    this.map.on('mouseenter', layer, () => style.cursor = 'pointer');
+    this.map.on('mouseleave', layer, () => style.cursor = '');
 
-    this.map.on('mouseleave', EDGE_LAYER, () =>
-      this.map.getCanvas().style.cursor = '');
-
-    this.map.on('click', EDGE_LAYER, (e) => {
+    this.map.on('click', layer, (e) => {
       let feature = e.features[0];
       if (!feature) return;
 
@@ -439,13 +437,20 @@ class Map {
 
       new mapboxgl.Popup()
         .setLngLat(midpoint.geometry.coordinates)
-        .setHTML(this.formatFeatureProperties(feature.properties))
+        .setHTML(getContent(feature.properties))
         .addTo(this.map);
 
       this.map.easeTo({
         center: midpoint.geometry.coordinates
       });
     });
+  }
+
+  initMapEvents() {
+    this.initLayerPopup(EDGE_LAYER,
+      (props) => this.formatSegmentProperties(props));
+    this.initLayerPopup(LEG_LAYER,
+      (props) => this.formatLegProperties(props));
   }
 
   updateStatistics() {
@@ -540,12 +545,20 @@ class Map {
       '<tbody>' + rowHTML + '</tbody></table>';
   }
 
-  formatFeatureProperties(props) {
+  formatSegmentProperties(props) {
     return '<h2>Segment Details</h2>' + this.makePropertiesTable([
       {name: 'Users', value: props.users},
       {name: 'Trips', value: props.trips},
-      {name: 'Average Speed', value: props.mean_speed.toFixed(1)},
+      {name: 'Average Speed', value: props.mean_speed.toFixed(1) + ' MPH'},
       {name: 'Preference', value: props.preference}
+    ]);
+  }
+
+  formatLegProperties(props) {
+    return '<h2>Leg Details</h2>' + this.makePropertiesTable([
+      {name: 'Distance', value: props.distance + ' ft'},
+      {name: 'Duration', value: props.duration + ' sec'},
+      {name: 'Speed', value: props.speed.toFixed(1) + ' MPH'}
     ]);
   }
 

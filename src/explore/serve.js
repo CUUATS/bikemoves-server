@@ -140,7 +140,7 @@ app.get(`${tripRoute}/leg.geojson`, requireView, parseTripID, (req, res) => {
   }).then((legs) => {
       if (!legs.length) return res.sendStatus(404);
       res.json(geo.toFeature(legs, (leg) => ({
-        distance: leg.distance * 0.000621371,
+        distance: Math.round(leg.distance * 3.28084), // feet
         duration: leg.duration,
         speed: leg.speed * 2.23694,
         routeType: leg.routeType

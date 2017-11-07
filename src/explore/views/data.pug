@@ -61,10 +61,15 @@ block body
         h3 Legend
         div#map-legend
           each layer in layers
-            label.legend-item(for=layer.id id='legend-item-' + layer.id)
+            label(for=layer.id id='legend-item-' + layer.id class='legend-item legend-item-' + layer.type)
               input(type='checkbox' name=layer.id checked='checked')
               span.legend-symbol
               span.label= layer.title
+              if layer.layers
+                for layerName in layer.layers
+                  span.legend-layer
+                    span.legend-symbol
+                    span.label= layerName
         div#chart-edge-color.chart-wrapper
         h3 Details
         each view in views

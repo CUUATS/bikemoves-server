@@ -60,11 +60,13 @@ const MAP_VIEWS = [
 const MAP_LAYERS = [
   {
     id: 'bike-rack',
-    title: 'Bicycle Parking'
+    title: 'Bicycle Parking',
+    type: 'base'
   },
   {
     id: 'bike-path',
-    title: 'Bicycle Facility'
+    title: 'Bicycle Facility',
+    type: 'base'
   }
 ];
 const USER_FILTERS = [
@@ -202,9 +204,45 @@ function getMapViews(req) {
   return views;
 }
 
+function getMapLayers(req) {
+  let layers = MAP_LAYERS.slice();
+  if (auth.checkPermission(req, auth.PERM_VIEW_TRIP_DETAILS))
+    layers = [
+      {
+        id: 'tracepoint',
+        title: 'Matched Tracepoint',
+        type: 'trip'
+      },
+      {
+        id: 'leg',
+        title: 'Matched Route',
+        type: 'trip',
+        layers: [
+          '0 to 3 MPH',
+          '4 to 6 MPH',
+          '7 to 9 MPH',
+          '10 to 12 MPH',
+          '13 MPH or higher'
+        ]
+      },
+      {
+        id: 'point',
+        title: 'GPS Points',
+        type: 'trip'
+      },
+      {
+        id: 'trip',
+        title: 'GPS Trace',
+        type: 'trip'
+      }
+    ].concat(layers);
+
+  return layers;
+}
+
 module.exports.serveStatic = serveStatic;
 module.exports.middleware = middleware;
 module.exports.getMapViews = getMapViews;
-module.exports.MAP_LAYERS = MAP_LAYERS;
+module.exports.getMapLayers = getMapLayers;
 module.exports.USER_FILTERS = USER_FILTERS;
 module.exports.TRIP_FILTERS = TRIP_FILTERS;

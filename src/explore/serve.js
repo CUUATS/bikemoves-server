@@ -119,7 +119,12 @@ app.get(`${tripRoute}/point.geojson`, requireView, parseTripID, (req, res) => {
     ]
   }).then((points) => {
       if (!points.length) return res.sendStatus(404);
-      res.json(turf.featureCollection(geo.filterPoints(points)));
+      let features = geo.filterPoints(points).map((feature) => {
+        feature.properties.speed =
+          Math.round(feature.properties.speed * 2.23694);
+        return feature;
+      });
+      res.json(turf.featureCollection(features));
     });
 });
 
@@ -134,7 +139,12 @@ app.get(`${tripRoute}/leg.geojson`, requireView, parseTripID, (req, res) => {
     ]
   }).then((legs) => {
       if (!legs.length) return res.sendStatus(404);
-      res.json(geo.toFeature(legs));
+      res.json(geo.toFeature(legs, (leg) => ({
+        distance: leg.distance * 0.000621371,
+        duration: leg.duration,
+        speed: leg.speed * 2.23694,
+        routeType: leg.routeType
+      })));
     });
 });
 
@@ -145,9 +155,9 @@ app.get(`${tripRoute}/tracepoint.geojson`,
       trip_id: req.tripID
     }
   }).then((tracepoints) => {
-      if (!tracepoints.length) return res.sendStatus(404);
-      res.json(geo.toFeature(tracepoints));
-    });
+    if (!tracepoints.length) return res.sendStatus(404);
+    res.json(geo.toFeature(tracepoints));
+  });
 });
 
 app.set('view engine', 'pug');
@@ -205,7 +215,7 @@ app.get('/data', (req, res) => {
     title: 'Data',
     id: 'data',
     views: template.getMapViews(req),
-    layers: template.MAP_LAYERS,
+    layers: template.getMapLayers(req),
     userFilters: template.USER_FILTERS,
     tripFilters: template.TRIP_FILTERS
   });

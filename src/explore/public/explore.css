@@ -516,17 +516,73 @@ h2 {
   display: block;
   font-size: 13px;
 }
+#data .legend-item-trip {
+  display: none;
+}
+#data .legend-layer {
+  color: #bbbbbb;
+  display: block;
+  font-size: 0.9em;
+  margin-left: 20px;
+}
 #data .legend-symbol {
   display: inline-block;
   margin-right: 5px;
   width: 16px;
 }
+#data #legend-item-tracepoint .legend-symbol::after {
+  background-color: white;
+  border-radius: 3px;
+  border: 2px solid black;
+  content: '';
+  display: inline-block;
+  height: 4px;
+  margin: 0 4px;
+  width: 4px;
+}
+#data #legend-item-leg .legend-layer .legend-symbol::after {
+  border-bottom: 3px solid #bd0026;
+  content: '';
+  display: inline-block;
+  height: 0;
+  margin-bottom: 2px;
+  width: 16px;
+}
+#data #legend-item-leg .legend-layer:nth-child(5) .legend-symbol::after {
+  border-color: #f03b20;
+}
+#data #legend-item-leg .legend-layer:nth-child(6) .legend-symbol::after {
+  border-color: #fd8d3c;
+}
+#data #legend-item-leg .legend-layer:nth-child(7) .legend-symbol::after {
+  border-color: #fecc5c;
+}
+#data #legend-item-leg .legend-layer:nth-child(8) .legend-symbol::after {
+  border-color: #ffffb2;
+}
+#data #legend-item-point .legend-symbol::after {
+  background-color: #999999;
+  border-radius: 3px;
+  content: '';
+  display: inline-block;
+  height: 6px;
+  margin: 0 5px;
+  width: 6px;
+}
+#data #legend-item-trip .legend-symbol::after {
+  border-bottom: 2px solid #999999;
+  content: '';
+  display: inline-block;
+  height: 0;
+  margin-bottom: 5px;
+  width: 16px;
+}
 #data #legend-item-bike-rack .legend-symbol::after {
+  background-color: white;
+  border-radius: 3px;
   border: 1px solid black;
   content: '';
   display: inline-block;
-  background-color: white;
-  border-radius: 3px;
   height: 6px;
   margin: 0 4px;
   width: 6px;

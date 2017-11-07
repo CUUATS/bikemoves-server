@@ -84,6 +84,9 @@ class Map {
     this.statistics = [];
     this.trips = {};
     this.mapLoaded = false;
+    this.perms = {
+      viewTripDetails: document.getElementById('filters') !== null
+    };
     this.init();
   }
 
@@ -308,13 +311,8 @@ class Map {
         'line-color': {
           type: 'interval',
           property: 'speed',
-          stops: [
-            [1, '#2c7bb6'],
-            [2, '#abd9e9'],
-            [3, '#ffffbf'],
-            [4, '#fdae61'],
-            [5, '#d7191c']
-          ]
+          stops: [3, 6, 9, 12, 100]
+            .map((lower, i) => [lower, CONTINUOUS_COLORS[i]])
         },
         'line-width': 6
       }
@@ -394,6 +392,13 @@ class Map {
     this.initLayerToggle('legend-item-bike-path',
       [PATH_LAYER, PATH_SHADOW_LAYER]);
 
+    if (this.perms.viewTripDetails) {
+      this.initLayerToggle('legend-item-tracepoint', [TRACEPOINT_LAYER]);
+      this.initLayerToggle('legend-item-leg', [LEG_LAYER]);
+      this.initLayerToggle('legend-item-point', [POINT_LAYER]);
+      this.initLayerToggle('legend-item-trip', [TRIP_LAYER]);
+    }
+
     this.drawLegend();
   }
 
@@ -462,8 +467,7 @@ class Map {
   }
 
   initFilters() {
-    let el = document.getElementById('filters');
-    if (!el) return;
+    if (!this.perms.viewTripDetails) return;
 
     this.filters = new Taggle('filters', {
       placeholder: 'Enter filters...',
@@ -618,6 +622,7 @@ class Map {
 
   drawLegend() {
     let viewName = this.state.mapView;
+    let isDetails = viewName === 'details';
 
     document.querySelectorAll('.view-info')
       .forEach((el) => el.style.display = 'none');
@@ -625,7 +630,10 @@ class Map {
       .forEach((el) => el.style.display = 'block');
 
     document.getElementById('chart-edge-color').style.display =
-      (viewName === 'details') ? 'none' : 'block';
+      (isDetails) ? 'none' : 'block';
+
+    document.querySelectorAll('.legend-item-trip')
+      .forEach((item) => item.style.display = (isDetails) ? 'block' : 'none');
 
     if (viewName === 'users') {
       this.drawLegendChart('edge-color', 'users', 'Users', 'Users',
@@ -682,8 +690,9 @@ class Map {
   }
 
   initTripsTable() {
+    if (!this.perms.viewTripDetails) return;
+
     let content = document.getElementById('trips-content');
-    if (!content) return;
 
     utils.getJSON(TRIPS_ENDPOINT).then((res) => {
       res.trips.forEach((trip) => this.trips[trip.id] = trip);

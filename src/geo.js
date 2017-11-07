@@ -26,12 +26,12 @@ function toGeoJSON(locations) {
   };
 };
 
-function toFeature(obj) {
+function toFeature(obj, propsMap) {
   if (Array.isArray(obj))
-    return turf.featureCollection(obj.map((child) => toFeature(child)));
+    return turf.featureCollection(
+      obj.map((child) => toFeature(child, propsMap)));
   let geom = obj.geom,
-    props = Object.assign({}, obj.dataValues);
-  delete props['geom'];
+    props = (typeof propsMap === 'function') ? propsMap(obj) : undefined;
   geom.crs = WGS_84;
   return turf.feature(geom, props);
 };
@@ -45,8 +45,19 @@ function getAngle(pointA, pointB, pointC) {
 
 function filterPoints(points) {
   // Convert points to features.
-  let features = points.map(toFeature),
-    latest = null;
+  let features = points.map((point) => {
+    return toFeature(point, (pt) => ({
+      accuracy: pt.accuracy,
+      heading: pt.heading,
+      moving: pt.moving,
+      speed: pt.speed,
+      time: pt.time,
+      event: pt.event,
+      activity: pt.activity,
+      confidence: pt.confidence
+    }));
+  });
+  let latest = null;
 
   // First pass: remove points with an angle greater than 90 degrees.
   return features.filter((feature, i, all) => {

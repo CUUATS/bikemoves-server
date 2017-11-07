@@ -12,6 +12,7 @@ const Charts = require('./charts.js');
 const FilterParser = require('../filters.js');
 const utils = require('./utils.js');
 
+const TRIP_IDS_ENDPOINT = '/api/v1/trips/id';
 const STATISTICS_ENDPOINT = '/api/v1/statistics';
 const TRIPS_ENDPOINT = '/api/v1/trips';
 
@@ -114,6 +115,7 @@ class Map {
     this.trips = {};
     this.layerToggles = {};
     this.mapLoaded = false;
+    this.filteredTripIds = [];
     this.perms = {
       viewTripDetails: document.getElementById('filters') !== null
     };
@@ -487,6 +489,15 @@ class Map {
       .then((res) => this.statistics = res.statistics);
   }
 
+  updateFilteredTripIds() {
+    return utils.getJSON(TRIP_IDS_ENDPOINT + this.getFiltersQueryString())
+      .then((res) => {
+        this.filteredTripIds = res.id;
+        if (document.querySelector('#trips-list.active'))
+          this.updateTripsTable();
+      });
+  }
+
   parseFilters() {
     let filters = (!this.filters) ? [] : this.filters.getTags().values;
     return new FilterParser(filters);
@@ -507,10 +518,13 @@ class Map {
     this.setActiveTrip(parser.tripId());
 
     let updateStats = this.updateStatistics();
+    let updateIds = this.updateFilteredTripIds();
+
     if (this.mapLoaded) {
       this.map.removeSource('explore');
       this.addTileSource();
-      updateStats.then(() => this.updateMapView());
+      Promise.all([updateStats, updateIds])
+        .then(() => this.updateMapView());
     }
   }
 
@@ -754,7 +768,10 @@ class Map {
   }
 
   getTableRows() {
-    return Object.values(this.trips).map((trip) => {
+    return Object.values(this.trips).filter((trip) => {
+      if (this.filteredTripIds.length === 0) return true;
+      return this.filteredTripIds.indexOf(trip.id) !== -1;
+    }).map((trip) => {
       let row = this.getTripProperties(trip);
       let attrs = `id="trip-${trip.id}"`;
       if (this.state.trip && this.state.trip.id === trip.id)

@@ -720,8 +720,9 @@ function getFilteredTripIds(filters) {
     SELECT id
     FROM trip
     WHERE match_status = 'OK'` +
-    (filters.length) ? ` AND ${getTripFilterSQL(filters)}` : '';
-  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT});
+    ((filters.length) ? ` AND ${getTripFilterSQL(filters)}` : '');
+  return sequelize.query(sql, {type: sequelize.QueryTypes.SELECT})
+    .map((row) => row.id);
 }
 
 // Update models.

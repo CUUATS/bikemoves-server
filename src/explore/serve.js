@@ -1,5 +1,6 @@
 const apicache = require('apicache');
 const express = require('express');
+const FilterParser = require('./filters.js');
 const passport = require('passport');
 const turf = require('@turf/turf');
 const auth = require('./auth.js');

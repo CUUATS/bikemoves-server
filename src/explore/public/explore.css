@@ -623,6 +623,19 @@ h2 {
   display: none;
   font-size: 14px;
 }
+#data .info-details table {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-collapse: collapse;
+  width: 100%;
+}
+#data .info-details th,
+#data .info-details td {
+  padding: 2px 10px;
+  text-align: left;
+}
+#data .info-details tbody tr:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.10);
+}
 #data .mapboxgl-popup h2 {
   margin-top: 5px;
 }

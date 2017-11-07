@@ -25,6 +25,17 @@ const OD_TYPES = [
   'Other'
 ];
 
+const TRIP_PROPERTY_LABELS = [
+  'ID',
+  'Date',
+  'Start Time',
+  'Duration',
+  'Distance',
+  'Origin',
+  'Destination',
+  'User'
+];
+
 const CONTINUOUS_COLORS = [
   '#bd0026',
   '#f03b20',
@@ -522,17 +533,20 @@ class Map {
     });
   }
 
+  makePropertiesTable(rows) {
+    let rowHTML = rows.map(
+      (row) => `<tr><td>${row.name}</td><td>${row.value}</td></tr>`).join('');
+    return '<table><thead><tr><th>Property</th><th>Value</th></tr></thead>' +
+      '<tbody>' + rowHTML + '</tbody></table>';
+  }
+
   formatFeatureProperties(props) {
-    return `<h2>Segment Details</h2>
-      <table>
-        <thead><tr><th>Property</th><th>Value</th></tr></thead>
-        <tbody>
-          <tr><td>Users</td><td>${props.users}</td></tr>
-          <tr><td>Trips</td><td>${props.trips}</td></tr>
-          <tr><td>Average Speed</td><td>${props.mean_speed.toFixed(1)} MPH</td></tr>
-          <tr><td>Preference</td><td>${props.preference}</td></tr>
-        </tbody>
-      </table>`;
+    return '<h2>Segment Details</h2>' + this.makePropertiesTable([
+      {name: 'Users', value: props.users},
+      {name: 'Trips', value: props.trips},
+      {name: 'Average Speed', value: props.mean_speed.toFixed(1)},
+      {name: 'Preference', value: props.preference}
+    ]);
   }
 
   getMapLayerFilter() {
@@ -651,24 +665,39 @@ class Map {
     } else if (viewName === 'preference') {
       this.drawLegendChart('edge-color', 'preference', 'Preference',
         'Net Trips', 'Miles', DIVERGING_COLORS, [2]);
+    } else if (isDetails) {
+      document.querySelector('.info-details').innerHTML =
+        this.getDetailsViewDescription();
     }
+  }
+
+  getDetailsViewDescription() {
+    if (!this.state.trip) return '';
+    let props = this.getTripProperties(this.state.trip);
+    return this.makePropertiesTable(props.map((prop, i) => ({
+      name: TRIP_PROPERTY_LABELS[i],
+      value: prop
+    })));
+  }
+
+  getTripProperties(trip) {
+    let start = moment(trip.startTime);
+    let end = moment(trip.endTime);
+    return [
+      trip.id,
+      start.format('M/D/YYYY'),
+      start.format('h:mm:ss a'),
+      utils.formatDuration(moment.duration(end.diff(start))),
+      trip.distance.toFixed(2) + ' mi',
+      OD_TYPES[trip.origin],
+      OD_TYPES[trip.destination],
+      trip.userId
+    ];
   }
 
   getTableRows() {
     return Object.values(this.trips).map((trip) => {
-      let start = moment(trip.startTime),
-        end = moment(trip.endTime),
-        row = [
-          trip.id,
-          start.format('M/D/YYYY'),
-          start.format('h:mm:ss a'),
-          utils.formatDuration(moment.duration(end.diff(start))),
-          trip.distance.toFixed(2) + ' mi',
-          OD_TYPES[trip.origin],
-          OD_TYPES[trip.destination],
-          trip.userId
-        ];
-
+      let row = this.getTripProperties(trip);
       let attrs = `id="trip-${trip.id}"`;
       if (this.state.trip && this.state.trip.id === trip.id)
         attrs += ' class="selected"';

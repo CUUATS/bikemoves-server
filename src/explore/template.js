@@ -151,6 +151,14 @@ const TRIP_FILTERS = [
       'start>=08:00',
       'end<=15:45'
     ]
+  },
+  {
+    variables: ['trip'],
+    values: ['id'],
+    examples: [
+      'trip=10',
+      'trip=55'
+    ]
   }
 ];
 

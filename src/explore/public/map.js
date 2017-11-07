@@ -343,7 +343,7 @@ class Map {
         'line-color': {
           type: 'interval',
           property: 'speed',
-          stops: [3, 6, 9, 12, 100]
+          stops: [0, 4, 7, 10, 13]
             .map((lower, i) => [lower, CONTINUOUS_COLORS[i]])
         },
         'line-width': 6

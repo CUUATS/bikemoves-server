@@ -712,7 +712,10 @@ class Map {
       let tripId = parseInt(e.target.parentNode.childNodes[0].textContent);
       if (!isNaN(tripId)) {
         if (this.filters) {
-          this.filters.removeAll();
+          let tripTags = this.filters.getTagValues()
+            .filter((tag) => /trip=/.test(tag));
+          if (tripTags.length)
+            tripTags.forEach((tag) => this.filters.remove(tag))
           this.filters.add([`trip=${tripId}`]);
         }
       }

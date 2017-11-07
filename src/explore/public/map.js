@@ -83,6 +83,7 @@ class Map {
     };
     this.statistics = [];
     this.trips = {};
+    this.layerToggles = {};
     this.mapLoaded = false;
     this.perms = {
       viewTripDetails: document.getElementById('filters') !== null
@@ -395,6 +396,7 @@ class Map {
     if (this.perms.viewTripDetails) {
       this.initLayerToggle('legend-item-tracepoint', [TRACEPOINT_LAYER]);
       this.initLayerToggle('legend-item-leg', [LEG_LAYER]);
+      this.initLayerToggle('legend-item-leg-fastest', [FASTEST_LAYER]);
       this.initLayerToggle('legend-item-point', [POINT_LAYER]);
       this.initLayerToggle('legend-item-trip', [TRIP_LAYER]);
     }
@@ -403,6 +405,7 @@ class Map {
   }
 
   initLayerToggle(id, layerNames) {
+    layerNames.forEach((name) => this.layerToggles[name] = id);
     document.getElementById(id).addEventListener('change', (e) =>
       layerNames.forEach((layerName) =>
         this.map.setLayoutProperty(layerName, 'visibility',
@@ -570,8 +573,9 @@ class Map {
     this.map.setLayoutProperty(EDGE_LAYER, 'visibility',
       (detailsView) ? 'none' : 'visible');
     TRIP_LAYERS.forEach((layer) => {
-      this.map.setLayoutProperty(layer, 'visibility',
-        (detailsView) ? 'visible' : 'none');
+      let toggle = document.querySelector(`#${this.layerToggles[layer]} input`);
+      let visible = (detailsView && toggle.checked) ? 'visible' : 'none';
+      this.map.setLayoutProperty(layer, 'visibility', visible);
     });
 
     if (this.state.mapView === 'details' && !this.state.trip)

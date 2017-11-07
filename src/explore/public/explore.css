@@ -540,7 +540,8 @@ h2 {
   margin: 0 4px;
   width: 4px;
 }
-#data #legend-item-leg .legend-layer .legend-symbol::after {
+#data #legend-item-leg .legend-layer .legend-symbol::after,
+#data #legend-item-leg-fastest .legend-symbol::after {
   border-bottom: 3px solid #bd0026;
   content: '';
   display: inline-block;
@@ -559,6 +560,9 @@ h2 {
 }
 #data #legend-item-leg .legend-layer:nth-child(8) .legend-symbol::after {
   border-color: #ffffb2;
+}
+#data #legend-item-leg-fastest .legend-symbol::after {
+  border-bottom: 3px dashed #96539b;
 }
 #data #legend-item-point .legend-symbol::after {
   background-color: #999999;

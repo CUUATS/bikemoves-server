@@ -226,6 +226,11 @@ function getMapLayers(req) {
         ]
       },
       {
+        id: 'leg-fastest',
+        title: 'Fastest Route',
+        type: 'trip'
+      },
+      {
         id: 'point',
         title: 'GPS Points',
         type: 'trip'

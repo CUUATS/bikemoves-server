@@ -78,7 +78,7 @@ class FilterParser {
   }
 
   objects() {
-    return this._filters.filter((f) => f.variable !== trip);
+    return this._filters.filter((f) => f.variable !== 'trip');
   }
 
   querystring() {

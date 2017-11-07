@@ -15,6 +15,24 @@ const utils = require('./utils.js');
 const STATISTICS_ENDPOINT = '/api/v1/statistics';
 const TRIPS_ENDPOINT = '/api/v1/trips';
 
+const ACTIVITIES = [
+  'Unknown',
+  'Still',
+  'Foot',
+  'Walk',
+  'Run',
+  'Vehicle',
+  'Bicycle'
+];
+
+const EVENTS = [
+  'Location',
+  'Motion',
+  'Geofence',
+  'Heartbeat',
+  'Provider'
+];
+
 const OD_TYPES = [
   'Not Specified',
   'Home',
@@ -423,6 +441,10 @@ class Map {
           (e.target.checked) ? 'visible' : 'none')));
   }
 
+  closePopup() {
+    if (this.popup) this.popup.remove();
+  }
+
   initLayerPopup(layer, getContent) {
     let style = this.map.getCanvas().style;
     this.map.on('mouseenter', layer, () => style.cursor = 'pointer');
@@ -432,10 +454,13 @@ class Map {
       let feature = e.features[0];
       if (!feature) return;
 
-      let midpoint = turf.along(feature.geometry,
-        turf.lineDistance(feature.geometry) * 0.5);
+      let geom = feature.geometry;
+      let midpoint = (geom.type === 'LineString') ?
+        turf.along(geom, turf.lineDistance(geom) * 0.5) : feature;
 
-      new mapboxgl.Popup()
+      this.closePopup();
+
+      this.popup = new mapboxgl.Popup()
         .setLngLat(midpoint.geometry.coordinates)
         .setHTML(getContent(feature.properties))
         .addTo(this.map);
@@ -449,8 +474,12 @@ class Map {
   initMapEvents() {
     this.initLayerPopup(EDGE_LAYER,
       (props) => this.formatSegmentProperties(props));
-    this.initLayerPopup(LEG_LAYER,
-      (props) => this.formatLegProperties(props));
+    if (this.perms.viewTripDetails) {
+      this.initLayerPopup(LEG_LAYER,
+        (props) => this.formatLegProperties(props));
+      this.initLayerPopup(POINT_LAYER,
+        (props) => this.formatPointProperties(props));
+    }
   }
 
   updateStatistics() {
@@ -562,6 +591,21 @@ class Map {
     ]);
   }
 
+  formatPointProperties(props) {
+    return '<h2>Point Details</h2>' + this.makePropertiesTable([
+      {name: 'Accuracy', value: Math.round(props.accuracy) + ' m'},
+      {name: 'Activity', value: ACTIVITIES[props.activity] || 'Unknown'},
+      {name: 'Confidence', value: (props.confidence !== 'null') ?
+        props.confidence + ' %' : '&mdash;'},
+      {name: 'Event', value: EVENTS[props.event] || '&mdash;'},
+      {name: 'Heading', value: (props.heading !== 'null') ?
+        props.heading + ' deg' : '&mdash;'},
+      {name: 'Moving', value: (props.moving) ? 'True' : 'False'},
+      {name: 'Speed', value: props.speed.toFixed(1) + ' MPH'},
+      {name: 'Time', value: moment(props.time).format('h:mm:ss a')}
+    ]);
+  }
+
   getMapLayerFilter() {
     if (this.state.mapView === 'preference') {
       let exclude = this.statistics['preference'].stops[2];
@@ -591,6 +635,7 @@ class Map {
       let value = props[propName];
       if (value.stops && value.stops.length === 0) continue;
       this.map.setPaintProperty(EDGE_LAYER, propName, value);
+    this.closePopup();
     }
 
     this.map.setFilter(EDGE_LAYER, this.getMapLayerFilter());

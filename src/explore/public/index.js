@@ -8,6 +8,7 @@ require('./assets/app-store.png');
 require('./assets/download-01.jpg');
 require('./assets/download-02.jpg');
 require('./assets/download-03.jpg');
+require('./assets/favicon.png');
 
 const Demographics = require('./demographics.js');
 const Map = require('./map.js');

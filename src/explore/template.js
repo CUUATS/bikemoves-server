@@ -30,22 +30,20 @@ const MAP_VIEWS = [
     id: 'users',
     title: 'Users',
     description: `This view shows the number of unique users that have
-      traveled on each segment. Segments ridden by only one user are
-      excluded to protect privacy.`
+      traveled on each segment.`
   },
   {
     id: 'trips',
     title: 'Trips',
     description: `This view shows the number of trips that have traveled on
-      on a given segment. Segments ridden by only one user are excluded
-      to protect privacy.`
+      on a given segment.`
   },
   {
     id: 'speed',
     title: 'Average Speed',
-    description: `This view shows the average riding speed for segments that
-      have been ridden by at least two unique users. The speed includes
-      delays, such as waiting for a traffic signal to change.`
+    description: `This view shows the average riding speed for segments.
+      The speed includes delays, such as waiting for a traffic
+      signal to change.`
   },
   {
     id: 'preference',
@@ -57,6 +55,10 @@ const MAP_VIEWS = [
       or strong positive or negative preference are shown.`
   }
 ];
+const PRIVACY_NOTICE = ` Segments ridden by only one user are excluded to
+  protect privacy.`
+const DATE_NOTICE = ` The data represent trips submitted
+  from July 2016 to present.`
 const MAP_LAYERS = [
   {
     id: 'bike-rack',
@@ -202,13 +204,21 @@ function middleware(req, res, next) {
 }
 
 function getMapViews(req) {
-  let views = MAP_VIEWS.slice();
-  if (auth.checkPermission(req, auth.PERM_VIEW_TRIP_DETAILS))
+  let views = MAP_VIEWS.map((view) => Object.assign({}, view));
+  let canView = auth.checkPermission(req, auth.PERM_VIEW_TRIP_DETAILS);
+  if (canView) {
     views.push({
       id: 'details',
       title: 'Trip Details',
       description: ''
     });
+  } else {
+    views.forEach((view, i) => {
+      if (i < 3) view.description += PRIVACY_NOTICE;
+      view.description += DATE_NOTICE;
+    });
+  }
+
   return views;
 }
 

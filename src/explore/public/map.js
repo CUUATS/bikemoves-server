@@ -1,6 +1,6 @@
 const Clusterize = require('clusterize.js');
+const formatDate = require('date-fns/format');
 const mapboxgl = require('mapbox-gl');
-const moment = require('moment');
 const styleSelect = require('styleselect');
 const Taggle = require('taggle');
 const turf = {
@@ -616,7 +616,7 @@ class Map {
         props.heading + ' deg' : '&mdash;'},
       {name: 'Moving', value: (props.moving) ? 'True' : 'False'},
       {name: 'Speed', value: props.speed.toFixed(1) + ' MPH'},
-      {name: 'Time', value: moment(props.time).format('h:mm:ss a')}
+      {name: 'Time', value: formatDate(new Date(props.time), 'h:mm:ss a')}
     ]);
   }
 
@@ -753,13 +753,13 @@ class Map {
   }
 
   getTripProperties(trip) {
-    let start = moment(trip.startTime);
-    let end = moment(trip.endTime);
+    let start = new Date(trip.startTime);
+    let end = new Date(trip.endTime);
     return [
       trip.id,
-      start.format('M/D/YYYY'),
-      start.format('h:mm:ss a'),
-      utils.formatDuration(moment.duration(end.diff(start))),
+      formatDate(start, 'M/D/YYYY'),
+      formatDate(start, 'h:mm:ss a'),
+      utils.formatDuration(start, end),
       trip.distance.toFixed(2) + ' mi',
       OD_TYPES[trip.origin],
       OD_TYPES[trip.destination],

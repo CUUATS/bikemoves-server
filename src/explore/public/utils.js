@@ -24,12 +24,14 @@ function pad(n, w) {
   return (d.length >= w) ? d : new Array(w - d.length + 1).join('0') + d;
 }
 
-function formatDuration(duration) {
-  let hours = pad(duration.hours(), 2),
-    minutes = pad(duration.minutes(), 2),
-    seconds = pad(duration.seconds(), 2);
+function formatDuration(start, end) {
+  let totalSec = Math.round((end - start) / 1000);
 
-  return [hours, minutes, seconds].join(':');
+  let hours = Math.floor(totalSec / 3600);
+  let minutes = Math.floor((totalSec % 3600) / 60);
+  let seconds = totalSec % 60;
+
+  return [pad(hours, 2), pad(minutes, 2), pad(seconds, 2)].join(':');
 }
 
 module.exports.absoluteURL = absoluteURL;

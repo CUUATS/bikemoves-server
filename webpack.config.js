@@ -25,6 +25,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist', 'explore'),
   },
   module: {
+    noParse: /(mapbox-gl)\.js$/,
     rules: [
       {
         test: /\.css$/,

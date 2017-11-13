@@ -5,7 +5,7 @@ const inProduction = process.env.BIKEMOVES_DEBUG !== 'true';
 
 function getPlugins() {
   let plugins = [
-    new ExtractTextPlugin('css/explore.css')
+    new ExtractTextPlugin('explore.css')
   ];
 
   if (inProduction)
@@ -58,8 +58,6 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new ExtractTextPlugin('explore.css')
-  ],
+  plugins: getPlugins(),
   watch: !inProduction
 };

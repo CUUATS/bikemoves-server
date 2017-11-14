@@ -59,7 +59,8 @@ class Charts {
     let series, labels;
     if (options.series.length === 1) {
       series = options.series[0];
-      labels = (new Array(series.length)).fill(0).map((v, i) => i + 1);
+      labels = [];
+      for (let i = 0; i < series.length; i++) labels.push(i + 1);
     } else {
       series = options.series;
       labels = options.labels;

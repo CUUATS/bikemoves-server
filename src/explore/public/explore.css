@@ -603,6 +603,7 @@ h2 {
 }
 #data .ct-label {
   color: #bbbbbb;
+  fill: #bbbbbb;
 }
 #data .ct-grids .ct-grid {
   stroke: #999999;

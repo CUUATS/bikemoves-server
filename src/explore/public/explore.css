@@ -130,7 +130,6 @@ h2 {
 #home .inner {
   box-sizing: border-box;
   display: flex;
-  height: 100%;
   flex-direction: column;
   justify-content: center;
   text-align: center;

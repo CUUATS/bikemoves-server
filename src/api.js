@@ -69,6 +69,15 @@ var sendEmailNotification = function(msg) {
   });
 };
 
+app.get('/:version/status', function(req, res) {
+  db.Trip.count().then(function(count) {
+    res.send('OK');
+  }).catch(function(e) {
+    console.error(e.stack);
+    res.status(500).send('Error');
+  });
+});
+
 app.post('/:version/user', function(req, res) {
   var userMsg = extractMessage(req, UserMessage);
   db.User.upsert(db.User.fromMessage(userMsg)).then(function(createdUser) {

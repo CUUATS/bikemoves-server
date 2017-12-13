@@ -228,6 +228,14 @@ class Map {
           stops: this.getStops('preference', DIVERGING_COLORS)
         }
       };
+    } else if (viewName === 'blts') {
+      props = {
+        'line-color': {
+          type: 'interval',
+          property: 'blts',
+          stops: this.getStops('blts', CONTINUOUS_COLORS.slice(0, 4).reverse())
+        }
+      };
     };
 
     return Object.assign(defaults, props);
@@ -593,7 +601,8 @@ class Map {
       {name: 'Users', value: props.users},
       {name: 'Trips', value: props.trips},
       {name: 'Average Speed', value: props.mean_speed.toFixed(1) + ' MPH'},
-      {name: 'Preference', value: props.preference}
+      {name: 'Preference', value: props.preference},
+      {name: 'BLTS', value: props.blts || 'N/A'},
     ]);
   }
 
@@ -629,6 +638,8 @@ class Map {
         ['>=', 'preference', exclude.upper],
         ['<', 'preference', exclude.lower]
       ];
+    } else if (this.state.mapView === 'blts') {
+      return ['>=', 'blts', 1];
     }
     return ['>', 'users', 0];
   }
@@ -737,6 +748,10 @@ class Map {
     } else if (viewName === 'preference') {
       this.drawLegendChart('edge-color', 'preference', 'Preference',
         'Net Trips', 'Miles', DIVERGING_COLORS, [2]);
+    } else if (viewName === 'blts') {
+      this.drawLegendChart('edge-color', 'blts',
+        'Bicycle Level of Traffic Stress', 'BLTS Score',
+        'Miles', CONTINUOUS_COLORS.slice(0, 4).reverse());
     } else if (isDetails) {
       document.querySelector('.info-details').innerHTML =
         this.getDetailsViewDescription();

@@ -20,13 +20,15 @@ function getStatistics(req) {
       center: 0,
       equal: false,
       profile: [0.05, 0.1, 0.9, 0.95]
-    })
-  ]).then(([speed, trips, users, preference]) => {
+    }),
+    fitDist('blts', 4, edgeOptions)
+  ]).then(([speed, trips, users, preference, blts]) => {
     return {
       speed: speed,
       trips: trips,
       users: users,
-      preference: preference
+      preference: preference,
+      blts: blts
     };
   });
 }

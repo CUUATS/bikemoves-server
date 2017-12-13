@@ -409,6 +409,15 @@ const Edge = sequelize.define('edge', {
   refs: {
     type: Sequelize.ARRAY(Sequelize.BIGINT)
   },
+  length: {
+    type: Sequelize.DOUBLE
+  },
+  blts: {
+    type: Sequelize.INTEGER
+  },
+  region: {
+    type: Sequelize.STRING
+  },
   geom: {
     type: Sequelize.GEOMETRY('LINESTRING', 4326),
     allowNull: false
@@ -422,6 +431,9 @@ const Edge = sequelize.define('edge', {
     {
       fields: ['refs'],
       using: 'gin'
+    },
+    {
+      fields: ['region']
     },
     {
       type: 'SPATIAL',
@@ -451,6 +463,9 @@ const WebUser = sequelize.define('web_user', {
     {
       fields: ['username'],
       unique: true
+    },
+    {
+      fields: ['region']
     }
   ],
   underscored: true
@@ -654,6 +669,7 @@ function getEdgeSQL(options) {
       edge_info.trips,
       edge_info.mean_speed,
       edge_info.preference,
+      edge.blts,
       edge.length,
       edge.geom
       FROM (
@@ -675,15 +691,19 @@ function getEdgeSQL(options) {
             ${tripFilter}
         GROUP BY edge_trip.edge_id
         ) AS edge_info
-      INNER JOIN edge
-        ON edge.id = edge_info.edge_id`;
+      RIGHT JOIN edge
+        ON edge.id = edge_info.edge_id
+      WHERE edge.region = '${options.region}'`;
 
   if (options.minUsers)
     sql = `SELECT
         CASE WHEN users >= ${options.minUsers} THEN users ELSE 0 END AS users,
         CASE WHEN users >= ${options.minUsers} THEN trips ELSE 0 END AS trips,
-        mean_speed,
-        preference,
+        CASE WHEN users >= ${options.minUsers} THEN mean_speed ELSE 0 END
+          AS mean_speed,
+        CASE WHEN users >= ${options.minUsers} OR users = 0
+          THEN preference ELSE 0 END AS preference,
+        blts,
         length,
         geom
       FROM (${sql}) AS unfiltered`;
@@ -692,7 +712,8 @@ function getEdgeSQL(options) {
 }
 
 function getEdgeStatistics(column, options, min) {
-  let where = (column != 'preference') ? `WHERE ${column} > 0` : '';
+  let where = (column != 'preference') ? `WHERE ${column} > 0` :
+    `WHERE ${column} <> 0`;
   let sql = `
     SELECT ${column}::int AS value,
       sum(length) * 0.000621371 AS count
@@ -709,7 +730,8 @@ function getEdgeTileSQL(options) {
     SELECT users,
       trips,
       mean_speed,
-      preference,
+      preference::integer,
+      blts::integer,
       ST_AsGeoJSON(geom) AS the_geom_geojson
     FROM (${getEdgeSQL(options)}) AS edge_info
     WHERE ST_Intersects(geom, !bbox_4326!)`;

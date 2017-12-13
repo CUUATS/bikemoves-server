@@ -53,6 +53,15 @@ const MAP_VIEWS = [
       users have gone out of their way to use (positive score) or
       avoid (negative score) a segment. Only segments with a moderate
       or strong positive or negative preference are shown.`
+  },
+  {
+    id: 'blts',
+    title: 'Bicycle Level of Traffic Stress',
+    description: `This view shows preliminary Bicycle Level of Traffic Stress
+      (BLTS) scores. Lower scores indicate a segment that is preceived as
+      more comfortable for cyclists. The BLTS scores are based on physical
+      factors such as street width and lane configuration, not on data
+      provided by BikeMoves Illinois users.`
   }
 ];
 const PRIVACY_NOTICE = ` Segments ridden by only one user are excluded to

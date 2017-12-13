@@ -493,7 +493,8 @@ class Map {
   }
 
   updateStatistics() {
-    return utils.getJSON(STATISTICS_ENDPOINT + this.getFiltersQueryString())
+    return utils.getJSON(STATISTICS_ENDPOINT + this.getFiltersQueryString(),
+        this.perms.viewTripDetails)
       .then((res) => this.statistics = res.statistics);
   }
 

@@ -3,7 +3,7 @@ function absoluteURL(url) {
     location.port ? ':' + location.port : '') + url;
 }
 
-function getJSON(url) {
+function getJSON(url, skipCache) {
   return new Promise((resolve, reject) => {
     let req = new XMLHttpRequest();
     req.onload = () => {
@@ -15,6 +15,7 @@ function getJSON(url) {
     };
     req.onerror = () => reject(req.statusText);
     req.open('GET', url, true);
+    if (skipCache) req.setRequestHeader('x-apicache-bypass', true);
     req.send();
   });
 }

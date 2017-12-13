@@ -35,6 +35,10 @@ function getWebUser(username) {
   });
 }
 
+function isAnon(req, res) {
+  return !req.user;
+}
+
 function init(app) {
   passport.use(new Strategy((username, password, cb) => {
     getWebUser(username)
@@ -86,5 +90,6 @@ function init(app) {
 
 module.exports.checkPermission = checkPermission;
 module.exports.requirePermission = requirePermission;
+module.exports.isAnon = isAnon;
 module.exports.init = init;
 module.exports.PERM_VIEW_TRIP_DETAILS = PERM_VIEW_TRIP_DETAILS;

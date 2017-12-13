@@ -20,7 +20,6 @@ const tilesplash = new Tilesplash({
 });
 const app = tilesplash.server;
 const cache = apicache.middleware;
-const noFilters = (req, res) => !req.query.filters;
 const requireView = auth.requirePermission(auth.PERM_VIEW_TRIP_DETAILS);
 const tripRoute = '/api/v1/trips/:id';
 
@@ -57,7 +56,7 @@ app.get('/api/v1/demographics', cache('4 hours'), (req, res) => {
   }));
 });
 
-app.get('/api/v1/statistics', cache('4 hours', noFilters), (req, res) => {
+app.get('/api/v1/statistics', cache('4 hours', auth.isAnon), (req, res) => {
   data.getStatistics(req).then((statistics) => res.json({
     statistics: statistics
   }));

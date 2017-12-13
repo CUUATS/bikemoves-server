@@ -71,6 +71,13 @@ const DIVERGING_COLORS = [
   '#2c7bb6'
 ];
 
+const BLTS_COLORS = [
+  '#225ea8',
+  '#41b6c4',
+  '#a1dab4',
+  '#ffffcc'
+]
+
 const EMPTY_FEATURE_COLLECTION = {
   type: 'FeatureCollection',
   features: []
@@ -233,7 +240,7 @@ class Map {
         'line-color': {
           type: 'interval',
           property: 'blts',
-          stops: this.getStops('blts', CONTINUOUS_COLORS.slice(0, 4).reverse())
+          stops: this.getStops('blts', BLTS_COLORS)
         }
       };
     };
@@ -752,7 +759,7 @@ class Map {
     } else if (viewName === 'blts') {
       this.drawLegendChart('edge-color', 'blts',
         'Bicycle Level of Traffic Stress', 'BLTS Score',
-        'Miles', CONTINUOUS_COLORS.slice(0, 4).reverse());
+        'Miles', BLTS_COLORS);
     } else if (isDetails) {
       document.querySelector('.info-details').innerHTML =
         this.getDetailsViewDescription();

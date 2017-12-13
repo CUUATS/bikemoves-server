@@ -224,7 +224,7 @@ function getMapViews(req) {
   } else {
     views.forEach((view, i) => {
       if (i < 3) view.description += PRIVACY_NOTICE;
-      view.description += DATE_NOTICE;
+      if (i < 4) view.description += DATE_NOTICE;
     });
   }
 

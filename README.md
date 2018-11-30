@@ -1,2 +1,2 @@
-# bikemoves-server
-Web application for receiving and processing bicycle route data
+# We've moved!
+This repository is now [hosted on GitLab](https://gitlab.com/ccrpc/bikemoves-server).
